@@ -42,6 +42,15 @@ test('normalizer rejects missing canonical instrument identity instead of synthe
   assert.equal(result.candidateEvaluable, false)
 })
 
+test('normalizer requires explicit timezone in source timestamps', () => {
+  const fixture = structuredClone(byId.get('S1-F01'))
+  fixture.raw.sourceObservedAt = '2026-11-03T12:00:00'
+  const result = normalizeMarketObservation(fixture)
+  assert.equal(result.qualityStatus, 'INCOMPLETE')
+  assert.equal(result.reason, 'PROVENANCE_OR_TIMESTAMP_FIELD_MISSING_OR_INVALID')
+  assert.equal(result.candidateEvaluable, false)
+})
+
 test('normalizer rejects missing profile/version/timestamp provenance', () => {
   const fixture = structuredClone(byId.get('S1-F01'))
   fixture.normalizerVersion = ''
@@ -53,7 +62,7 @@ test('normalizer rejects missing profile/version/timestamp provenance', () => {
 test('S1-F02 rejects an unmapped instrument without symbol inference', () => {
   const result = normalizeMarketObservation(byId.get('S1-F02'))
   assert.equal(result.qualityStatus, 'INVALID')
-  assert.equal(result.reason, 'INSTRUMENT_MAPPING_MISSING')
+  assert.equal(result.reason, 'INSTRUMENT_MAPPING_MISSING_OR_INCOMPLETE')
   assert.equal(result.candidateEvaluable, false)
 })
 
