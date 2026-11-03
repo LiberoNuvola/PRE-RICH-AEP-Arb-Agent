@@ -1,0 +1,121 @@
+{
+  "recordType": "CollectionCoverageReport",
+  "schemaVersion": "0.1",
+  "collectionRunRef": "fixture:collection-run:001",
+  "profileRef": "fixture:provider-profile:synthetic",
+  "profileVersion": "0.1",
+  "requestedScopeRef": "fixture:scope:account-subset-A",
+  "startedAt": "2026-11-03T12:00:00.000Z",
+  "completedAt": "2026-11-03T12:00:01.000Z",
+  "coverageItems": [
+    {
+      "dataFamily": "BALANCES",
+      "status": "COMPLETE_NONEMPTY",
+      "requested": true,
+      "requestScopeRef": "fixture:query:balances:scope-A",
+      "queryCompleted": true,
+      "paginationStatus": "EXHAUSTED",
+      "truncated": false,
+      "recordCount": 2,
+      "completionEvidenceRef": "fixture:evidence:balances-completion",
+      "boundary": {
+        "kind": "QUERY_COMPLETION",
+        "reference": "fixture:boundary:balances-run-001",
+        "atomicity": "NON_ATOMIC"
+      },
+      "retentionStatus": "WITHIN_DOCUMENTED_RETENTION",
+      "omissions": [],
+      "reasonCodes": [],
+      "profileBasisRef": null
+    },
+    {
+      "dataFamily": "OPEN_ORDERS",
+      "status": "COMPLETE_EMPTY",
+      "requested": true,
+      "requestScopeRef": "fixture:query:open-orders:scope-A",
+      "queryCompleted": true,
+      "paginationStatus": "EXHAUSTED",
+      "truncated": false,
+      "recordCount": 0,
+      "completionEvidenceRef": "fixture:evidence:orders-completion",
+      "boundary": {
+        "kind": "QUERY_COMPLETION",
+        "reference": "fixture:boundary:orders-run-001",
+        "atomicity": "NON_ATOMIC"
+      },
+      "retentionStatus": "WITHIN_DOCUMENTED_RETENTION",
+      "omissions": [],
+      "reasonCodes": [],
+      "profileBasisRef": null
+    },
+    {
+      "dataFamily": "FILLS",
+      "status": "PARTIAL",
+      "requested": true,
+      "requestScopeRef": "fixture:query:fills:scope-A",
+      "queryCompleted": false,
+      "paginationStatus": "NOT_EXHAUSTED",
+      "truncated": true,
+      "recordCount": 1,
+      "completionEvidenceRef": null,
+      "boundary": {
+        "kind": "UNKNOWN",
+        "reference": null,
+        "atomicity": "UNKNOWN"
+      },
+      "retentionStatus": "POSSIBLE_GAP",
+      "omissions": [
+        "Historical page beyond provider retention window"
+      ],
+      "reasonCodes": [
+        "TRUNCATED_BY_SOURCE",
+        "RECOVERY_INCOMPLETE"
+      ],
+      "profileBasisRef": null
+    },
+    {
+      "dataFamily": "TRANSFERS",
+      "status": "NOT_REQUESTED",
+      "requested": false,
+      "requestScopeRef": null,
+      "queryCompleted": null,
+      "paginationStatus": "NOT_REQUESTED",
+      "truncated": null,
+      "recordCount": null,
+      "completionEvidenceRef": null,
+      "boundary": {
+        "kind": "NONE",
+        "reference": null,
+        "atomicity": "UNKNOWN"
+      },
+      "retentionStatus": "UNKNOWN",
+      "omissions": [],
+      "reasonCodes": [
+        "NOT_COLLECTED"
+      ],
+      "profileBasisRef": null
+    },
+    {
+      "dataFamily": "MARGIN",
+      "status": "NOT_APPLICABLE_PROFILE",
+      "requested": false,
+      "requestScopeRef": null,
+      "queryCompleted": null,
+      "paginationStatus": "NOT_REQUESTED",
+      "truncated": null,
+      "recordCount": null,
+      "completionEvidenceRef": null,
+      "boundary": {
+        "kind": "NONE",
+        "reference": null,
+        "atomicity": "UNKNOWN"
+      },
+      "retentionStatus": "NOT_APPLICABLE",
+      "omissions": [],
+      "reasonCodes": [
+        "PROFILE_DECLARES_NOT_APPLICABLE"
+      ],
+      "profileBasisRef": "fixture:profile-basis:no-margin-mode"
+    }
+  ]
+}
