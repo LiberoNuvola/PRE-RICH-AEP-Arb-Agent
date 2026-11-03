@@ -9,7 +9,7 @@
 | Stage | Permitted scope | Current status |
 | --- | --- | --- |
 | S0 | Research, contracts, synthetic fixtures | Materialized in this repository |
-| S1 | Read-only observations, deterministic replay, projections, synthetic simulation | Candidate implementation; 28 Node tests and 6 schema validations passed on GitHub Actions run #1 |
+| S1 | Read-only observations, deterministic replay, projections, synthetic simulation | Candidate implementation; 28 Node tests and 7 schema validations plus checkpoint-coverage checks defined for next CI run |
 | S2 | Paper/test profile with separately specified environment and account isolation | Not authorized / not implemented |
 | S3 | Bounded autonomous live execution | Not authorized; D0–D8 and exact profile/recovery gates remain open |
 | S4 | Multi-Principal/shared-resource operation | Not authorized; explicit composition/allocation contracts required |
@@ -28,9 +28,9 @@
 
 ## 3. Multi-stream composition boundary
 
-The implementation returns independent replayStream results and an overall PARTIAL_UNRESOLVED when one or more streams are unresolved. It does not merge event histories, choose a total order, compute a shared state or decide whether resources are shared/exclusive.
+The implementation returns independent replayStream results and an overall PARTIAL_UNRESOLVED when one or more streams are unresolved. Each ReplayManifest declares an initialCheckpoints array: exactly one checkpoint for each stream. The validator cross-checks stream IDs and requires each checkpoint's coveredThroughSequence to match that stream's startSequenceExclusive.
 
-When more than one stream is present, compositionStatus remains COMPOSITION_UNRESOLVED. No X1–X7 composition witness is currently consumed. A future composition adapter must supply explicit source evidence, ownership/resource partition, causal/atomicity or mirrored-exposure semantics, and joint verification under the approved Composition Contract. The S1 reducer is not that adapter.
+The implementation does not merge event histories, choose a total order, compute a shared state or decide whether resources are shared/exclusive. When more than one stream is present, compositionStatus remains COMPOSITION_UNRESOLVED. No X1–X7 composition witness is currently consumed. A future composition adapter must supply explicit source evidence, ownership/resource partition, causal/atomicity or mirrored-exposure semantics, and joint verification under the approved Composition Contract. The S1 reducer is not that adapter.
 
 ## 4. OpenExposure boundary
 
@@ -59,6 +59,7 @@ S1 is suitable for review as an isolated, no-actuation reference package. It is 
 - [x] Local no-actuation source guards pass.
 - [x] GitHub Actions workflow is defined with read-only repository permission.
 - [x] First GitHub Actions run #1 completed successfully: 28 Node tests, 6 schema validations; [run evidence](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41584700965).
+- [ ] Second CI run after the per-stream manifest checkpoint correction completes successfully.
 - [ ] Review of schema/reducer contracts and evidence limitations is recorded.
 
 Separate authority gates remain open and are not prerequisites for keeping S1 read-only: D0 Principal/financial authority root and D1 account/resource isolation. They are mandatory before any paper/live capability is even considered. S3 additionally requires the full D0–D8 profile, economic admission, actuator boundary, reconciler and recovery contract.

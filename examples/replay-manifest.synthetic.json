@@ -1,15 +1,17 @@
 {
   "recordType": "ReplayManifest",
-  "manifestVersion": "arb-replay-manifest/0.1",
+  "manifestVersion": "arb-replay-manifest/0.2",
   "replayId": "fixture:replay:market-stream-01",
   "replayMode": "OBSERVATION_REPLAY",
   "syntheticOnly": true,
-  "initialCheckpoint": {
-    "snapshotRef": "fixture:snapshot:alpha:40",
-    "streamId": "fixture:public-feed:alpha:instrument:AAA-USDX",
-    "coveredThroughSequence": "40",
-    "snapshotCompleteness": "COMPLETE_FOR_FIXTURE"
-  },
+  "initialCheckpoints": [
+    {
+      "snapshotRef": "fixture:snapshot:alpha:40",
+      "streamId": "fixture:public-feed:alpha:instrument:AAA-USDX",
+      "coveredThroughSequence": "40",
+      "snapshotCompleteness": "COMPLETE_FOR_FIXTURE"
+    }
+  ],
   "streams": [{
     "streamId": "fixture:public-feed:alpha:instrument:AAA-USDX",
     "orderedEventRefs": ["fixture:event:alpha:AAA-USDX:41"],

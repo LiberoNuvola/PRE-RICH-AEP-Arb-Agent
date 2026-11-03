@@ -10,18 +10,18 @@
 - Runtime: Node.js 22.
 - Covers the nine synthetic base fixtures; observation/freshness/sequence/conflict classification; account completeness; order/fill lifecycle; simulation isolation; capability allowlist; duplicate/conflict/gap/correction replay; late fill after cancel confirmation; deterministic replay; independent multi-stream progress; duplicate stream declaration rejection; typed gross exposure preservation; empty/malformed/duplicate exposure handling; and static no-actuation guards.
 
-## JSON Schema checks
+## JSON Schema and manifest consistency checks
 
-**Six synthetic documents passed** Draft 2020-12 validation on GitHub Actions:
-
+Seven synthetic JSON documents pass Draft 2020-12 schema validation:
 1. Base fixture pack.
 2. ObservationRecord example.
-3. Single-stream ReplayManifest example.
-4. Single-stream ReplayResult example.
-5. MultiStreamReplayResult example.
-6. OpenExposureSet example.
+3. Single-stream ReplayManifest.
+4. Multi-stream ReplayManifest with one checkpoint per stream.
+5. Single-stream ReplayResult.
+6. MultiStreamReplayResult.
+7. OpenExposureSet.
 
-No schema validation errors were reported.
+The Python validator also checks that every ReplayManifest stream has exactly one matching checkpoint and that its checkpoint cursor equals the stream's declared start cursor.
 
 ## Evidence limits
 

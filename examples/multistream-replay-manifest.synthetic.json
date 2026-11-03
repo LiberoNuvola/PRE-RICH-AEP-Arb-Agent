@@ -1,0 +1,51 @@
+{
+  "recordType": "ReplayManifest",
+  "manifestVersion": "arb-replay-manifest/0.2",
+  "replayId": "fixture:replay:independent-streams-01",
+  "replayMode": "OBSERVATION_REPLAY",
+  "syntheticOnly": true,
+  "initialCheckpoints": [
+    {
+      "snapshotRef": "fixture:snapshot:market-A:40",
+      "streamId": "fixture:stream:market:A",
+      "coveredThroughSequence": "40",
+      "snapshotCompleteness": "COMPLETE_FOR_FIXTURE"
+    },
+    {
+      "snapshotRef": "fixture:snapshot:account-B:8",
+      "streamId": "fixture:stream:account:B",
+      "coveredThroughSequence": "8",
+      "snapshotCompleteness": "COMPLETE_FOR_FIXTURE"
+    }
+  ],
+  "streams": [
+    {
+      "streamId": "fixture:stream:market:A",
+      "orderedEventRefs": ["fixture:event:market:A:41"],
+      "startSequenceExclusive": "40",
+      "endSequenceInclusive": "41"
+    },
+    {
+      "streamId": "fixture:stream:account:B",
+      "orderedEventRefs": ["fixture:event:account:B:9"],
+      "startSequenceExclusive": "8",
+      "endSequenceInclusive": "9"
+    }
+  ],
+  "versions": {
+    "envelopeSchema": "arb-event-envelope/0.1",
+    "payloadSchema": "independent-observation/0.1",
+    "sourceProfile": "synthetic-independent-stream-profile/0.1",
+    "normalizer": "fixture-normalizer/0.1.0",
+    "projectionReducer": "fixture-per-stream-reducer/0.2.0",
+    "canonicalization": "fixture-canonicalization/0.1",
+    "fixturePack": "arb-s1-fixture/v0.1"
+  },
+  "policies": {
+    "sequenceSemantics": "monotonic-per-stream",
+    "freshnessPolicy": "fixture-provided-only",
+    "correctionPolicy": "append-only-supersession",
+    "crossStreamOrdering": "NOT_DECLARED"
+  },
+  "secretsIncluded": false
+}

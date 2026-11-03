@@ -1,25 +1,30 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://immortal.invalid/arb/s1/replay-manifest/0.1",
+  "$id": "https://immortal.invalid/arb/s1/replay-manifest/0.2",
   "title": "Arb S1 ReplayManifest candidate",
+  "description": "Each independent stream has its own initial checkpoint and ordered event list. No global cross-stream order is inferred.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["recordType", "manifestVersion", "replayId", "replayMode", "syntheticOnly", "initialCheckpoint", "streams", "versions", "policies", "secretsIncluded"],
+  "required": ["recordType", "manifestVersion", "replayId", "replayMode", "syntheticOnly", "initialCheckpoints", "streams", "versions", "policies", "secretsIncluded"],
   "properties": {
     "recordType": { "const": "ReplayManifest" },
     "manifestVersion": { "type": "string", "minLength": 1 },
     "replayId": { "type": "string", "minLength": 1 },
     "replayMode": { "enum": ["OBSERVATION_REPLAY", "PROJECTION_REPLAY", "SIMULATION_REPLAY"] },
     "syntheticOnly": { "type": "boolean" },
-    "initialCheckpoint": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["snapshotRef", "streamId", "coveredThroughSequence", "snapshotCompleteness"],
-      "properties": {
-        "snapshotRef": { "type": "string", "minLength": 1 },
-        "streamId": { "type": "string", "minLength": 1 },
-        "coveredThroughSequence": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
-        "snapshotCompleteness": { "type": "string", "minLength": 1 }
+    "initialCheckpoints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["snapshotRef", "streamId", "coveredThroughSequence", "snapshotCompleteness"],
+        "properties": {
+          "snapshotRef": { "type": "string", "minLength": 1 },
+          "streamId": { "type": "string", "minLength": 1 },
+          "coveredThroughSequence": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+          "snapshotCompleteness": { "type": "string", "minLength": 1 }
+        }
       }
     },
     "streams": {
@@ -59,7 +64,7 @@
         "sequenceSemantics": { "type": "string", "minLength": 1 },
         "freshnessPolicy": { "type": "string", "minLength": 1 },
         "correctionPolicy": { "type": "string", "minLength": 1 },
-        "crossStreamOrdering": { "type": "string", "minLength": 1 }
+        "crossStreamOrdering": { "const": "NOT_DECLARED" }
       }
     },
     "secretsIncluded": { "const": false }
