@@ -255,23 +255,28 @@ export function projectOrderLifecycle(events) {
     if (event.eventType === 'CANCEL_REQUEST_ACKNOWLEDGED') cancelRequested = true
     if (event.eventType === 'CANCEL_CONFIRMED') cancelConfirmed = true
     if (event.eventType === 'FILL') {
-      if (typeof event.fillId !== 'string' || !event.fillId || typeof event.quantity !== 'string') {
-        anomalies.push('FILL_ID_OR_QUANTITY_MISSING')
+      if (typeof event.fillId !== 'string' || !event.fillId ||
+          typeof event.quantity !== 'string' ||
+          typeof event.rawDigestRef !== 'string' || !event.rawDigestRef) {
+        anomalies.push('FILL_ID_QUANTITY_OR_RAW_DIGEST_MISSING')
         continue
       }
       const existing = fills.get(event.fillId)
-      if (existing && existing !== event.quantity) {
+      if (existing) {
+        if (existing.quantity === event.quantity && existing.rawDigestRef === event.rawDigestRef) {
+          continue
+        }
         anomalies.push('FILL_ID_PAYLOAD_CONFLICT')
         continue
       }
-      fills.set(event.fillId, event.quantity)
+      fills.set(event.fillId, { quantity: event.quantity, rawDigestRef: event.rawDigestRef })
       if (cancelConfirmed) anomalies.push('FILL_OBSERVED_AFTER_CANCEL_CONFIRMATION_REQUIRES_RECONCILIATION')
     }
   }
 
   let filledQuantity = '0'
-  for (const quantity of fills.values()) {
-    const sum = addDecimalStrings(filledQuantity, quantity)
+  for (const fill of fills.values()) {
+    const sum = addDecimalStrings(filledQuantity, fill.quantity)
     if (sum === null) anomalies.push('INVALID_FILL_QUANTITY')
     else filledQuantity = sum
   }

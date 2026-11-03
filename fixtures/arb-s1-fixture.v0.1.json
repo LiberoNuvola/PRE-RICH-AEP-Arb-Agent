@@ -162,7 +162,8 @@
           "eventType": "FILL",
           "orderId": "fixture:order:01",
           "fillId": "fixture:fill:01",
-          "quantity": "2.000"
+          "quantity": "2.000",
+          "rawDigestRef": "fixture:digest:fill-01"
         },
         {
           "eventId": "fixture:event:cancel-request",

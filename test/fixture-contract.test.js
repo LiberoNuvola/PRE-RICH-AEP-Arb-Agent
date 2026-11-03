@@ -158,18 +158,41 @@ test('S1-F07 preserves a partial fill and non-terminal cancel request', () => {
 test('duplicate fill identity is counted only once', () => {
   const result = projectOrderLifecycle([
     { eventType: 'ORDER_ACCEPTED', orderId: 'order:1', quantity: '4.000' },
-    { eventType: 'FILL', orderId: 'order:1', fillId: 'fill:1', quantity: '1.000' },
-    { eventType: 'FILL', orderId: 'order:1', fillId: 'fill:1', quantity: '1.000' },
+    { eventType: 'FILL', orderId: 'order:1', fillId: 'fill:1', quantity: '1.000', rawDigestRef: 'digest:fill:1' },
+    { eventType: 'FILL', orderId: 'order:1', fillId: 'fill:1', quantity: '1.000', rawDigestRef: 'digest:fill:1' },
   ])
   assert.equal(result.fillCount, 1)
   assert.equal(result.filledQuantity, '1.000')
+})
+
+test('same fill ID and quantity with a different raw payload digest is conflicted', () => {
+  const result = projectOrderLifecycle([
+    { eventType: 'ORDER_ACCEPTED', orderId: 'order:1', quantity: '4.000' },
+    { eventType: 'FILL', orderId: 'order:1', fillId: 'fill:1', quantity: '1.000', rawDigestRef: 'digest:fill:original', fee: '0.01' },
+    { eventType: 'FILL', orderId: 'order:1', fillId: 'fill:1', quantity: '1.000', rawDigestRef: 'digest:fill:conflict', fee: '0.02' },
+  ])
+  assert.equal(result.fillCount, 1)
+  assert.equal(result.filledQuantity, '1.000')
+  assert.equal(result.qualityStatus, 'CONFLICTED')
+  assert.ok(result.anomalies.includes('FILL_ID_PAYLOAD_CONFLICT'))
+})
+
+test('fill without a raw payload digest remains unverified and is not counted', () => {
+  const result = projectOrderLifecycle([
+    { eventType: 'ORDER_ACCEPTED', orderId: 'order:1', quantity: '4.000' },
+    { eventType: 'FILL', orderId: 'order:1', fillId: 'fill:missing-digest', quantity: '1.000' },
+  ])
+  assert.equal(result.qualityStatus, 'CONFLICTED')
+  assert.equal(result.fillCount, 0)
+  assert.equal(result.filledQuantity, '0')
+  assert.ok(result.anomalies.includes('FILL_ID_QUANTITY_OR_RAW_DIGEST_MISSING'))
 })
 
 test('late fill after terminal cancel is retained and flagged for reconciliation', () => {
   const result = projectOrderLifecycle([
     { eventType: 'ORDER_ACCEPTED', orderId: 'order:1', quantity: '3.000' },
     { eventType: 'CANCEL_CONFIRMED', orderId: 'order:1' },
-    { eventType: 'FILL', orderId: 'order:1', fillId: 'fill:late', quantity: '1.000' },
+    { eventType: 'FILL', orderId: 'order:1', fillId: 'fill:late', quantity: '1.000', rawDigestRef: 'digest:fill:late' },
   ])
   assert.equal(result.filledQuantity, '1.000')
   assert.equal(result.qualityStatus, 'CONFLICTED')
