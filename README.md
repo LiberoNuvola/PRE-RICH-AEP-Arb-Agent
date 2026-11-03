@@ -36,6 +36,12 @@ The [contribution and novelty assessment](docs/CONTRIBUTION-AND-NOVELTY-ASSESSME
 
 The [provider-neutral adapter contract](docs/PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md) defines the future read-only evidence boundary. Machine-readable starting points are [ProviderProfile schema](schemas/provider-profile.schema.json), [unselected ProviderProfile template](examples/provider-profile.template.json), [per-family collection coverage schema](schemas/collection-coverage.schema.json), and [synthetic coverage report](examples/collection-coverage.synthetic.json). The template is intentionally TEMPLATE_ONLY: provider, product, protocol and official documentation are unselected/unmapped.
 
+## Cardano wallet companion and IMMORTAL adapter coverage
+
+The [Cardano Wallet Companion architecture](docs/CARDANO-WALLET-COMPANION-ARCHITECTURE-v0.1.md) evaluates Arb as a non-custodial companion dApp using the existing wallet's CIP-30 bridge. It does not add wallet code, credentials, signing, submission or autonomous execution to the current S1 package.
+
+The [IMMORTAL EXP ↔ Cardano Adapter crosswalk](docs/IMMORTAL-CARDANO-EXP-ADAPTER-CROSSWALK-v0.1.md) maps all twelve EXP axes to the existing Cardano Adapter boundary, identifies reusable implementation and states the generalized-contract gaps. The existing Cardano execution witness is still PRE-RICH-shaped; Arb must not relabel Issue/Reveal/Claim/Expire or duplicate the economic kernel. Any generalized Cardano Adapter implementation belongs in IMMORTAL's adapter workstream after the canonical EXP contracts are available.
+
 ## Multi-stream boundary
 
 Each stream keeps its own cursor and event order. A gap/conflict blocks only that stream. Lexical sorting of result rows is presentation canonicalization only, not causal ordering. With multiple streams, composition remains COMPOSITION_UNRESOLVED until an explicit Composition Contract X1–X7 witness exists; this package does not implement that witness or aggregate stream state. Every stream must have its own matching initial checkpoint in the replay manifest.
