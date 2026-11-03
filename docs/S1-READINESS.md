@@ -9,7 +9,7 @@
 | Stage | Permitted scope | Current status |
 | --- | --- | --- |
 | S0 | Research, contracts, synthetic fixtures | Materialized in this repository |
-| S1 | Read-only observations, deterministic replay, projections, synthetic simulation | Candidate implementation; 38 Node tests, 7 schema validations and 2 per-stream checkpoint checks passed on GitHub Actions run #9 |
+| S1 | Read-only observations, deterministic replay, projections, synthetic simulation | Candidate implementation; 38 Node tests, 7 schema validations and 2 per-stream checkpoint checks passed on GitHub Actions run #10 |
 | S2 | Paper/test profile with separately specified environment and account isolation | Not authorized / not implemented |
 | S3 | Bounded autonomous live execution | Not authorized; D0–D8 and exact profile/recovery gates remain open |
 | S4 | Multi-Principal/shared-resource operation | Not authorized; explicit composition/allocation contracts required |
@@ -62,7 +62,7 @@ S1 is suitable for review as an isolated, no-actuation reference package. It is 
 - [x] Independent multi-stream replay and typed gross exposure preservation are covered by tests.
 - [x] Static no-actuation source checks scan all JavaScript under src.
 - [x] GitHub Actions workflow uses read-only repository permission.
-- [x] GitHub Actions run #9 completed successfully: 38 Node tests, 7 schema documents and 2 per-stream checkpoint consistency checks; [run evidence](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41586103171).
+- [x] GitHub Actions run #9 completed successfully: 38 Node tests, 7 schema documents and 2 per-stream checkpoint consistency checks; [run evidence](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41586219658).
 - [x] Focused internal adversarial review recorded in [S1-ADVERSARIAL-REVIEW.md](S1-ADVERSARIAL-REVIEW.md).
 - [ ] Independent external review of schema/reducer contracts and evidence limitations.
 - [ ] Provider-specific evidence and event identity semantics reviewed against an actual provider profile.

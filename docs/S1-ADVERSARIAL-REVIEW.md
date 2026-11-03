@@ -3,7 +3,7 @@
 **Review type:** internal second-pass adversarial review by the implementation agent  
 **Review date:** 2026-11-03  
 **Scope:** read-only source normalization, per-stream replay lineage, correction chain, order/fill projection, no-actuation guard  
-**Latest CI evidence:** [run #9](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41586103171)  
+**Latest CI evidence:** [run #10](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41586219658)  
 **Latest reviewed commit:** [287ad0d](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/commit/287ad0dc24793bb0ab7fdb95304be65a0fa788ab)
 
 This is not an independent external audit, security certification, production readiness approval or venue conformance report.

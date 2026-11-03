@@ -2,14 +2,16 @@
 
 ## Latest GitHub Actions evidence
 
-**Run #9:** [S1 Read-only Conformance](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41586103171)  
-**Commit:** [287ad0dc24793bb0ab7fdb95304be65a0fa788ab](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/commit/287ad0dc24793bb0ab7fdb95304be65a0fa788ab)  
+**Run #10:** [S1 Read-only Conformance](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41586219658)  
+**Commit:** [94cebf1173298994e167918fee3e59e7295cd7c6](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/commit/94cebf1173298994e167918fee3e59e7295cd7c6)  
 **Conclusion:** success — the S1 schemas, replay and no-actuation job completed.
 
 - **38 Node tests passed / 0 failed** on the GitHub Actions runner (Node.js 22).
 - **7 synthetic JSON documents passed** Draft 2020-12 validation.
 - **2 ReplayManifest consistency checks passed:** exactly one initial checkpoint per stream, with checkpoint cursor equal to the stream's start cursor.
 - The static no-actuation check scans all JavaScript files under src.
+
+Run #9 passed on the latest code changes; run #10 independently revalidated the report/readiness documentation commit with the same conformance counts.
 
 ## Coverage
 
@@ -31,8 +33,9 @@ Seven JSON documents:
 - Run #7 exposed over-escaped timestamp/decimal validation patterns.
 - Run #8 passed after those pattern fixes and test alignment.
 - Run #9 passed after fill payload digest requirements and new regressions.
+- Run #10 passed after the internal adversarial review report and readiness documentation were committed.
 
-These failures are retained as development history; the latest candidate's passing result is run #9.
+These failures are retained as development history; no failed run is represented as a pass.
 
 ## Evidence limits
 
