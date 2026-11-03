@@ -176,7 +176,7 @@ References:
 | Principal/account authority separation | NIST ZTA and authorization frameworks | D0/D1 remain OPEN; adapter cannot set either | Established principle; financial binding remains unproven |
 | Gross obligations and legal netting | ISDA/IOSCO/Basel | Typed gross OpenExposure; no netting/novation | Established principle; explicit evidence binding remains a design requirement |
 | Cross-stream/resource composition | Flink consistent snapshots; financial portfolio and netting frameworks | Composition X1–X7 remains unresolved absent its explicit witness | Partial overlap; exact financial composition semantics need evidence |
-| Evidence-to-economic admission hand-off | Related elements in the systems above, but no end-to-end equivalence established in this review | Arb is a consumer; IMMORTAL owns normative economic admission | Candidate integration contribution; not yet demonstrated novel |
+| Evidence-to-economic admission hand-off | IMMORTAL R9, Gates 23/24/30, EconomicAdmissionWitness, GOV-27 and X1–X7 already define substantial upstream/downstream boundaries | Arb is currently an S1 observer; no provider-specific integration or complete hand-off exists | Provider-neutral mapping/integration gap only; not a novel generic admission framework |
 
 ### What is clearly not a novelty claim
 
@@ -213,9 +213,9 @@ Arb must not own or recreate:
 A provider-neutral CollectionCoverageReport is only a statement about what the adapter requested and collected under a declared profile. It is not proof that the provider's universe is complete, that liabilities outside the queried scope do not exist, or that the data is authoritative for an economic decision.
 
 The resulting hand-off must use the existing IMMORTAL observation/admission interfaces. Do not define a second universal status vocabulary or permission token unless a concrete unmapped requirement is demonstrated and the canonical owner approves it.
-## 4. Falsifiable properties to test
+## 4. Candidate Arb conformance properties — not novelty claims
 
-The contribution only becomes substantive if these properties are formally defined and tested against adversarial fixtures and established implementations.
+The following properties are useful regression criteria for the Arb-to-IMMORTAL mapping. They overlap with existing IMMORTAL contracts, established prior art and the existing EXP boundaries; they are not claimed as newly invented invariants. Their value is to test that a provider adapter preserves those obligations and does not bypass or weaken them.
 
 | ID | Proposed property | Falsification condition |
 | --- | --- | --- |
@@ -232,7 +232,18 @@ These are candidate invariants. No formal proof is claimed. They need executable
 
 ## 5. Required comparative experiments
 
-Before claiming an original contribution, Arb should be compared against actual reference systems rather than only against written standards.
+Before claiming an original contribution, Arb should be compared both with the existing canonical IMMORTAL contracts and with external reference systems. The first baseline is the controlling one: reuse normative contracts and test only the uncovered provider/account-data mapping.
+
+### Experiment 0 — Existing IMMORTAL contract baseline
+
+Use the canonical internal contracts before designing any new Arb gate:
+- Gates 23/24/30 for PRE oracle source qualification and exact asset/source semantics;
+- R9 V1–V9 and EV1–EV7 for EEV source, verification, freshness, determinism, conservative derivation and failure behavior;
+- the current EconomicAdmissionWitness, ExecutableLiquidityObservation, CanonicalTransitionEvidence and admission-provenance audit;
+- GOV-27 for separate integrity, authorization, evidence and ruleset checks;
+- Composition X1–X7 for shared resources, atomicity, joint gate and perimeter.
+
+For each Arb ProviderProfile/CollectionCoverage field, record one of: exact reuse, domain-specific adaptation, not applicable, or genuinely unmapped. A genuinely unmapped requirement must be described and evidenced before any new type is proposed. The producer-side EEV/protected-capital gap already recorded by IMMORTAL must remain OPEN; a consumer-side observer cannot close it.
 
 ### Experiment A — Trading reconciliation baseline
 
