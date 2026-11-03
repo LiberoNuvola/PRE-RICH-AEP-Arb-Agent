@@ -9,7 +9,7 @@
 | Stage | Permitted scope | Current status |
 | --- | --- | --- |
 | S0 | Research, contracts, synthetic fixtures | Materialized in this repository |
-| S1 | Read-only observations, deterministic replay, projections, synthetic simulation | Candidate implementation; 38 Node tests, 7 schema validations and 2 per-stream checkpoint checks passed on GitHub Actions run #11 |
+| S1 | Read-only observations, deterministic replay, projections, synthetic simulation | Candidate implementation; 38 Node tests, 9 schema validations, 2 per-stream checkpoint checks and provider-coverage rejection tests run on GitHub Actions |
 | S2 | Paper/test profile with separately specified environment and account isolation | Not authorized / not implemented |
 | S3 | Bounded autonomous live execution | Not authorized; D0–D8 and exact profile/recovery gates remain open |
 | S4 | Multi-Principal/shared-resource operation | Not authorized; explicit composition/allocation contracts required |
@@ -29,6 +29,9 @@
 11. A fill is countable only when its fill ID, quantity and raw digest reference are present. Duplicate fill IDs require matching quantity and digest reference; otherwise the order projection is conflicted.
 12. Canonical instrument identity must come from an explicit instrument mapping. Provider source event IDs are passed through as supplied and are not invented. Missing sourceEventId remains null.
 13. Source profile, normalizer version, source identifier and timezone-qualified source/receipt timestamps are required for a candidate-evaluable normalized observation.
+14. A collection-completeness statement is per data family and exact query scope. COMPLETE_EMPTY requires query completion, exhausted pagination (or a documented non-paginated operation), no truncation, a completion-evidence reference, a boundary reference and documented retention applicability.
+15. A per-family COMPLETE_EMPTY result does not imply a global account snapshot or zero liability. NOT_REQUESTED, PARTIAL, UNAVAILABLE, UNKNOWN or NOT_APPLICABLE_PROFILE are not empty/zero results.
+16. ProviderProfile and collection coverage records are source-profile evidence only. They cannot set Principal authority or account ownership.
 
 ## 3. Multi-stream composition boundary
 
@@ -62,9 +65,11 @@ S1 is suitable for review as an isolated, no-actuation reference package. It is 
 - [x] Independent multi-stream replay and typed gross exposure preservation are covered by tests.
 - [x] Static no-actuation source checks scan all JavaScript under src.
 - [x] GitHub Actions workflow uses read-only repository permission.
-- [x] GitHub Actions run #11 completed successfully: 38 Node tests, 7 schema documents and 2 per-stream checkpoint consistency checks; [run evidence](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41586398713).
 - [x] Focused internal adversarial review recorded in [S1-ADVERSARIAL-REVIEW.md](S1-ADVERSARIAL-REVIEW.md).
-- [x] Provider-neutral adapter evidence boundary documented as a design candidate in [PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md](PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md).
+- [x] Provider-neutral evidence boundary documented in [PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md](PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md).
+- [x] Prior-art adaptation map recorded in [PRIOR-ART-ADAPTATION.md](PRIOR-ART-ADAPTATION.md).
+- [x] ProviderProfile and per-family CollectionCoverage JSON Schemas with synthetic examples are materialized.
+- [x] Negative schema checks reject COMPLETE_EMPTY with non-exhausted pagination, non-zero count, or unknown boundary; reject NOT_REQUESTED marked as requested; reject REVIEWABLE profiles without provider identity/docs; and reject attempts to set Principal authority.
 - [ ] Independent external review of schema/reducer contracts and evidence limitations.
 - [ ] Provider-specific evidence and event identity semantics reviewed against an actual provider profile.
 
@@ -72,7 +77,7 @@ Separate authority gates remain open and are not prerequisites for keeping S1 re
 
 ## 7. Residual limits
 
-The internal review report records open limitations: rawDigestRef equality is not cryptographic digest verification; no provider-specific fill schema or account snapshot proof exists; event sequencing and correction identity remain source-profile-specific; no global cross-stream order or X1–X7 composition is implemented. The provider-neutral contract defines a review checklist only; it does not close these limitations or implement a provider.
+The internal review report records open limitations: rawDigestRef equality is not cryptographic digest verification; no provider-specific fill schema or account snapshot proof exists; event sequencing and correction identity remain source-profile-specific; no global cross-stream order or X1–X7 composition is implemented. The provider-neutral contract and machine-readable schemas define a review boundary only; they do not close these limitations or implement a provider.
 
 ## 8. Ownership separation
 
@@ -84,6 +89,8 @@ This repository does not amend IMMORTAL rules or Cormia specifications, and does
 
 ## 9. Provider evidence boundary
 
-The [Provider-Neutral Evidence Adapter Contract](PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md) separates source assertions, collection coverage, independent verification, and Principal/account authority. It specifies profile declarations for source identity, per-stream ordering/corrections, snapshots/pagination, timestamps, execution semantics, known exclusions, and bounded coverage states.
+The [Provider-Neutral Evidence Adapter Contract](PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md) separates source assertions, collection coverage, independent verification, and Principal/account authority. The [Prior-Art Adaptation Map](PRIOR-ART-ADAPTATION.md) documents the reuse boundary for CloudEvents, PROV-O, JCS, DSSE and FIX.
 
-This is a design-only document. No provider is selected; no provider profile, credentials, network client, account observation or adapter implementation exists. In particular, COMPLETE_EMPTY is bounded to the exact profile-defined query scope and snapshot boundary; no incomplete/unrequested/filtered category may be inferred as zero or absent. D0, D1 and independent external review remain OPEN. S2 and S3 remain unauthorized.
+The ProviderProfile schema is only a template for declaring provider semantics; the current example is TEMPLATE_ONLY with no provider selected or documentation mapped. CollectionCoverageReport records are per data family, not an account-wide complete flag. COMPLETE_EMPTY is valid only when exact query scope, completion evidence, pagination completion, no truncation, a boundary reference and retention applicability are documented. A query-completion boundary with NON_ATOMIC state proves only that query's completion, not an atomic account snapshot.
+
+No provider is selected; no provider credentials, network client, account observation or adapter implementation exists. D0, D1 and independent external review remain OPEN. S2 and S3 remain unauthorized.
