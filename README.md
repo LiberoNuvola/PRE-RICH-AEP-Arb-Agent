@@ -28,6 +28,12 @@ python test/validate_schemas.py
 
 GitHub Actions runs these checks on pushes, pull requests and manual dispatch.
 
+## Evidence architecture and prior art
+
+The [prior-art adaptation map](docs/PRIOR-ART-ADAPTATION.md) records what is reused or adapted from CloudEvents, W3C PROV-O, RFC 8785 JCS, DSSE and FIX, plus what those standards do not prove. ObservationRecord remains the Arb envelope; formal CloudEvents conformance is not claimed.
+
+The [provider-neutral adapter contract](docs/PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md) defines the future read-only evidence boundary. Machine-readable starting points are [ProviderProfile schema](schemas/provider-profile.schema.json), [unselected ProviderProfile template](examples/provider-profile.template.json), [per-family collection coverage schema](schemas/collection-coverage.schema.json), and [synthetic coverage report](examples/collection-coverage.synthetic.json). The template is intentionally TEMPLATE_ONLY: provider, product, protocol and official documentation are unselected/unmapped.
+
 ## Multi-stream boundary
 
 Each stream keeps its own cursor and event order. A gap/conflict blocks only that stream. Lexical sorting of result rows is presentation canonicalization only, not causal ordering. With multiple streams, composition remains COMPOSITION_UNRESOLVED until an explicit Composition Contract X1–X7 witness exists; this package does not implement that witness or aggregate stream state. Every stream must have its own matching initial checkpoint in the replay manifest.
@@ -46,4 +52,4 @@ EXP-03 keeps asset identity/eligibility distinct from valuation, haircut, liquid
 
 ## Readiness
 
-S1 is a candidate read-only implementation with synthetic conformance evidence only. D0 Principal/financial authority and D1 Solo account/resource isolation remain open. This package does not authorize S2 paper trading or S3 live execution. See [S1 Readiness](docs/S1-READINESS.md), the [focused adversarial review](docs/S1-ADVERSARIAL-REVIEW.md), and the [provider-neutral evidence adapter contract](docs/PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md). The provider contract is a design candidate only: no provider profile, live adapter, account connection or provider conformance is implemented.
+S1 is a candidate read-only implementation with synthetic conformance evidence only. D0 Principal/financial authority and D1 Solo account/resource isolation remain open. This package does not authorize S2 paper trading or S3 live execution. See [S1 Readiness](docs/S1-READINESS.md), the [focused adversarial review](docs/S1-ADVERSARIAL-REVIEW.md), the [provider-neutral evidence adapter contract](docs/PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md), and the [prior-art adaptation map](docs/PRIOR-ART-ADAPTATION.md). No provider profile, live adapter, account connection or provider conformance is implemented.
