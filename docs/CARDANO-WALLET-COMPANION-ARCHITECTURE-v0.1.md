@@ -1,11 +1,11 @@
 # Cardano Wallet Companion Architecture v0.1
 
 **Date:** 2026-11-03  
-**Status:** design / integration proposal; non-normative  
+**Status:** W1 read-only reference implementation plus non-normative integration architecture  
 **Target workstream:** PRE-RICH AEP Arb Agent  
 **Repository baseline:** `Immortal-Protocol` at `7305f8027eb765d051403c5ac31a90dd2170fc6c`  
 **IMMORTAL Cardano source inspected:** `work/immortal-green-closure` at `2746652cb0fe327720fc66fe981eb355811bff9c`  
-**Change scope:** documentation only; no wallet connection, signing, submission, provider client, mandate, deployment or live trading is implemented or authorized.
+**Change scope:** W1 adds an isolated, mocked-and-tested CIP-30 read-only port in Arb. No live user wallet was connected by CI. Signing, submission, credentials, provider RPC clients, mandate, deployment and live trading are not implemented or authorized.
 
 ## 1. Decision under evaluation
 
@@ -208,13 +208,13 @@ Current DEX collectors and the current Cardano execution path are not interchang
 | Stage | Scope | Exit evidence | Explicitly excluded |
 |---|---|---|---|
 | W0 — contract design | This architecture and the EXP/Cardano adapter crosswalk | Source-backed ownership and gap matrix | No provider connection, wallet call or code change |
-| W1 — wallet read-only companion | CIP-30 discovery, explicit enable, account/network binding, address and wallet UTxO snapshot | Session-change, network mismatch, pagination, incomplete data and no-secret tests | No signing call, transaction submission, mandate or provider write key |
+| W1 — wallet read-only companion | **Implemented reference slice:** injected CIP-30 discovery, explicit enable, account/network fingerprint check, raw balance and unpaginated wallet UTxO read | Mocked-provider tests, account-change/refusal invalidation, null-vs-empty handling, testnet-variant unresolved, static no-actuation scan | No signing call, transaction submission, mandate, provider write key, RPC client or live wallet connection |
 | W2 — Cardano protocol observation | Reuse one existing read-only Cardano venue observer and independently bind wallet-held assets/position claims | Exact asset identity, datum/UTxO provenance, coverage, freshness, unknown-state and replay tests | No DEX orders, no automatic trading, no inferred complete portfolio |
 | W3 — IMMORTAL consumer mapping | Map observations to existing EXP contracts, generic state/kernel/gate interfaces and adapter evidence | Field-by-field conformance packet and no-duplicate-kernel review | No parallel ProtectedCapital, Ω, netting, novation, risk-budget or authority engine |
 | W4 — interactive transaction proposal | Construct a candidate through the IMMORTAL Adapter and request a user-visible wallet signature | Transaction-intent/body binding, user refusal handling, actual submission and post-state reconciliation tests | No unattended execution |
 | W5 — bounded delegated execution | Separate authority key, standing mandate and constrained execution capability | D0–D8 closed for a selected Solo profile and venue, plus revocation/recovery and security evidence | No implicit multi-Principal/Pool support |
 
-W1 and W2 should begin in read-only mode. W4 is not authorized merely because W1/W2 pass. W5 is a distinct future assurance gate.
+W1 is implemented as an isolated read-only reference port under wallet-companion/; its precise scope and limitations are recorded in [W1 Readiness](W1-READINESS.md). It has not been exercised against an actual user wallet or deployed PWA. W2 remains unselected and unimplemented. W4 is not authorized merely because W1/W2 pass. W5 is a distinct future assurance gate.
 
 ## 10. Design conclusions
 

@@ -1,6 +1,6 @@
-# PRE-RICH AEP Arb Agent — S1 Read-only Reference (v0.2.x)
+# PRE-RICH AEP Arb Agent — S1 Read-only Core + W1 Wallet Observer (v0.2.x)
 
-**Status:** isolated reference implementation for the S1 research gate. This package is read-only and synthetic-only. It is not a live trading agent, venue adapter, financial authority, economic kernel or production account observer.
+**Status:** the S1 reducer/replay core remains a synthetic-only reference implementation. An isolated W1 module adds user-authorized CIP-30 reads only. This repository is not a live trading agent, venue adapter, financial authority, economic kernel or production account observer.
 
 ## S1 scope
 
@@ -14,7 +14,7 @@
 - Keep simulation distinct from realized state.
 - Enforce a read-only capability allowlist and static no-actuation checks over all JavaScript files under src.
 
-There are no credentials, network clients, exchange endpoints, wallet operations, order methods or actuator adapters in this package.
+There are no credentials, direct network clients, exchange endpoints, signing/submission methods, order methods or actuator adapters in this package. W1 uses only an injected CIP-30 browser-wallet bridge for read-only wallet data; it does not call RPC/indexer services or expose the wallet's full API.
 
 ## Run locally
 
@@ -38,7 +38,7 @@ The [provider-neutral adapter contract](docs/PROVIDER-EVIDENCE-ADAPTER-CONTRACT.
 
 ## Cardano wallet companion and IMMORTAL adapter coverage
 
-The [Cardano Wallet Companion architecture](docs/CARDANO-WALLET-COMPANION-ARCHITECTURE-v0.1.md) evaluates Arb as a non-custodial companion dApp using the existing wallet's CIP-30 bridge. It does not add wallet code, credentials, signing, submission or autonomous execution to the current S1 package.
+The [Cardano Wallet Companion architecture](docs/CARDANO-WALLET-COMPANION-ARCHITECTURE-v0.1.md) defines the non-custodial dApp boundary. W1 is now implemented as an isolated [read-only CIP-30 port](wallet-companion/cip30-read-only.js), with [W1 readiness and limitations](docs/W1-READINESS.md). It requests no signing/submission capability, does not persist sessions and does not connect to a wallet in CI.
 
 The [IMMORTAL EXP ↔ Cardano Adapter crosswalk](docs/IMMORTAL-CARDANO-EXP-ADAPTER-CROSSWALK-v0.1.md) maps all twelve EXP axes to the existing Cardano Adapter boundary, identifies reusable implementation and states the generalized-contract gaps. The existing Cardano execution witness is still PRE-RICH-shaped; Arb must not relabel Issue/Reveal/Claim/Expire or duplicate the economic kernel. Any generalized Cardano Adapter implementation belongs in IMMORTAL's adapter workstream after the canonical EXP contracts are available.
 

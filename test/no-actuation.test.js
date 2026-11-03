@@ -2,10 +2,13 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile, readdir } from 'node:fs/promises'
 
-const sourcePaths = await readdir(new URL('../src/', import.meta.url), { recursive: true })
-const javascriptPaths = sourcePaths.filter((path) => path.endsWith('.js'))
-const sources = await Promise.all(javascriptPaths.map((path) =>
-  readFile(new URL(`../src/${path}`, import.meta.url), 'utf8')
+const sourceDirectories = ['../src/', '../wallet-companion/']
+const sourceFiles = (await Promise.all(sourceDirectories.map(async (directory) => {
+  const paths = await readdir(new URL(directory, import.meta.url), { recursive: true })
+  return paths.filter((path) => path.endsWith('.js')).map((path) => `${directory}${path}`)
+}))).flat()
+const sources = await Promise.all(sourceFiles.map((path) =>
+  readFile(new URL(path, import.meta.url), 'utf8')
 ))
 const combinedSource = sources.join('\n')
 
@@ -28,4 +31,12 @@ test('all S1 source files contain no mutating adapter method declarations', () =
     'depositAsset', 'changeAccountPermissions', 'issueMandate', 'revokeMandate',
   ]
   for (const method of forbiddenMethods) assert.equal(combinedSource.includes(method), false, `mutating method found: ${method}`)
+})
+
+
+test('W1 wallet companion exposes no CIP-30 signing or submission methods', () => {
+  const forbiddenWalletMethods = ['signTx', 'signData', 'submitTx', 'signTxs', 'submitTxs']
+  for (const method of forbiddenWalletMethods) {
+    assert.equal(combinedSource.includes(method), false, 'forbidden CIP-30 method found: ' + method)
+  }
 })
