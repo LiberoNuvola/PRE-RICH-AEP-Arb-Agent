@@ -1,21 +1,36 @@
 # Test Results — PRE-RICH AEP Arb Agent S1 Reference v0.2.x
 
-## Latest GitHub Actions evidence
+## Latest full S1 conformance evidence
 
-The provider-neutral profile and coverage contracts add two schema-validated synthetic documents to the seven original S1 JSON documents. The current workflow validates 9 JSON documents and runs negative schema checks in addition to the existing replay and no-actuation tests. The exact latest run and commit are linked in the repository history; this report will be aligned to the completed run after the current workflow finishes.
+**Run #21:** [S1 Read-only Conformance — success](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41690326864)  
+**Commit:** [661f64a50c639596ecae45737dd2afda709c1e63](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/commit/661f64a50c639596ecae45737dd2afda709c1e63)  
+**Conclusion:** success — full S1 Node, schema, coverage-negative and no-actuation job completed.
 
-## Expected verification coverage in the current workflow
+The exact run logs show:
 
-- **38 Node tests** for S1 normalization, replay, exposure projection, capability allowlist and no-actuation checks.
-- **9 synthetic JSON documents** validated against Draft 2020-12 schemas: the original seven plus an unselected ProviderProfile template and a per-family CollectionCoverageReport.
-- **2 ReplayManifest consistency checks:** exactly one initial checkpoint per stream, with checkpoint cursor equal to the stream's start cursor.
-- **6 negative evidence-claim checks:** reject COMPLETE_EMPTY without exhausted pagination, with non-zero count, or without a documented boundary; reject NOT_REQUESTED marked as requested; reject REVIEWABLE ProviderProfile without provider identity/documentation; reject attempts to set Principal authority.
-- Unique data-family coverage entries are checked separately from JSON Schema validation.
-- The static no-actuation check scans all JavaScript files under src.
+- **38 Node tests passed / 0 failed**.
+- **9 synthetic JSON documents** passed Draft 2020-12 validation: the original seven plus a ProviderProfile template and a CollectionCoverageReport.
+- **2 ReplayManifest consistency checks** passed: exactly one initial checkpoint per stream, with checkpoint cursor equal to the stream's start cursor.
+- **6 negative evidence-claim checks** passed:
+  1. COMPLETE_EMPTY without exhausted pagination was rejected.
+  2. COMPLETE_EMPTY with a non-zero record count was rejected.
+  3. COMPLETE_EMPTY without a documented query/snapshot boundary was rejected.
+  4. NOT_REQUESTED marked as requested was rejected.
+  5. REVIEWABLE ProviderProfile without provider identity/documentation was rejected.
+  6. ProviderProfile attempting to set Principal authority was rejected.
+- The synthetic coverage report has unique per-family records.
+- Static no-actuation checks passed over all JavaScript files under src.
 
-The provider-profile and coverage work is schema/test/documentation-only. It adds no provider client, account connection, credentials, adapter, network capability, trading capability or economic admission.
+**Documentation revalidation:** [Run #24 — success](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41690510406) completed on documentation commit [72772e7](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/commit/72772e7e58bf4f7a5ed70d6bcce06f3a943ce76a). It revalidated the prior-art map, provider-neutral contract, schemas, examples, README, readiness and test-report documentation. The present test-report alignment is documentation-only and is itself rechecked by the workflow triggered by this commit.
 
-## Existing test coverage
+## What the new schemas cover
+
+1. ProviderProfile is version-pinned and declares provider/product/environment, protocol, official documentation basis, resource scope, data-family mappings, event identity, stream/correction semantics, snapshot/pagination/recovery, time, execution fields, exclusions and an immutable authority boundary.
+2. CollectionCoverageReport records coverage per data family, including COMPLETE_NONEMPTY, COMPLETE_EMPTY, PARTIAL, UNAVAILABLE, NOT_REQUESTED, NOT_APPLICABLE_PROFILE, UNKNOWN and CONFLICTED.
+3. COMPLETE_EMPTY is scoped to the precise query. It requires successful query completion, exhausted pagination (or a documented non-paginated operation), no truncation, a completion evidence reference, a boundary reference and applicable retention evidence. A query-completion boundary with NON_ATOMIC state is not an atomic account snapshot.
+4. No account-wide completeness or accountComplete boolean is introduced. Missing, unrequested, filtered, truncated or unknown categories are not represented as zero.
+
+## Existing S1 test coverage
 
 Tests cover the nine synthetic base fixtures; observation normalization and explicit identity/provenance; freshness/sequence/conflict classification; account-category completeness; order/fill lifecycle; simulation isolation; capability allowlist; duplicate/conflict/gap/correction replay; stale correction target rejection; event-ID reuse/alias conflict; null input fail-closed behavior; late fill after cancel confirmation; duplicate fill digest equality; conflicting fill payload digest; missing fill digest; deterministic replay; independent multi-stream progress; duplicate stream declaration rejection; typed gross OpenExposure preservation; empty/malformed/duplicate exposure handling; and source no-actuation checks.
 
@@ -39,8 +54,10 @@ Two new documents:
 - Run #7 exposed over-escaped timestamp/decimal validation patterns.
 - Run #8 passed after those pattern fixes and test alignment.
 - Run #9 passed after fill payload digest requirements and new regressions.
-- Run #10 and #11 passed after adversarial-review/readiness documentation alignment.
-- Runs #12–#20 passed while the prior-art and provider-profile documents, schemas and synthetic examples were added. The new negative evidence claims are executed by the latest validator change, not by those earlier runs.
+- Runs #10–#11 passed after adversarial-review/readiness documentation alignment.
+- Runs #12–#20 passed as the prior-art map, provider contract, schemas and synthetic examples were added.
+- Run #21 passed with the complete schema/negative-check update.
+- Runs #22–#24 passed while README, readiness and results documentation was aligned.
 
 These failures are retained as development history; no failed run is represented as a pass.
 
