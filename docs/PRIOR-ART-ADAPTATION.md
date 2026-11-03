@@ -73,7 +73,7 @@ Reference: https://github.com/secure-systems-lab/dsse
 
 ### 5. FIX — reuse lifecycle questions and book synchronization patterns
 
-The FIX Trading Community describes Snapshot/Full Refresh and Incremental Refresh messages, with book-management practices for sequencing and interpreting updates. FIX Execution Report references distinguish the current order state (OrdStatus) from the purpose of the report (ExecType), and include execution/fill and fee reporting use cases. Execution reports do not replace end-of-day confirmations.
+The FIX Trading Community describes Snapshot/Full Refresh and Incremental Refresh messages, with book-management practices for sequencing and interpreting updates. A third-party FIX 4.3 dictionary rendering distinguishes the current order state (OrdStatus) from the purpose of the Execution Report (ExecType), and describes execution/fill and fee reporting use cases. It also notes that Execution Reports do not replace end-of-day confirmations. Treat that rendering as a research cross-reference, not as the authoritative source for a future implementation; pin and verify the applicable official FIX version and message dictionary before mapping a provider.
 
 Decision:
 - Use FIX as a checklist for what a provider-specific order/fill profile must explain: order state vs event purpose, partial/final fills, corrections, cancels, execution IDs, price/quantity/fee units, venue/liquidity role and snapshot-to-incremental recovery.
