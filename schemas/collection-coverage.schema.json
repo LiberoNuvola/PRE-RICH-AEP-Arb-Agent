@@ -1,0 +1,456 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://immortal.invalid/arb/s1/collection-coverage/0.1",
+  "title": "Arb S1 CollectionCoverageReport",
+  "description": "Per-data-family collection coverage. No account-wide completeness or economic zero state is implied.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recordType",
+    "schemaVersion",
+    "collectionRunRef",
+    "profileRef",
+    "profileVersion",
+    "requestedScopeRef",
+    "startedAt",
+    "completedAt",
+    "coverageItems"
+  ],
+  "properties": {
+    "recordType": {
+      "const": "CollectionCoverageReport"
+    },
+    "schemaVersion": {
+      "const": "0.1"
+    },
+    "collectionRunRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profileRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profileVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "requestedScopeRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "coverageItems": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "dataFamily",
+          "status",
+          "requested",
+          "requestScopeRef",
+          "queryCompleted",
+          "paginationStatus",
+          "truncated",
+          "recordCount",
+          "completionEvidenceRef",
+          "boundary",
+          "retentionStatus",
+          "omissions",
+          "reasonCodes",
+          "profileBasisRef"
+        ],
+        "properties": {
+          "dataFamily": {
+            "enum": [
+              "BALANCES",
+              "COLLATERAL",
+              "POSITIONS",
+              "OPEN_ORDERS",
+              "ORDER_HISTORY",
+              "FILLS",
+              "FEES",
+              "FUNDING",
+              "BORROW",
+              "TRANSFERS",
+              "SETTLEMENT",
+              "MARGIN",
+              "LIABILITIES",
+              "OTHER"
+            ]
+          },
+          "status": {
+            "enum": [
+              "COMPLETE_NONEMPTY",
+              "COMPLETE_EMPTY",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "NOT_REQUESTED",
+              "NOT_APPLICABLE_PROFILE",
+              "UNKNOWN",
+              "CONFLICTED"
+            ]
+          },
+          "requested": {
+            "type": "boolean"
+          },
+          "requestScopeRef": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "queryCompleted": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "paginationStatus": {
+            "enum": [
+              "EXHAUSTED",
+              "NOT_EXHAUSTED",
+              "NOT_APPLICABLE",
+              "UNKNOWN",
+              "NOT_REQUESTED"
+            ]
+          },
+          "truncated": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "recordCount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "completionEvidenceRef": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "boundary": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "reference",
+              "atomicity"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "PROVIDER_SNAPSHOT",
+                  "CURSOR_END",
+                  "QUERY_COMPLETION",
+                  "NONE",
+                  "UNKNOWN"
+                ]
+              },
+              "reference": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1
+              },
+              "atomicity": {
+                "enum": [
+                  "ATOMIC",
+                  "PER_FAMILY",
+                  "NON_ATOMIC",
+                  "UNKNOWN"
+                ]
+              }
+            }
+          },
+          "retentionStatus": {
+            "enum": [
+              "WITHIN_DOCUMENTED_RETENTION",
+              "POSSIBLE_GAP",
+              "OUTSIDE_RETENTION",
+              "NOT_APPLICABLE",
+              "UNKNOWN"
+            ]
+          },
+          "omissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "reasonCodes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "profileBasisRef": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "enum": [
+                    "COMPLETE_NONEMPTY",
+                    "COMPLETE_EMPTY"
+                  ]
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "requested": {
+                  "const": true
+                },
+                "requestScopeRef": {
+                  "type": "string"
+                },
+                "queryCompleted": {
+                  "const": true
+                },
+                "paginationStatus": {
+                  "enum": [
+                    "EXHAUSTED",
+                    "NOT_APPLICABLE"
+                  ]
+                },
+                "truncated": {
+                  "const": false
+                },
+                "completionEvidenceRef": {
+                  "type": "string"
+                },
+                "boundary": {
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "PROVIDER_SNAPSHOT",
+                        "CURSOR_END",
+                        "QUERY_COMPLETION"
+                      ]
+                    },
+                    "reference": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "retentionStatus": {
+                  "enum": [
+                    "WITHIN_DOCUMENTED_RETENTION",
+                    "NOT_APPLICABLE"
+                  ]
+                }
+              },
+              "required": [
+                "requestScopeRef",
+                "completionEvidenceRef"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "COMPLETE_EMPTY"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "recordCount": {
+                  "const": 0
+                }
+              },
+              "required": [
+                "recordCount"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "COMPLETE_NONEMPTY"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "recordCount": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "recordCount"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "PARTIAL"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "requested": {
+                  "const": true
+                },
+                "reasonCodes": {
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "reasonCodes"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "UNAVAILABLE"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "requested": {
+                  "const": true
+                },
+                "reasonCodes": {
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "reasonCodes"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "NOT_REQUESTED"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "requested": {
+                  "const": false
+                },
+                "paginationStatus": {
+                  "const": "NOT_REQUESTED"
+                },
+                "recordCount": {
+                  "type": "null"
+                },
+                "queryCompleted": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "NOT_APPLICABLE_PROFILE"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "requested": {
+                  "const": false
+                },
+                "profileBasisRef": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "profileBasisRef"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "CONFLICTED"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "reasonCodes": {
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "reasonCodes"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}
