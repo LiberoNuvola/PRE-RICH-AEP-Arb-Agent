@@ -24,7 +24,7 @@ function makeApi(overrides = {}) {
   const api = {
     async getNetworkId() {
       calls.push('getNetworkId')
-      return state.networkId
+      return typeof state.networkId === 'function' ? state.networkId() : state.networkId
     },
     async getChangeAddress() {
       calls.push('getChangeAddress')
@@ -194,4 +194,22 @@ test('local close invalidates the read-only session', async () => {
     session.readSnapshot({ observedAt: OBSERVED_AT }),
     (error) => error.code === 'SESSION_INVALIDATED',
   )
+})
+
+
+test('network ID change during the read discards the snapshot', async () => {
+  let networkCalls = 0
+  const { api } = makeApi({
+    networkId: () => {
+      networkCalls += 1
+      return networkCalls < 2 ? 0 : 1
+    },
+  })
+  const session = await connectReadOnlyWallet({ walletName: 'nami', injectedWallets: namespaceFor(api) })
+
+  await assert.rejects(
+    session.readSnapshot({ observedAt: OBSERVED_AT }),
+    (error) => error.code === 'ACCOUNT_OR_NETWORK_CHANGED_DURING_READ',
+  )
+  assert.equal(session.getState().status, 'INVALIDATED')
 })

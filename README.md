@@ -12,7 +12,7 @@
 - Reject stale correction targets, ambiguous event identity reuse and fill-ID payload conflicts.
 - Derive order/fill lifecycle and typed gross OpenExposure projections.
 - Keep simulation distinct from realized state.
-- Enforce a read-only capability allowlist and static no-actuation checks over all JavaScript files under src.
+- Enforce a read-only capability allowlist and static no-actuation checks over all JavaScript files under src/ and wallet-companion/.
 
 There are no credentials, direct network clients, exchange endpoints, signing/submission methods, order methods or actuator adapters in this package. W1 uses only an injected CIP-30 browser-wallet bridge for read-only wallet data; it does not call RPC/indexer services or expose the wallet's full API.
 
