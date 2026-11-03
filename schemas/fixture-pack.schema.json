@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://immortal.invalid/arb/s1/fixture-pack/0.1",
+  "title": "Arb S1 synthetic fixture pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fixturePack", "syntheticOnly", "fixtures"],
+  "properties": {
+    "fixturePack": { "const": "arb-s1-fixture/v0.1" },
+    "syntheticOnly": { "const": true },
+    "fixtures": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "expected"],
+        "properties": {
+          "id": { "enum": ["S1-F01", "S1-F02", "S1-F03", "S1-F04", "S1-F05", "S1-F06", "S1-F07", "S1-F08", "S1-F09"] },
+          "kind": { "enum": ["market_observation", "freshness_check", "sequence_check", "conflicting_observation", "account_snapshot", "execution_history_projection", "simulation_result", "capability_manifest"] },
+          "expected": { "type": "object" }
+        }
+      }
+    }
+  }
+}

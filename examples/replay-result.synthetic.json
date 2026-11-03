@@ -1,0 +1,19 @@
+{
+  "recordType": "ReplayResult",
+  "resultVersion": "arb-replay-result/0.1",
+  "replayId": "fixture:replay:market-stream-01",
+  "manifestRef": "fixture:replay-manifest:market-stream-01",
+  "status": "COMPLETE",
+  "eventOutcomes": [{
+    "eventRef": "fixture:event:alpha:AAA-USDX:41",
+    "classification": "APPLIED",
+    "projectionRefs": ["fixture:projection:quote:41"]
+  }],
+  "projectionDigests": ["fixture:digest:projection-quote-41"],
+  "anomalies": [],
+  "unresolvedScopes": [],
+  "evidenceClass": "DERIVED",
+  "authorityGranted": false,
+  "economicAdmissionGranted": false,
+  "externalSideEffectPerformed": false
+}

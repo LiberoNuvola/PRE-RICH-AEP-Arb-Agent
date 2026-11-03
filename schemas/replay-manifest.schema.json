@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://immortal.invalid/arb/s1/replay-manifest/0.1",
+  "title": "Arb S1 ReplayManifest candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["recordType", "manifestVersion", "replayId", "replayMode", "syntheticOnly", "initialCheckpoint", "streams", "versions", "policies", "secretsIncluded"],
+  "properties": {
+    "recordType": { "const": "ReplayManifest" },
+    "manifestVersion": { "type": "string", "minLength": 1 },
+    "replayId": { "type": "string", "minLength": 1 },
+    "replayMode": { "enum": ["OBSERVATION_REPLAY", "PROJECTION_REPLAY", "SIMULATION_REPLAY"] },
+    "syntheticOnly": { "type": "boolean" },
+    "initialCheckpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshotRef", "streamId", "coveredThroughSequence", "snapshotCompleteness"],
+      "properties": {
+        "snapshotRef": { "type": "string", "minLength": 1 },
+        "streamId": { "type": "string", "minLength": 1 },
+        "coveredThroughSequence": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+        "snapshotCompleteness": { "type": "string", "minLength": 1 }
+      }
+    },
+    "streams": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["streamId", "orderedEventRefs", "startSequenceExclusive", "endSequenceInclusive"],
+        "properties": {
+          "streamId": { "type": "string", "minLength": 1 },
+          "orderedEventRefs": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+          "startSequenceExclusive": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+          "endSequenceInclusive": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" }
+        }
+      }
+    },
+    "versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["envelopeSchema", "payloadSchema", "sourceProfile", "normalizer", "projectionReducer", "canonicalization", "fixturePack"],
+      "properties": {
+        "envelopeSchema": { "type": "string", "minLength": 1 },
+        "payloadSchema": { "type": "string", "minLength": 1 },
+        "sourceProfile": { "type": "string", "minLength": 1 },
+        "normalizer": { "type": "string", "minLength": 1 },
+        "projectionReducer": { "type": "string", "minLength": 1 },
+        "canonicalization": { "type": "string", "minLength": 1 },
+        "fixturePack": { "type": "string", "minLength": 1 }
+      }
+    },
+    "policies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequenceSemantics", "freshnessPolicy", "correctionPolicy", "crossStreamOrdering"],
+      "properties": {
+        "sequenceSemantics": { "type": "string", "minLength": 1 },
+        "freshnessPolicy": { "type": "string", "minLength": 1 },
+        "correctionPolicy": { "type": "string", "minLength": 1 },
+        "crossStreamOrdering": { "type": "string", "minLength": 1 }
+      }
+    },
+    "secretsIncluded": { "const": false }
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://immortal.invalid/arb/s1/observation-record/0.1",
+  "title": "Arb S1 ObservationRecord candidate",
+  "description": "Non-normative, source-independent observation envelope. No venue or authority semantics are implied.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recordType", "envelopeVersion", "eventId", "eventKind", "evidenceClass",
+    "source", "scope", "timestamps", "relations", "evidence", "quality", "payload"
+  ],
+  "properties": {
+    "recordType": { "const": "ObservationRecord" },
+    "envelopeVersion": { "type": "string", "minLength": 1 },
+    "eventId": { "type": "string", "minLength": 1 },
+    "eventKind": { "type": "string", "minLength": 1 },
+    "evidenceClass": { "const": "OBSERVED" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceId", "streamId"],
+      "properties": {
+        "sourceId": { "type": "string", "minLength": 1 },
+        "sourceEventId": { "type": ["string", "null"], "minLength": 1 },
+        "streamId": { "type": "string", "minLength": 1 },
+        "sequence": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["kind", "value"],
+          "properties": {
+            "kind": { "type": "string", "minLength": 1 },
+            "value": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" }
+          }
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profileRef", "profileVersion", "subjects"],
+      "properties": {
+        "profileRef": { "type": "string", "minLength": 1 },
+        "profileVersion": { "type": "string", "minLength": 1 },
+        "subjects": {
+          "type": "object",
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "timestamps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceObservedAt", "receivedAt", "effectiveAt", "clockQuality"],
+      "properties": {
+        "sourceObservedAt": { "type": ["string", "null"], "format": "date-time" },
+        "receivedAt": { "type": "string", "format": "date-time" },
+        "effectiveAt": { "type": ["string", "null"], "format": "date-time" },
+        "clockQuality": { "type": "string", "enum": ["SOURCE_TIME_PRESENT", "SOURCE_TIME_MISSING", "DEGRADED", "UNKNOWN"] }
+      }
+    },
+    "relations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["correlationRef", "causationRef", "supersedesRef"],
+      "properties": {
+        "correlationRef": { "type": ["string", "null"], "minLength": 1 },
+        "causationRef": { "type": ["string", "null"], "minLength": 1 },
+        "supersedesRef": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rawEvidenceRef", "rawDigestRef", "normalizedDigestRef", "canonicalizationVersion", "verificationRef", "verificationStatus"],
+      "properties": {
+        "rawEvidenceRef": { "type": "string", "minLength": 1 },
+        "rawDigestRef": { "type": "string", "minLength": 1 },
+        "normalizedDigestRef": { "type": "string", "minLength": 1 },
+        "canonicalizationVersion": { "type": "string", "minLength": 1 },
+        "verificationRef": { "type": ["string", "null"], "minLength": 1 },
+        "verificationStatus": { "type": "string", "enum": ["NOT_VERIFIED", "VERIFIED_BY_SEPARATE_VERIFIER", "UNVERIFIABLE", "REJECTED"] }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reasons"],
+      "properties": {
+        "status": { "type": "string", "enum": ["VALID", "STALE", "GAPPED", "CONFLICTED", "INCOMPLETE", "UNAVAILABLE", "INVALID", "UNKNOWN"] },
+        "reasons": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "payload": { "type": "object" }
+  }
+}

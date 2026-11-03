@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://immortal.invalid/arb/s1/multistream-replay-result/0.2",
+  "title": "Arb S1 MultiStreamReplayResult candidate",
+  "description": "Non-normative independent per-stream replay result. Lexical stream row order is presentation-only; cross-stream causal/global ordering and X1-X7 composition are not inferred.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["recordType", "status", "streamResults", "duplicateStreamIds", "compositionStatus", "crossStreamOrdering", "aggregateStateProduced", "authorityGranted", "economicAdmissionGranted", "externalSideEffectPerformed"],
+  "properties": {
+    "recordType": { "const": "MultiStreamReplayResult" },
+    "status": { "enum": ["INVALID_INPUT", "PARTIAL_UNRESOLVED", "COMPLETE"] },
+    "streamResults": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["streamId", "result"],
+        "properties": {
+          "streamId": { "type": "string", "minLength": 1 },
+          "result": { "type": "object" }
+        }
+      }
+    },
+    "duplicateStreamIds": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "unresolvedStreamIds": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "compositionStatus": { "enum": ["UNVERIFIABLE", "COMPOSITION_UNRESOLVED", "NOT_REQUIRED_SINGLE_STREAM"] },
+    "crossStreamOrdering": { "const": "NOT_DECLARED" },
+    "causalOrderDerived": { "type": "boolean", "const": false },
+    "aggregateStateProduced": { "type": "boolean", "const": false },
+    "authorityGranted": { "type": "boolean", "const": false },
+    "economicAdmissionGranted": { "type": "boolean", "const": false },
+    "externalSideEffectPerformed": { "type": "boolean", "const": false }
+  }
+}

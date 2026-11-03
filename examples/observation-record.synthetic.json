@@ -1,0 +1,47 @@
+{
+  "recordType": "ObservationRecord",
+  "envelopeVersion": "arb-event-envelope/0.1",
+  "eventId": "fixture:event:alpha:AAA-USDX:41",
+  "eventKind": "MarketQuoteObserved",
+  "evidenceClass": "OBSERVED",
+  "source": {
+    "sourceId": "fixture:public-feed:alpha",
+    "sourceEventId": "fixture:source-event:alpha:41",
+    "streamId": "fixture:public-feed:alpha:instrument:AAA-USDX",
+    "sequence": {"kind": "monotonic-per-stream", "value": "41"}
+  },
+  "scope": {
+    "profileRef": "synthetic-public-market-profile",
+    "profileVersion": "0.1",
+    "subjects": {
+      "instrumentRef": "fixture:instrument:AAA-USDX",
+      "baseAssetRef": "fixture:asset:AAA",
+      "quoteAssetRef": "fixture:asset:USDX"
+    }
+  },
+  "timestamps": {
+    "sourceObservedAt": "2026-11-03T12:00:00.000Z",
+    "receivedAt": "2026-11-03T12:00:00.250Z",
+    "effectiveAt": null,
+    "clockQuality": "SOURCE_TIME_PRESENT"
+  },
+  "relations": {"correlationRef": null, "causationRef": null, "supersedesRef": null},
+  "evidence": {
+    "rawEvidenceRef": "fixture:raw:market-quote-41",
+    "rawDigestRef": "fixture:digest:raw-41",
+    "normalizedDigestRef": "fixture:digest:normalized-41",
+    "canonicalizationVersion": "fixture-canonicalization/0.1",
+    "verificationRef": null,
+    "verificationStatus": "NOT_VERIFIED"
+  },
+  "quality": {"status": "VALID", "reasons": []},
+  "payload": {
+    "instrumentKey": "AAA/USDX",
+    "bidPrice": "10.125",
+    "bidQuantity": "4.000",
+    "askPrice": "10.130",
+    "askQuantity": "3.000",
+    "priceUnit": "fixture:asset:USDX",
+    "quantityUnit": "fixture:asset:AAA"
+  }
+}

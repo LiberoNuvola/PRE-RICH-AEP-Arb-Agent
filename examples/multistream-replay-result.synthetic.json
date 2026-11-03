@@ -1,0 +1,39 @@
+{
+  "recordType": "MultiStreamReplayResult",
+  "status": "PARTIAL_UNRESOLVED",
+  "streamResults": [
+    {
+      "streamId": "fixture:stream:market:A",
+      "result": {
+        "status": "COMPLETE",
+        "lastSequence": "41",
+        "applied": ["fixture:event:market:A:41"],
+        "unresolved": false,
+        "authorityGranted": false,
+        "economicAdmissionGranted": false,
+        "externalSideEffectPerformed": false
+      }
+    },
+    {
+      "streamId": "fixture:stream:account:B",
+      "result": {
+        "status": "BLOCKED_GAP",
+        "lastSequence": "8",
+        "applied": [],
+        "unresolved": true,
+        "authorityGranted": false,
+        "economicAdmissionGranted": false,
+        "externalSideEffectPerformed": false
+      }
+    }
+  ],
+  "duplicateStreamIds": [],
+  "unresolvedStreamIds": ["fixture:stream:account:B"],
+  "compositionStatus": "COMPOSITION_UNRESOLVED",
+  "crossStreamOrdering": "NOT_DECLARED",
+  "causalOrderDerived": false,
+  "aggregateStateProduced": false,
+  "authorityGranted": false,
+  "economicAdmissionGranted": false,
+  "externalSideEffectPerformed": false
+}

@@ -1,0 +1,35 @@
+{
+  "recordType": "ReplayManifest",
+  "manifestVersion": "arb-replay-manifest/0.1",
+  "replayId": "fixture:replay:market-stream-01",
+  "replayMode": "OBSERVATION_REPLAY",
+  "syntheticOnly": true,
+  "initialCheckpoint": {
+    "snapshotRef": "fixture:snapshot:alpha:40",
+    "streamId": "fixture:public-feed:alpha:instrument:AAA-USDX",
+    "coveredThroughSequence": "40",
+    "snapshotCompleteness": "COMPLETE_FOR_FIXTURE"
+  },
+  "streams": [{
+    "streamId": "fixture:public-feed:alpha:instrument:AAA-USDX",
+    "orderedEventRefs": ["fixture:event:alpha:AAA-USDX:41"],
+    "startSequenceExclusive": "40",
+    "endSequenceInclusive": "41"
+  }],
+  "versions": {
+    "envelopeSchema": "arb-event-envelope/0.1",
+    "payloadSchema": "market-quote-observed/0.1",
+    "sourceProfile": "synthetic-public-market-profile/0.1",
+    "normalizer": "fixture-normalizer/0.1.0",
+    "projectionReducer": "fixture-observation-reducer/0.1.0",
+    "canonicalization": "fixture-canonicalization/0.1",
+    "fixturePack": "arb-s1-fixture/v0.1"
+  },
+  "policies": {
+    "sequenceSemantics": "monotonic-per-stream",
+    "freshnessPolicy": "fixture-provided-only",
+    "correctionPolicy": "append-only-supersession",
+    "crossStreamOrdering": "NOT_DECLARED"
+  },
+  "secretsIncluded": false
+}

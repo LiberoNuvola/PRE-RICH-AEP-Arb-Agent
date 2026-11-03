@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://immortal.invalid/arb/s1/replay-result/0.1",
+  "title": "Arb S1 ReplayResult candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["recordType", "resultVersion", "replayId", "manifestRef", "status", "eventOutcomes", "projectionDigests", "anomalies", "unresolvedScopes", "evidenceClass", "authorityGranted", "economicAdmissionGranted", "externalSideEffectPerformed"],
+  "properties": {
+    "recordType": { "const": "ReplayResult" },
+    "resultVersion": { "type": "string", "minLength": 1 },
+    "replayId": { "type": "string", "minLength": 1 },
+    "manifestRef": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["COMPLETE", "COMPLETE_WITH_UNRESOLVED", "BLOCKED_GAP", "BLOCKED_CONFLICT", "INCOMPLETE_INPUT", "INVALID_INPUT", "NON_REPRODUCIBLE"] },
+    "eventOutcomes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["eventRef", "classification", "projectionRefs"],
+        "properties": {
+          "eventRef": { "type": "string", "minLength": 1 },
+          "classification": { "enum": ["APPLIED", "DUPLICATE_NO_OP", "QUARANTINED", "GAP_BLOCKED", "CORRECTION_APPLIED"] },
+          "projectionRefs": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "projectionDigests": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "anomalies": { "type": "array", "items": { "type": "string" } },
+    "unresolvedScopes": { "type": "array", "items": { "type": "string" } },
+    "evidenceClass": { "const": "DERIVED" },
+    "authorityGranted": { "const": false },
+    "economicAdmissionGranted": { "const": false },
+    "externalSideEffectPerformed": { "const": false }
+  }
+}

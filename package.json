@@ -1,0 +1,16 @@
+{
+  "name": "pre-rich-aep-arb-agent-s1",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Read-only S1 observation, independent multi-stream replay and typed gross exposure reference implementation",
+  "scripts": {
+    "test": "node --test",
+    "check:fixtures": "node --test test/fixture-contract.test.js",
+    "check:schemas": "python test/validate_schemas.py",
+    "check": "npm test && python test/validate_schemas.py"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

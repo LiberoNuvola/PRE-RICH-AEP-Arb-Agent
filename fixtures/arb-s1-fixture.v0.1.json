@@ -1,0 +1,189 @@
+{
+  "fixturePack": "arb-s1-fixture/v0.1",
+  "syntheticOnly": true,
+  "fixtures": [
+    {
+      "id": "S1-F01",
+      "kind": "market_observation",
+      "profileId": "synthetic-public-market-profile/0.1",
+      "normalizerVersion": "fixture-normalizer/0.1.0",
+      "previousSequence": 40,
+      "receivedAt": "2026-11-03T12:00:00.250Z",
+      "raw": {
+        "sourceId": "fixture:public-feed:alpha",
+        "sourceSequence": 41,
+        "sourceObservedAt": "2026-11-03T12:00:00.000Z",
+        "instrumentKey": "AAA/USDX",
+        "bidPrice": "10.125",
+        "bidQuantity": "4.000",
+        "askPrice": "10.130",
+        "askQuantity": "3.000"
+      },
+      "instrumentMap": {
+        "AAA/USDX": {
+          "baseAssetRef": "fixture:asset:AAA",
+          "quoteAssetRef": "fixture:asset:USDX"
+        }
+      },
+      "expected": {
+        "qualityStatus": "VALID",
+        "resolvedInstrument": true,
+        "preserveSourceSequence": true,
+        "preserveSourceTimestamp": true,
+        "repeatReplayDigestEqual": true
+      }
+    },
+    {
+      "id": "S1-F02",
+      "kind": "market_observation",
+      "profileId": "synthetic-public-market-profile/0.1",
+      "normalizerVersion": "fixture-normalizer/0.1.0",
+      "raw": {
+        "sourceId": "fixture:public-feed:alpha",
+        "sourceSequence": 42,
+        "sourceObservedAt": "2026-11-03T12:00:01.000Z",
+        "instrumentKey": "MISSING/USDX",
+        "bidPrice": "1.000",
+        "bidQuantity": "1.000",
+        "askPrice": "1.010",
+        "askQuantity": "1.000"
+      },
+      "instrumentMap": {},
+      "expected": {
+        "qualityStatus": "INVALID",
+        "reason": "INSTRUMENT_MAPPING_MISSING",
+        "resolvedInstrument": false,
+        "candidateEvaluable": false,
+        "inferAssetFromSymbol": false
+      }
+    },
+    {
+      "id": "S1-F03",
+      "kind": "freshness_check",
+      "sourceObservedAt": "2026-11-03T11:59:57.000Z",
+      "receivedAt": "2026-11-03T12:00:00.000Z",
+      "fixtureMaxAgeMs": 2000,
+      "expected": {
+        "ageMs": 3000,
+        "qualityStatus": "STALE",
+        "candidateEvaluable": false,
+        "fixtureLimitIsProductionDefault": false
+      }
+    },
+    {
+      "id": "S1-F04",
+      "kind": "sequence_check",
+      "sourceId": "fixture:public-feed:alpha",
+      "streamKey": "AAA/USDX",
+      "lastAcceptedSequence": 41,
+      "nextSequence": 43,
+      "missingSequence": 42,
+      "profileResetEvidence": null,
+      "expected": {
+        "qualityStatus": "GAPPED",
+        "fabricateMissingEvent": false,
+        "assumeUnchangedQuote": false,
+        "silentlyHealGap": false
+      }
+    },
+    {
+      "id": "S1-F05",
+      "kind": "conflicting_observation",
+      "sourceId": "fixture:public-feed:alpha",
+      "streamKey": "AAA/USDX",
+      "sourceSequence": 44,
+      "observations": [
+        {
+          "sourceObservedAt": "2026-11-03T12:00:04.000Z",
+          "receivedAt": "2026-11-03T12:00:04.100Z",
+          "bidPrice": "10.125",
+          "askPrice": "10.130"
+        },
+        {
+          "sourceObservedAt": "2026-11-03T12:00:04.000Z",
+          "receivedAt": "2026-11-03T12:00:04.200Z",
+          "bidPrice": "10.225",
+          "askPrice": "10.230"
+        }
+      ],
+      "expected": {
+        "qualityStatus": "CONFLICTED",
+        "preserveBothRawObservations": true,
+        "selectByLastReceiptTime": false,
+        "candidateEvaluable": false
+      }
+    },
+    {
+      "id": "S1-F06",
+      "kind": "account_snapshot",
+      "profileId": "synthetic-readonly-account-profile/0.1",
+      "accountRef": "fixture:account:principal-01",
+      "observedAt": "2026-11-03T12:00:00.000Z",
+      "returnedCategories": ["balances"],
+      "requiredCategoriesForFixture": ["balances", "openOrders", "positions", "liabilities"],
+      "balances": [{"assetRef": "fixture:asset:USDX", "free": "1000.00", "locked": "0.00"}],
+      "expected": {
+        "qualityStatus": "INCOMPLETE",
+        "openOrders": "UNKNOWN",
+        "positions": "UNKNOWN",
+        "liabilities": "UNKNOWN",
+        "inferEmptyArrays": false,
+        "inferZeroExposure": false,
+        "economicAdmissionAllowed": false
+      }
+    },
+    {
+      "id": "S1-F07",
+      "kind": "execution_history_projection",
+      "events": [
+        {"eventId": "fixture:event:order-accepted", "eventType": "ORDER_ACCEPTED", "orderId": "fixture:order:01", "quantity": "5.000"},
+        {"eventId": "fixture:event:partial-fill", "eventType": "FILL", "orderId": "fixture:order:01", "fillId": "fixture:fill:01", "quantity": "2.000"},
+        {"eventId": "fixture:event:cancel-request", "eventType": "CANCEL_REQUEST_ACKNOWLEDGED", "orderId": "fixture:order:01"}
+      ],
+      "terminalCancelConfirmationPresent": false,
+      "expected": {
+        "orderProjection": "CANCEL_PENDING_WITH_PARTIAL_FILL",
+        "remainingQuantityTerminallyCancelled": false,
+        "assumeNoLateFill": false,
+        "releaseReservation": false,
+        "claimSettlement": false
+      }
+    },
+    {
+      "id": "S1-F08",
+      "kind": "simulation_result",
+      "simulation": {"fixtureSet": "arb-s1-fixture/v0.1", "simulatedPnl": "12.50", "currencyRef": "fixture:asset:USDX", "modelVersion": "fixture-simulator/0.1.0"},
+      "expected": {
+        "outputType": "SimulationResult",
+        "realizedProfitCreated": false,
+        "realFillCreated": false,
+        "settledProceedsCreated": false,
+        "openExposureReduced": false,
+        "riskBudgetIncreased": false,
+        "mandateChanged": false
+      }
+    },
+    {
+      "id": "S1-F09",
+      "kind": "capability_manifest",
+      "mode": "READ_ONLY_SIMULATION",
+      "capabilities": [
+        "read_market_observations", "read_instrument_metadata", "normalize_observations",
+        "replay_observations", "derive_candidate_intent", "simulate_candidate"
+      ],
+      "forbiddenCapabilities": [
+        "submit_order", "amend_order", "cancel_order", "open_position", "reduce_position", "close_position",
+        "transfer_asset", "withdraw_asset", "deposit_asset", "borrow_asset", "change_margin_or_collateral",
+        "change_account_permissions", "create_or_rotate_credential", "issue_or_revoke_mandate", "modify_risk_budget"
+      ],
+      "credentialClasses": [],
+      "productionTradingEndpointAllowlist": [],
+      "expected": {
+        "effectiveCapabilitiesSubsetOfAllowlist": true,
+        "mutatingCredentialPresent": false,
+        "productionTradingEndpointPresent": false,
+        "unknownCapabilityFails": true
+      }
+    }
+  ]
+}
