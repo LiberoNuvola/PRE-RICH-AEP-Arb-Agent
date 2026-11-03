@@ -176,7 +176,7 @@ References:
 | Principal/account authority separation | NIST ZTA and authorization frameworks | D0/D1 remain OPEN; adapter cannot set either | Established principle; financial binding remains unproven |
 | Gross obligations and legal netting | ISDA/IOSCO/Basel | Typed gross OpenExposure; no netting/novation | Established principle; explicit evidence binding remains a design requirement |
 | Cross-stream/resource composition | Flink consistent snapshots; financial portfolio and netting frameworks | Composition X1–X7 remains unresolved absent its explicit witness | Partial overlap; exact financial composition semantics need evidence |
-| Evidence-to-economic admission hand-off | IMMORTAL R9, Gates 23/24/30, EconomicAdmissionWitness, GOV-27 and X1–X7 already define substantial upstream/downstream boundaries | Arb is currently an S1 observer; no provider-specific integration or complete hand-off exists | Provider-neutral mapping/integration gap only; not a novel generic admission framework |
+| Evidence-to-economic admission hand-off | IMMORTAL R9, Gates 23/24/30, EXP-06/12, multi-oracle registry/observation prototype, ProtectedCapital item ledger, EconomicAdmissionWitness, GOV-27 and X1–X7 already define substantial boundaries | Arb is currently an S1 synthetic observer; no live provider/account integration or complete hand-off exists | Provider-specific account/venue lifecycle mapping only; not a new evidence framework, oracle registry or economic gate |
 
 ### What is clearly not a novelty claim
 
@@ -192,15 +192,17 @@ The following should be described as implementation choices, safety invariants o
 
 The general idea of a decision-specific evidence qualification contract is already substantially covered by IMMORTAL R9, Gates 23/24/30, GOV-27 and the existing economic-admission interfaces. A parallel Arb EvidenceQualification object would risk duplicating those contracts.
 
-The candidate Arb-specific work is therefore to create a **provider-neutral adapter and mapping layer for heterogeneous financial account/venue observations**. It should preserve source-specific semantics and limitations, and then supply correctly scoped evidence to the existing IMMORTAL contracts.
+The cross-branch audit of all 31 visible IMMORTAL, Cormia and Arb branches narrows this further. IMMORTAL work/immortal-green-closure already contains a multi-oracle source/registry and currentness adapter prototype, multi-venue price-source observation and a PRE-RICH ticket item-ledger/source-census prototype. IMMORTAL work/b3-materios-provenance-evidence already contains EXP-06/EXP-12 and generalized evidence/derivation boundaries. Cormia's work branches already define project mandate, task/runtime authority and prior-art composition.
 
-The Arb layer may own:
-1. **Provider profile:** provider/product/environment, official API/message documentation, account/resource scope, data-family map and known exclusions.
-2. **Observation lineage:** original provider event identifiers when present, stream/cursor identity, source and receipt timestamps, raw evidence references, correction links and profile/normalizer versions.
-3. **Collection coverage:** per-family query scope, completion, pagination/continuation, snapshot/cursor boundary, retention, truncation, omissions and unresolved states.
-4. **Financial field mapping:** explicit instrument/asset/unit identity and source-specific order/fill/fee/settlement fields, without inferring missing semantics.
-5. **Reproducible evidence packet:** references to raw inputs, normalization/derivation versions and tests, without claiming cryptographic verification until raw-byte retrieval and recomputation exist.
-6. **Contract mapping:** an explicit crosswalk to the applicable existing IMMORTAL contract (for example R9 EV1–EV7 for an EEV input, or the appropriate source-qualification profile for a price reference).
+Therefore the remaining candidate is **provider-specific observation and mapping of external broker/exchange account and trading-lifecycle data**, not a general price-feed/oracle registry or a generic evidence framework. It should preserve source-specific semantics and limitations, then supply correctly scoped evidence to existing IMMORTAL contracts.
+
+The Arb layer may own only what is not already supplied by those existing components:
+1. **Provider/account profile:** exact provider/product/environment, official API/message documentation, account/resource scope, data-family map and known exclusions.
+2. **Trading-event lineage:** original provider event IDs when present, order/fill/correction identities, stream/cursor semantics, source and receipt timestamps, raw evidence references and normalizer/profile versions.
+3. **Account-data collection coverage:** query scope, pagination/continuation, per-family completion, snapshot/cursor boundary, atomicity, retention, truncation, omissions and unresolved states. This is not a proof of global liability completeness.
+4. **Financial field mapping:** exact instrument/asset/unit identity and provider-specific balances, orders, executions/fills, fees, positions, liabilities, collateral and settlement semantics; never infer missing provider meaning.
+5. **Reproducible evidence packet:** references to raw inputs, normalization/derivation versions and tests. Do not claim cryptographic verification until raw-byte retrieval and recomputation exist.
+6. **Contract mapping:** explicit field-by-field mapping to the applicable existing IMMORTAL contract. Price-only source observations should use/reconcile with the existing multi-oracle work. EEV inputs must discharge R9 EV1–EV7. PRE-RICH ticket liabilities should be compared with the existing item-ledger prototype, not copied into a generic broker ledger.
 
 Arb must not own or recreate:
 - provider qualification policy where an applicable canonical qualification gate already exists;
@@ -210,9 +212,9 @@ Arb must not own or recreate:
 - joint resource accounting or X1–X7 composition;
 - the final admission decision.
 
-A provider-neutral CollectionCoverageReport is only a statement about what the adapter requested and collected under a declared profile. It is not proof that the provider's universe is complete, that liabilities outside the queried scope do not exist, or that the data is authoritative for an economic decision.
+An account-data CollectionCoverageReport is only a statement about what the adapter requested and collected under a declared provider profile. It is not proof that the provider's universe is complete, that liabilities outside the queried scope do not exist, or that the data is authoritative for an economic decision. Before extending the current schema, compare its fields against IMMORTAL multiOracleObservation/registry, the PRE-RICH ProtectedCapital item census and the applicable EEV/admission interface. Keep the schema only for genuinely unmapped account/venue collection requirements.
 
-The resulting hand-off must use the existing IMMORTAL observation/admission interfaces. Do not define a second universal status vocabulary or permission token unless a concrete unmapped requirement is demonstrated and the canonical owner approves it.
+The resulting hand-off must use the existing IMMORTAL observation/admission interfaces. Do not define a second universal status vocabulary, source registry, signature/currentness mechanism or permission token unless a concrete unmapped requirement is demonstrated and the canonical owner approves it.
 ## 4. Candidate Arb conformance properties — not novelty claims
 
 The following properties are useful regression criteria for the Arb-to-IMMORTAL mapping. They overlap with existing IMMORTAL contracts, established prior art and the existing EXP boundaries; they are not claimed as newly invented invariants. Their value is to test that a provider adapter preserves those obligations and does not bypass or weaken them.
@@ -366,3 +368,23 @@ The repository also contains an explicit Issue Admission Provenance audit. It st
 The candidate contribution is not a new generic evidence-to-economic-admission framework. It is the faithful, provider-neutral implementation of the upstream financial observation/mapping gap, with exact integration into existing IMMORTAL contracts. Its value must be demonstrated by a concrete provider profile, replayable evidence and a successful contract mapping—not by introducing another generic gate.
 
 No new EvidenceQualification schema or status machine should be added until a field-by-field gap analysis shows a requirement not already represented by the existing canonical interfaces.
+
+## 10. Full branch audit — 2026-11-03
+
+The initial version of this assessment relied on IMMORTAL main and selected Notion contracts. The subsequent full branch inventory is recorded in [BRANCH-PRIOR-ART-AUDIT-2026-11-03.md](BRANCH-PRIOR-ART-AUDIT-2026-11-03.md). It covers all 27 IMMORTAL branches, all 3 Cormia branches and Arb's only branch. Relevant files were inspected by targeted source review; this is not a line-by-line certification of every repository file.
+
+### New internal prior art that changes the contribution boundary
+
+- **IMMORTAL work/immortal-green-closure:** multi-oracle observation normalization, signed Ed25519 source registry snapshots, canonical digest verification, exact source/feed/policy binding, currentness-provider interface, revocation overlays, rollback/equivocation checks, multi-venue source matrices, and PRE-RICH ProtectedCapital item-ledger/source census. The multi-oracle prototype's historical Actions run #40823847938 passed 53 focused tests on its exact source SHA, but its trust-root/currentness authority is unselected, anti-rollback memory is process-local, and no production consumer is wired. The item ledger is PRE-RICH ticket-specific, caller-snapshot-driven, and explicitly does not prove source completeness or full ProtectedCapital.
+- **IMMORTAL work/b3-materios-provenance-evidence:** generalized derivation contract, EXP-06 evidence-as-input, EXP-12 observer/authority split, EXP-03 asset eligibility, EXP-04 profile composition, EXP-07 regime stress, EXP-08 netting, EXP-09 novation and EXP-10 explicit risk budget. Its generic harnesses test structural boundary properties; they do not implement or certify the underlying economic functions from authoritative inputs.
+- **IMMORTAL b1-hardening:** synthetic multi-invariant admission and Aegis comparison. It does not execute Aegis's actual Aiken predicate, prove live Cardano behavior or approve policy thresholds.
+- **IMMORTAL release/public-main-curated:** Workflow C/B3 evidence integration and source-to-transition audit material. It reinforces the separation of transport, structural, cryptographic and model evidence; Workflow C remains explicitly uncertified.
+- **Cormia work/exp-generalization-crosswalk:** 2026-11-03 prior-art composition review recommends reusing A2A/MCP, existing workflow, sandbox, provenance and resource components rather than building parallel generic subsystems. Cormia work/project-normative-contract adds PNC-bound operational mandate/runtime authority, not financial Principal authority.
+
+### Final novelty classification
+
+The following are explicitly **not** Arb inventions: event replay, source/feed registry patterns, signed snapshot envelopes, digest verification, currentness/revocation checks, evidence-as-input, observer/authority separation, generalized fail-closed derivation boundaries, source/venue independence analysis, PRE-RICH ticket item classification, ProtectedCapital/Economic Gate/viability, and composition semantics X1–X7.
+
+The remaining candidate is a provider-specific financial account/trading-lifecycle adapter that preserves external provider semantics for balances, orders, fills/executions, corrections, fees, positions, liabilities/collateral and settlement, then maps those records into the existing IMMORTAL contracts. The branch audit did not identify a general broker/exchange account-event adapter with this scope in the reviewed repository paths. This bounded absence is not proof of external novelty; it requires a concrete provider profile and the separate external prior-art comparison.
+
+No new EvidenceQualification schema, source registry, signature/currentness mechanism, economic kernel, authority system or production provider integration should be created by default.
