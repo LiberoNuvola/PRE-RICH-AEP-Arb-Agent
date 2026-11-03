@@ -1,0 +1,150 @@
+{
+  "recordType": "ProviderProfile",
+  "schemaVersion": "0.1",
+  "profileRef": "template:provider-profile:unselected",
+  "profileVersion": "0.1-template",
+  "status": "TEMPLATE_ONLY",
+  "provider": {
+    "providerRef": null,
+    "productRef": null,
+    "environment": "UNSELECTED"
+  },
+  "protocol": {
+    "family": "UNSELECTED",
+    "version": null
+  },
+  "documentationBasis": [],
+  "resourceScope": {
+    "scopeModel": "UNSELECTED",
+    "dimensions": [],
+    "partitionSemantics": "UNKNOWN"
+  },
+  "dataFamilies": [
+    {
+      "family": "BALANCES",
+      "supportStatus": "NOT_MAPPED",
+      "sourceOperationRef": null,
+      "completenessRuleRef": null
+    },
+    {
+      "family": "COLLATERAL",
+      "supportStatus": "NOT_MAPPED",
+      "sourceOperationRef": null,
+      "completenessRuleRef": null
+    },
+    {
+      "family": "POSITIONS",
+      "supportStatus": "NOT_MAPPED",
+      "sourceOperationRef": null,
+      "completenessRuleRef": null
+    },
+    {
+      "family": "OPEN_ORDERS",
+      "supportStatus": "NOT_MAPPED",
+      "sourceOperationRef": null,
+      "completenessRuleRef": null
+    },
+    {
+      "family": "ORDER_HISTORY",
+      "supportStatus": "NOT_MAPPED",
+      "sourceOperationRef": null,
+      "completenessRuleRef": null
+    },
+    {
+      "family": "FILLS",
+      "supportStatus": "NOT_MAPPED",
+      "sourceOperationRef": null,
+      "completenessRuleRef": null
+    },
+    {
+      "family": "FEES",
+      "supportStatus": "NOT_MAPPED",
+      "sourceOperationRef": null,
+      "completenessRuleRef": null
+    },
+    {
+      "family": "FUNDING",
+      "supportStatus": "NOT_MAPPED",
+      "sourceOperationRef": null,
+      "completenessRuleRef": null
+    },
+    {
+      "family": "BORROW",
+      "supportStatus": "NOT_MAPPED",
+      "sourceOperationRef": null,
+      "completenessRuleRef": null
+    },
+    {
+      "family": "TRANSFERS",
+      "supportStatus": "NOT_MAPPED",
+      "sourceOperationRef": null,
+      "completenessRuleRef": null
+    },
+    {
+      "family": "SETTLEMENT",
+      "supportStatus": "NOT_MAPPED",
+      "sourceOperationRef": null,
+      "completenessRuleRef": null
+    },
+    {
+      "family": "MARGIN",
+      "supportStatus": "NOT_MAPPED",
+      "sourceOperationRef": null,
+      "completenessRuleRef": null
+    },
+    {
+      "family": "LIABILITIES",
+      "supportStatus": "NOT_MAPPED",
+      "sourceOperationRef": null,
+      "completenessRuleRef": null
+    }
+  ],
+  "eventIdentity": {
+    "sourceIdentityScope": "UNKNOWN",
+    "eventIdField": null,
+    "uniquenessScope": "UNKNOWN",
+    "reuseBehavior": "UNKNOWN",
+    "missingIdTreatment": "NULL_NOT_SYNTHESIZED"
+  },
+  "streamModel": {
+    "sequenceKind": "UNKNOWN",
+    "sequenceScope": "UNKNOWN",
+    "gapDetection": "UNKNOWN",
+    "resetBehavior": "UNKNOWN",
+    "duplicateDelivery": "UNKNOWN"
+  },
+  "correctionModel": {
+    "semanticsStatus": "UNKNOWN",
+    "targetIdentityField": null,
+    "lateCorrectionBehavior": "UNKNOWN"
+  },
+  "snapshotModel": {
+    "atomicity": "UNKNOWN",
+    "snapshotTokenField": null,
+    "paginationSemantics": "UNKNOWN",
+    "recoverySemantics": "UNKNOWN",
+    "retentionSemantics": "UNKNOWN"
+  },
+  "timeModel": {
+    "sourceTimeMeaning": "UNKNOWN",
+    "sourceTimePrecision": null,
+    "timezoneSemantics": "UNKNOWN",
+    "clockQuality": "UNKNOWN"
+  },
+  "executionModel": {
+    "semanticsStatus": "UNKNOWN",
+    "fieldMappings": []
+  },
+  "knownExclusions": [
+    "No provider selected",
+    "No official provider documentation mapped",
+    "No account connected",
+    "No credentials or provider client",
+    "No provider conformance claim"
+  ],
+  "authorityBoundary": {
+    "canSetPrincipalAuthority": false,
+    "canSetAccountOwnership": false,
+    "containsCredentialMaterial": false
+  }
+}
