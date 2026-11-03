@@ -1,6 +1,6 @@
 # S1 Read-only Readiness Contract
 
-**Revision:** 0.2.0 candidate  
+**Revision:** 0.2.x candidate  
 **Scope:** PRE-RICH AEP Arb Agent, consumer-side S1 only  
 **Authority status:** non-normative implementation reference; no financial mandate or live execution authority
 
@@ -9,7 +9,7 @@
 | Stage | Permitted scope | Current status |
 | --- | --- | --- |
 | S0 | Research, contracts, synthetic fixtures | Materialized in this repository |
-| S1 | Read-only observations, deterministic replay, projections, synthetic simulation | Candidate implementation; 29 Node tests, 7 schema validations and 2 per-stream checkpoint consistency checks passed on GitHub Actions run #4 |
+| S1 | Read-only observations, deterministic replay, projections, synthetic simulation | Candidate implementation; 38 Node tests, 7 schema validations and 2 per-stream checkpoint checks passed on GitHub Actions run #9 |
 | S2 | Paper/test profile with separately specified environment and account isolation | Not authorized / not implemented |
 | S3 | Bounded autonomous live execution | Not authorized; D0–D8 and exact profile/recovery gates remain open |
 | S4 | Multi-Principal/shared-resource operation | Not authorized; explicit composition/allocation contracts required |
@@ -25,7 +25,10 @@
 7. Empty or incomplete observations do not imply empty orders, zero positions, zero liabilities or zero exposure.
 8. A simulation result never creates a realized fill, profit, settled proceeds, budget increase, mandate change or external side effect.
 9. A timeout or uncertain side effect cannot be treated as proof that a mutating action did not happen. The S1 package has no such mutating action path.
-10. Within a stream replay, an event ID reused with a different source/sequence identity is quarantined and blocks that stream; the previously accepted event lineage is not overwritten.
+10. Within a stream replay, event-ID reuse across identities is quarantined; corrections must target the active event head; exact duplicate delivery requires matching source identity and digest reference.
+11. A fill is countable only when its fill ID, quantity and raw digest reference are present. Duplicate fill IDs require matching quantity and digest reference; otherwise the order projection is conflicted.
+12. Canonical instrument identity must come from an explicit instrument mapping. Provider source event IDs are passed through as supplied and are not invented. Missing sourceEventId remains null.
+13. Source profile, normalizer version, source identifier and timezone-qualified source/receipt timestamps are required for a candidate-evaluable normalized observation.
 
 ## 3. Multi-stream composition boundary
 
@@ -43,7 +46,7 @@ This projection does not decide valuation, liquidity, eligibility, ProtectedCapi
 
 | EXP | S1 constraint |
 | --- | --- |
-| EXP-03 | Preserve exact asset references; eligibility, valuation, haircut, liquidity and ProtectedCapital remain distinct. |
+| EXP-03 | Preserve exact asset/instrument references from explicit mappings; eligibility, valuation, haircut, liquidity and ProtectedCapital remain distinct. |
 | EXP-07 | Record regime-related evidence only; do not assign regime or add parameters/thresholds. |
 | EXP-08 | Keep gross obligations; do not infer netting from opposing signs/symbols/amounts. |
 | EXP-09 | Keep obligation identity/source/destination/history; no transfer or novation by owner-field change. |
@@ -52,20 +55,25 @@ This projection does not decide valuation, liquidity, eligibility, ProtectedCapi
 
 ## 6. Repository readiness and exit criteria
 
-S1 is suitable for review as an isolated, no-actuation reference package. It is not yet declared production-ready. Exit criteria for the first S1 repository gate:
+S1 is suitable for review as an isolated, no-actuation reference package. It is not yet declared production-ready.
 
 - [x] Dedicated repository exists and is separate from IMMORTAL and Cormia.
-- [x] Candidate schemas, fixtures, pure reducer and adversarial tests are materialized locally.
+- [x] Candidate schemas, fixtures, pure reducer and adversarial tests are materialized.
 - [x] Independent multi-stream replay and typed gross exposure preservation are covered by tests.
-- [x] Local no-actuation source guards pass.
-- [x] GitHub Actions workflow is defined with read-only repository permission.
-- [x] GitHub Actions run #4 completed successfully: 29 Node tests, 7 schema documents and 2 per-stream checkpoint consistency checks; [run evidence](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41585214152).
-- [x] Focused schema/reducer review recorded: manifest now requires one checkpoint per stream; duplicate event-ID reuse across a different source/sequence identity is quarantined and tested.
-- [ ] Independent review of schema/reducer contracts and evidence limitations.
+- [x] Static no-actuation source checks scan all JavaScript under src.
+- [x] GitHub Actions workflow uses read-only repository permission.
+- [x] GitHub Actions run #9 completed successfully: 38 Node tests, 7 schema documents and 2 per-stream checkpoint consistency checks; [run evidence](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41586103171).
+- [x] Focused internal adversarial review recorded in [S1-ADVERSARIAL-REVIEW.md](S1-ADVERSARIAL-REVIEW.md).
+- [ ] Independent external review of schema/reducer contracts and evidence limitations.
+- [ ] Provider-specific evidence and event identity semantics reviewed against an actual provider profile.
 
 Separate authority gates remain open and are not prerequisites for keeping S1 read-only: D0 Principal/financial authority root and D1 account/resource isolation. They are mandatory before any paper/live capability is even considered. S3 additionally requires the full D0–D8 profile, economic admission, actuator boundary, reconciler and recovery contract.
 
-## 7. Ownership separation
+## 7. Residual limits
+
+The internal review report records open limitations: rawDigestRef equality is not cryptographic digest verification; no provider-specific fill schema or account snapshot proof exists; event sequencing and correction identity remain source-profile-specific; no global cross-stream order or X1–X7 composition is implemented. Static source checks do not form a security sandbox.
+
+## 8. Ownership separation
 
 - **Arb Agent:** financial Principal/mandate consumption, market/account observation, orders, fills, positions, typed OpenExposure, RiskBudget and settlement orchestration when future stages are authorized.
 - **IMMORTAL:** normative economic kernel, economic admission, protected-capital and composition rules.

@@ -1,36 +1,39 @@
-# Test Results — PRE-RICH AEP Arb Agent S1 Reference v0.2.0
+# Test Results — PRE-RICH AEP Arb Agent S1 Reference v0.2.x
 
 ## Latest GitHub Actions evidence
 
-**Run #4:** [S1 Read-only Conformance](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41585214152)  
-**Commit:** [f02602c710a1e890fa346e6719ccc33b44332e38](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/commit/f02602c710a1e890fa346e6719ccc33b44332e38)  
-**Conclusion:** success — job "S1 schemas, replay and no-actuation checks" completed.
+**Run #9:** [S1 Read-only Conformance](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41586103171)  
+**Commit:** [287ad0dc24793bb0ab7fdb95304be65a0fa788ab](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/commit/287ad0dc24793bb0ab7fdb95304be65a0fa788ab)  
+**Conclusion:** success — the S1 schemas, replay and no-actuation job completed.
 
-- **29 Node tests passed / 0 failed** on the GitHub Actions runner (Node.js 22).
+- **38 Node tests passed / 0 failed** on the GitHub Actions runner (Node.js 22).
 - **7 synthetic JSON documents passed** Draft 2020-12 validation.
-- **2 additional manifest consistency checks passed:** one unique initial checkpoint per declared stream, and checkpoint cursor equals the stream's start cursor.
+- **2 ReplayManifest consistency checks passed:** exactly one initial checkpoint per stream, with checkpoint cursor equal to the stream's start cursor.
+- The static no-actuation check scans all JavaScript files under src.
 
 ## Coverage
 
-Node tests cover the nine synthetic base fixtures; observation/freshness/sequence/conflict classification; account completeness; order/fill lifecycle; simulation isolation; capability allowlist; duplicate/conflict/gap/correction replay; late fill after cancel confirmation; deterministic replay; independent multi-stream progress; duplicate stream declarations; duplicate event-ID reuse across source sequence; typed gross exposure preservation; empty/malformed/duplicate exposure handling; and static no-actuation guards.
+Tests cover the nine synthetic base fixtures; observation normalization and explicit identity/provenance; freshness/sequence/conflict classification; account-category completeness; order/fill lifecycle; simulation isolation; capability allowlist; duplicate/conflict/gap/correction replay; stale correction target rejection; event-ID reuse/alias conflict; null input fail-closed behavior; late fill after cancel confirmation; duplicate fill digest equality; conflicting fill payload digest; missing fill digest; deterministic replay; independent multi-stream progress; duplicate stream declaration rejection; typed gross OpenExposure preservation; empty/malformed/duplicate exposure handling; and source no-actuation checks.
 
 Seven JSON documents:
 1. Base fixture pack.
 2. ObservationRecord example.
 3. Single-stream ReplayManifest.
-4. Multi-stream ReplayManifest with a distinct initial checkpoint for each stream.
+4. Multi-stream ReplayManifest with one checkpoint per stream.
 5. Single-stream ReplayResult.
 6. MultiStreamReplayResult.
 7. OpenExposureSet.
 
-The manifest consistency validator also rejects duplicate stream IDs, duplicate checkpoint IDs, missing/extra checkpoint coverage and cursor mismatches.
+## Prior CI attempts
 
-## Earlier CI evidence
+- Runs #1–#5 passed before the expanded adversarial pass.
+- Run #6 failed on normalizer provenance expectations introduced in that change.
+- Run #7 exposed over-escaped timestamp/decimal validation patterns.
+- Run #8 passed after those pattern fixes and test alignment.
+- Run #9 passed after fill payload digest requirements and new regressions.
 
-- [Run #1](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41584700965): success; 28 Node tests and 6 schema validations.
-- [Run #2](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41584895093): success; documentation/package metadata revalidation.
-- [Run #3](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41585073825): success; 28 Node tests, 7 schema documents and 2 per-stream checkpoint consistency checks.
+These failures are retained as development history; the latest candidate's passing result is run #9.
 
 ## Evidence limits
 
-The passing workflows validate this package against synthetic fixtures on GitHub-hosted runners. They are not independent security certification, provider/venue conformance, real account ownership/control evidence, IMMORTAL economic admission, D0/D1 closure, Composition Contract X1–X7 evidence, or permission to trade. Static source checks are defense-in-depth and not a complete security proof.
+Passing workflows validate the candidate against synthetic fixtures on GitHub-hosted runners. They are not independent security certification, provider/venue conformance, real account ownership/control evidence, cryptographic digest verification, IMMORTAL economic admission, D0/D1 closure, Composition Contract X1–X7 evidence or permission to trade. Static source checks are defense-in-depth, not a sandbox or proof of universal absence of side effects.
