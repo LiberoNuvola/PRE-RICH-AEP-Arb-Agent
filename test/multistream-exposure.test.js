@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { replayStreams, classifyOpenExposureSet, compareReplayDeterminism } from '../src/reducer.js'
+import { replayStream, replayStreams, classifyOpenExposureSet, compareReplayDeterminism } from '../src/reducer.js'
 
 function event(streamId, sourceId, sequence, eventId, rawDigestRef, extras = {}) {
   return { streamId, sourceId, sequence: String(sequence), eventId, rawDigestRef, supersedesRef: null, ...extras }
@@ -40,6 +40,24 @@ test('a gap in one stream does not discard accepted evidence from another stream
   assert.deepEqual(healthy.result.applied, ['event:healthy:1'])
   assert.equal(gapped.result.status, 'BLOCKED_GAP')
   assert.deepEqual(result.unresolvedStreamIds, ['stream:gapped'])
+})
+
+test('event ID reuse at a different source sequence is quarantined without overwriting lineage', () => {
+  const result = replayStream({
+    streamId: 'stream:event-id',
+    initialSequence: '0',
+    events: [
+      event('stream:event-id', 'source:event-id', 1, 'event:reused', 'digest:first'),
+      event('stream:event-id', 'source:event-id', 2, 'event:reused', 'digest:second'),
+    ],
+  })
+  assert.equal(result.status, 'BLOCKED_CONFLICT')
+  assert.deepEqual(result.applied, ['event:reused'])
+  assert.deepEqual(result.activeEventIds, ['event:reused'])
+  assert.equal(result.outcomes[1].classification, 'QUARANTINED')
+  assert.equal(result.outcomes[1].reason, 'EVENT_ID_REUSED_WITH_DIFFERENT_SOURCE_IDENTITY')
+  assert.equal(result.lastSequence, '1')
+  assert.equal(result.authorityGranted, false)
 })
 
 test('duplicate stream declarations fail closed instead of merging cursors', () => {

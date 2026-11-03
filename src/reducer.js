@@ -324,6 +324,7 @@ export function replayStream({ streamId, initialSequence, events }) {
   const outcomes = []
   const activeEventIds = []
   const byEventId = new Map()
+  const seenEventIds = new Map()
   let blocked = null
 
   for (const event of events) {
@@ -350,6 +351,20 @@ export function replayStream({ streamId, initialSequence, events }) {
       continue
     }
     seenBySourceSequence.set(identity, { eventId: event.eventId, rawDigestRef: event.rawDigestRef })
+
+    const previousEventId = seenEventIds.get(event.eventId)
+    if (previousEventId) {
+      outcomes.push({
+        eventId: event.eventId,
+        classification: 'QUARANTINED',
+        reason: 'EVENT_ID_REUSED_WITH_DIFFERENT_SOURCE_IDENTITY',
+        previousSourceId: previousEventId.sourceId,
+        previousSequence: previousEventId.sequence,
+      })
+      blocked = 'BLOCKED_CONFLICT'
+      continue
+    }
+    seenEventIds.set(event.eventId, { sourceId: event.sourceId, sequence: sequence.toString() })
 
     if (blocked === 'BLOCKED_CONFLICT' || blocked === 'INVALID_INPUT') {
       outcomes.push({ eventId: event.eventId, classification: 'QUARANTINED', reason: 'STREAM_ALREADY_BLOCKED' })
