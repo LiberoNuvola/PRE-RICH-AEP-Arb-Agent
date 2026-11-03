@@ -2,9 +2,9 @@
 
 ## Latest full S1 conformance evidence
 
-**Run #21:** [S1 Read-only Conformance — success](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41690326864)  
-**Commit:** [661f64a50c639596ecae45737dd2afda709c1e63](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/commit/661f64a50c639596ecae45737dd2afda709c1e63)  
-**Conclusion:** success — full S1 Node, schema, coverage-negative and no-actuation job completed.
+**Latest full run #29:** [S1 Read-only Conformance — success](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41692538623)  
+**Commit:** [115a8aa95d4016952639fbee1900f6a0b0e80721](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/commit/115a8aa95d4016952639fbee1900f6a0b0e80721)  
+**Conclusion:** success — full S1 Node, schema, coverage-negative and no-actuation job completed on the exact current readiness/assessment documentation commit.
 
 The exact run logs show:
 
@@ -21,7 +21,7 @@ The exact run logs show:
 - The synthetic coverage report has unique per-family records.
 - Static no-actuation checks passed over all JavaScript files under src.
 
-**Documentation revalidation:** [Run #24 — success](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41690510406) completed on documentation commit [72772e7](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/commit/72772e7e58bf4f7a5ed70d6bcce06f3a943ce76a). It revalidated the prior-art map, provider-neutral contract, schemas, examples, README, readiness and test-report documentation. The present test-report alignment is documentation-only and is itself rechecked by the workflow triggered by this commit.
+**Prior-art/assessment documentation checks:** runs [#27](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41692406897), [#28](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41692532061) and [#29](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41692538623) completed successfully on the contribution assessment, README and readiness documentation commits. The exact run #29 logs repeat the full 38-test, 9-schema, 2-checkpoint and 6 negative-claim results.
 
 ## What the new schemas cover
 
@@ -58,6 +58,8 @@ Two new documents:
 - Runs #12–#20 passed as the prior-art map, provider contract, schemas and synthetic examples were added.
 - Run #21 passed with the complete schema/negative-check update.
 - Runs #22–#24 passed while README, readiness and results documentation was aligned.
+- Run #27 passed after adding the preliminary contribution/novelty assessment.
+- Runs #28–#29 passed after linking the assessment and updating readiness; run #29 revalidated all 38 Node tests, 9 schema documents, 2 checkpoint checks and 6 negative evidence-claim checks.
 
 These failures are retained as development history; no failed run is represented as a pass.
 
