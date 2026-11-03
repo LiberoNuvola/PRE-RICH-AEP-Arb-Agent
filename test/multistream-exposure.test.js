@@ -60,6 +60,58 @@ test('event ID reuse at a different source sequence is quarantined without overw
   assert.equal(result.authorityGranted, false)
 })
 
+test('correction cannot supersede an event that is already superseded', () => {
+  const result = replayStream({
+    streamId: 'stream:correction-chain',
+    initialSequence: '0',
+    events: [
+      event('stream:correction-chain', 'source:chain', 1, 'event:1', 'digest:1'),
+      event('stream:correction-chain', 'source:chain', 2, 'event:2', 'digest:2', { supersedesRef: 'event:1' }),
+      event('stream:correction-chain', 'source:chain', 3, 'event:3', 'digest:3', { supersedesRef: 'event:1' }),
+    ],
+  })
+  assert.equal(result.status, 'BLOCKED_CONFLICT')
+  assert.deepEqual(result.activeEventIds, ['event:2'])
+  assert.deepEqual(result.applied, ['event:1', 'event:2'])
+  assert.equal(result.outcomes[2].classification, 'QUARANTINED')
+  assert.equal(result.outcomes[2].reason, 'CORRECTION_TARGET_NOT_ACTIVE')
+  assert.equal(result.lastSequence, '2')
+})
+
+test('exact duplicate delivery is a no-op but a different event ID for the same source cursor conflicts', () => {
+  const exact = event('stream:dedupe', 'source:dedupe', 1, 'event:stable', 'digest:stable')
+  const result = replayStream({
+    streamId: 'stream:dedupe',
+    initialSequence: '0',
+    events: [
+      exact,
+      { ...exact },
+      event('stream:dedupe', 'source:dedupe', 2, 'event:next', 'digest:next'),
+    ],
+  })
+  assert.equal(result.status, 'COMPLETE')
+  assert.deepEqual(result.applied, ['event:stable', 'event:next'])
+  assert.equal(result.outcomes[1].classification, 'DUPLICATE_NO_OP')
+
+  const conflicting = replayStream({
+    streamId: 'stream:dedupe',
+    initialSequence: '0',
+    events: [
+      exact,
+      event('stream:dedupe', 'source:dedupe', 1, 'event:alias', 'digest:stable'),
+    ],
+  })
+  assert.equal(conflicting.status, 'BLOCKED_CONFLICT')
+  assert.equal(conflicting.outcomes[1].reason, 'SAME_SOURCE_SEQUENCE_DIFFERENT_EVENT_ID')
+})
+
+test('null or malformed replay inputs fail closed without throwing', () => {
+  assert.equal(replayStream(null).status, 'INVALID_INPUT')
+  assert.equal(replayStream({}).status, 'INVALID_INPUT')
+  assert.equal(replayStreams(null).status, 'INVALID_INPUT')
+  assert.equal(replayStreams({}).status, 'INVALID_INPUT')
+})
+
 test('duplicate stream declarations fail closed instead of merging cursors', () => {
   const result = replayStreams({
     streams: [

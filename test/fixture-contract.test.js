@@ -20,7 +20,34 @@ test('S1-F01 normalizes a mapped market observation', () => {
   assert.equal(result.qualityStatus, 'VALID')
   assert.equal(result.baseAssetRef, 'fixture:asset:AAA')
   assert.equal(result.quoteAssetRef, 'fixture:asset:USDX')
+  assert.equal(result.instrumentRef, 'fixture:instrument:AAA-USDX')
+  assert.equal(result.sourceEventReference, 'fixture:source-event:alpha:41')
   assert.equal(result.candidateEvaluable, true)
+})
+
+test('normalizer does not invent source event references when the provider omits them', () => {
+  const fixture = structuredClone(byId.get('S1-F01'))
+  delete fixture.raw.sourceEventId
+  const result = normalizeMarketObservation(fixture)
+  assert.equal(result.qualityStatus, 'VALID')
+  assert.equal(result.sourceEventReference, null)
+})
+
+test('normalizer rejects missing canonical instrument identity instead of synthesizing one', () => {
+  const fixture = structuredClone(byId.get('S1-F01'))
+  delete fixture.instrumentMap['AAA/USDX'].instrumentRef
+  const result = normalizeMarketObservation(fixture)
+  assert.equal(result.qualityStatus, 'INVALID')
+  assert.equal(result.reason, 'INSTRUMENT_MAPPING_MISSING_OR_INCOMPLETE')
+  assert.equal(result.candidateEvaluable, false)
+})
+
+test('normalizer rejects missing profile/version/timestamp provenance', () => {
+  const fixture = structuredClone(byId.get('S1-F01'))
+  fixture.normalizerVersion = ''
+  const result = normalizeMarketObservation(fixture)
+  assert.equal(result.qualityStatus, 'INCOMPLETE')
+  assert.equal(result.candidateEvaluable, false)
 })
 
 test('S1-F02 rejects an unmapped instrument without symbol inference', () => {

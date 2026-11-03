@@ -17,12 +17,14 @@
         "bidPrice": "10.125",
         "bidQuantity": "4.000",
         "askPrice": "10.130",
-        "askQuantity": "3.000"
+        "askQuantity": "3.000",
+        "sourceEventId": "fixture:source-event:alpha:41"
       },
       "instrumentMap": {
         "AAA/USDX": {
           "baseAssetRef": "fixture:asset:AAA",
-          "quoteAssetRef": "fixture:asset:USDX"
+          "quoteAssetRef": "fixture:asset:USDX",
+          "instrumentRef": "fixture:instrument:AAA-USDX"
         }
       },
       "expected": {
@@ -119,9 +121,22 @@
       "profileId": "synthetic-readonly-account-profile/0.1",
       "accountRef": "fixture:account:principal-01",
       "observedAt": "2026-11-03T12:00:00.000Z",
-      "returnedCategories": ["balances"],
-      "requiredCategoriesForFixture": ["balances", "openOrders", "positions", "liabilities"],
-      "balances": [{"assetRef": "fixture:asset:USDX", "free": "1000.00", "locked": "0.00"}],
+      "returnedCategories": [
+        "balances"
+      ],
+      "requiredCategoriesForFixture": [
+        "balances",
+        "openOrders",
+        "positions",
+        "liabilities"
+      ],
+      "balances": [
+        {
+          "assetRef": "fixture:asset:USDX",
+          "free": "1000.00",
+          "locked": "0.00"
+        }
+      ],
       "expected": {
         "qualityStatus": "INCOMPLETE",
         "openOrders": "UNKNOWN",
@@ -136,9 +151,24 @@
       "id": "S1-F07",
       "kind": "execution_history_projection",
       "events": [
-        {"eventId": "fixture:event:order-accepted", "eventType": "ORDER_ACCEPTED", "orderId": "fixture:order:01", "quantity": "5.000"},
-        {"eventId": "fixture:event:partial-fill", "eventType": "FILL", "orderId": "fixture:order:01", "fillId": "fixture:fill:01", "quantity": "2.000"},
-        {"eventId": "fixture:event:cancel-request", "eventType": "CANCEL_REQUEST_ACKNOWLEDGED", "orderId": "fixture:order:01"}
+        {
+          "eventId": "fixture:event:order-accepted",
+          "eventType": "ORDER_ACCEPTED",
+          "orderId": "fixture:order:01",
+          "quantity": "5.000"
+        },
+        {
+          "eventId": "fixture:event:partial-fill",
+          "eventType": "FILL",
+          "orderId": "fixture:order:01",
+          "fillId": "fixture:fill:01",
+          "quantity": "2.000"
+        },
+        {
+          "eventId": "fixture:event:cancel-request",
+          "eventType": "CANCEL_REQUEST_ACKNOWLEDGED",
+          "orderId": "fixture:order:01"
+        }
       ],
       "terminalCancelConfirmationPresent": false,
       "expected": {
@@ -152,7 +182,12 @@
     {
       "id": "S1-F08",
       "kind": "simulation_result",
-      "simulation": {"fixtureSet": "arb-s1-fixture/v0.1", "simulatedPnl": "12.50", "currencyRef": "fixture:asset:USDX", "modelVersion": "fixture-simulator/0.1.0"},
+      "simulation": {
+        "fixtureSet": "arb-s1-fixture/v0.1",
+        "simulatedPnl": "12.50",
+        "currencyRef": "fixture:asset:USDX",
+        "modelVersion": "fixture-simulator/0.1.0"
+      },
       "expected": {
         "outputType": "SimulationResult",
         "realizedProfitCreated": false,
@@ -168,13 +203,29 @@
       "kind": "capability_manifest",
       "mode": "READ_ONLY_SIMULATION",
       "capabilities": [
-        "read_market_observations", "read_instrument_metadata", "normalize_observations",
-        "replay_observations", "derive_candidate_intent", "simulate_candidate"
+        "read_market_observations",
+        "read_instrument_metadata",
+        "normalize_observations",
+        "replay_observations",
+        "derive_candidate_intent",
+        "simulate_candidate"
       ],
       "forbiddenCapabilities": [
-        "submit_order", "amend_order", "cancel_order", "open_position", "reduce_position", "close_position",
-        "transfer_asset", "withdraw_asset", "deposit_asset", "borrow_asset", "change_margin_or_collateral",
-        "change_account_permissions", "create_or_rotate_credential", "issue_or_revoke_mandate", "modify_risk_budget"
+        "submit_order",
+        "amend_order",
+        "cancel_order",
+        "open_position",
+        "reduce_position",
+        "close_position",
+        "transfer_asset",
+        "withdraw_asset",
+        "deposit_asset",
+        "borrow_asset",
+        "change_margin_or_collateral",
+        "change_account_permissions",
+        "create_or_rotate_credential",
+        "issue_or_revoke_mandate",
+        "modify_risk_budget"
       ],
       "credentialClasses": [],
       "productionTradingEndpointAllowlist": [],

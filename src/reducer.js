@@ -40,37 +40,71 @@ function parseIsoMs(value) {
   return Number.isFinite(ms) ? ms : null
 }
 
+function isOffsetDateTime(value) {
+  return typeof value === 'string' &&
+    /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$/.test(value) &&
+    parseIsoMs(value) !== null
+}
+
 export function normalizeMarketObservation(fixture) {
-  if (!isRecord(fixture) || !isRecord(fixture.raw) || !isRecord(fixture.instrumentMap)) {
+  if (!isRecord(fixture) || !isRecord(readOwn(fixture, 'raw')) || !isRecord(readOwn(fixture, 'instrumentMap'))) {
     return Object.freeze({ qualityStatus: 'INVALID', reason: 'MALFORMED_FIXTURE', candidateEvaluable: false })
   }
 
-  const raw = fixture.raw
+  const raw = readOwn(fixture, 'raw')
+  const instrumentMap = readOwn(fixture, 'instrumentMap')
   const instrumentKey = readOwn(raw, 'instrumentKey')
-  const mapping = typeof instrumentKey === 'string' ? readOwn(fixture.instrumentMap, instrumentKey) : undefined
+  const mapping = typeof instrumentKey === 'string' && instrumentKey.length > 0
+    ? readOwn(instrumentMap, instrumentKey)
+    : undefined
+
+  // An instrument reference must come from an explicit mapping; never synthesize it from symbol fragments.
   if (!isRecord(mapping) ||
-      typeof readOwn(mapping, 'baseAssetRef') !== 'string' ||
-      typeof readOwn(mapping, 'quoteAssetRef') !== 'string') {
+      typeof readOwn(mapping, 'instrumentRef') !== 'string' || !readOwn(mapping, 'instrumentRef') ||
+      typeof readOwn(mapping, 'baseAssetRef') !== 'string' || !readOwn(mapping, 'baseAssetRef') ||
+      typeof readOwn(mapping, 'quoteAssetRef') !== 'string' || !readOwn(mapping, 'quoteAssetRef')) {
     return Object.freeze({
       qualityStatus: 'INVALID',
-      reason: 'INSTRUMENT_MAPPING_MISSING',
+      reason: 'INSTRUMENT_MAPPING_MISSING_OR_INCOMPLETE',
       candidateEvaluable: false,
       sourceSequence: readOwn(raw, 'sourceSequence') ?? null,
       rawInstrumentKey: instrumentKey ?? null,
     })
   }
 
-  const required = ['sourceId', 'sourceSequence', 'sourceObservedAt', 'bidPrice', 'bidQuantity', 'askPrice', 'askQuantity']
-  if (required.some((key) => readOwn(raw, key) === undefined)) {
-    return Object.freeze({ qualityStatus: 'INCOMPLETE', reason: 'REQUIRED_MARKET_FIELD_MISSING', candidateEvaluable: false })
+  const profileId = readOwn(fixture, 'profileId')
+  const normalizerVersion = readOwn(fixture, 'normalizerVersion')
+  const sourceId = readOwn(raw, 'sourceId')
+  const sourceSequence = readOwn(raw, 'sourceSequence')
+  const sourceObservedAt = readOwn(raw, 'sourceObservedAt')
+  const receivedAt = readOwn(fixture, 'receivedAt')
+  if (typeof profileId !== 'string' || !profileId ||
+      typeof normalizerVersion !== 'string' || !normalizerVersion ||
+      typeof sourceId !== 'string' || !sourceId ||
+      sourceSequence === undefined ||
+      !isOffsetDateTime(sourceObservedAt) ||
+      !isOffsetDateTime(receivedAt)) {
+    return Object.freeze({
+      qualityStatus: 'INCOMPLETE',
+      reason: 'PROVENANCE_OR_TIMESTAMP_FIELD_MISSING_OR_INVALID',
+      candidateEvaluable: false,
+    })
   }
-  if (!/^(0|[1-9][0-9]*)$/.test(String(raw.sourceSequence))) {
+  if (!/^(0|[1-9][0-9]*)$/.test(String(sourceSequence))) {
     return Object.freeze({ qualityStatus: 'INVALID', reason: 'SOURCE_SEQUENCE_INVALID', candidateEvaluable: false })
   }
+
   for (const key of ['bidPrice', 'bidQuantity', 'askPrice', 'askQuantity']) {
-    if (typeof raw[key] !== 'string' || !/^(0|[1-9][0-9]*)(\.[0-9]+)?$/.test(raw[key])) {
+    const value = readOwn(raw, key)
+    if (typeof value !== 'string' || !/^(0|[1-9][0-9]*)(\\.[0-9]+)?$/.test(value)) {
       return Object.freeze({ qualityStatus: 'INVALID', reason: `DECIMAL_INVALID:${key}`, candidateEvaluable: false })
     }
+  }
+
+  const sourceEventId = readOwn(raw, 'sourceEventId')
+  if (sourceEventId !== undefined && sourceEventId !== null &&
+      (typeof sourceEventId !== 'string' || !sourceEventId)) {
+    return Object.freeze({ qualityStatus: 'INVALID', reason: 'SOURCE_EVENT_ID_INVALID', candidateEvaluable: false })
   }
 
   return Object.freeze({
@@ -78,23 +112,24 @@ export function normalizeMarketObservation(fixture) {
     evidenceClass: 'DERIVED',
     qualityStatus: 'VALID',
     candidateEvaluable: true,
-    profileId: fixture.profileId,
-    normalizerVersion: fixture.normalizerVersion,
-    sourceId: raw.sourceId,
-    sourceSequence: String(raw.sourceSequence),
-    sourceObservedAt: raw.sourceObservedAt,
-    receivedAt: fixture.receivedAt,
+    profileId,
+    normalizerVersion,
+    sourceId,
+    sourceSequence: String(sourceSequence),
+    sourceObservedAt,
+    receivedAt,
     instrumentKey,
-    instrumentRef: `fixture:instrument:${mapping.baseAssetRef.split(':').at(-1)}-${mapping.quoteAssetRef.split(':').at(-1)}`,
-    baseAssetRef: mapping.baseAssetRef,
-    quoteAssetRef: mapping.quoteAssetRef,
-    bidPrice: raw.bidPrice,
-    bidQuantity: raw.bidQuantity,
-    askPrice: raw.askPrice,
-    askQuantity: raw.askQuantity,
-    priceUnit: mapping.quoteAssetRef,
-    quantityUnit: mapping.baseAssetRef,
-    sourceEventReference: `fixture:source:${raw.sourceId}:${raw.sourceSequence}`,
+    instrumentRef: readOwn(mapping, 'instrumentRef'),
+    baseAssetRef: readOwn(mapping, 'baseAssetRef'),
+    quoteAssetRef: readOwn(mapping, 'quoteAssetRef'),
+    bidPrice: readOwn(raw, 'bidPrice'),
+    bidQuantity: readOwn(raw, 'bidQuantity'),
+    askPrice: readOwn(raw, 'askPrice'),
+    askQuantity: readOwn(raw, 'askQuantity'),
+    priceUnit: readOwn(mapping, 'quoteAssetRef'),
+    quantityUnit: readOwn(mapping, 'baseAssetRef'),
+    // This is the source's own event identifier, not a locally invented identifier.
+    sourceEventReference: sourceEventId ?? null,
   })
 }
 
@@ -312,7 +347,10 @@ export function validateCapabilityManifest(manifest) {
  * The caller supplies events in the ReplayManifest's frozen order.
  * Sequence values are decimal strings. No wall-clock ordering is inferred.
  */
-export function replayStream({ streamId, initialSequence, events }) {
+export function replayStream(input) {
+  const streamId = isRecord(input) ? readOwn(input, 'streamId') : undefined
+  const initialSequence = isRecord(input) ? readOwn(input, 'initialSequence') : undefined
+  const events = isRecord(input) ? readOwn(input, 'events') : undefined
   if (typeof streamId !== 'string' || !streamId ||
       !/^(0|[1-9][0-9]*)$/.test(String(initialSequence)) || !Array.isArray(events)) {
     return Object.freeze({ status: 'INVALID_INPUT', applied: [], outcomes: [], activeEventIds: [], lastSequence: null })
@@ -339,32 +377,45 @@ export function replayStream({ streamId, initialSequence, events }) {
     }
 
     const sequence = BigInt(event.sequence)
-    const identity = `${event.sourceId}|${event.streamId}|${sequence}`
-    const previous = seenBySourceSequence.get(identity)
-    if (previous) {
-      if (previous.rawDigestRef === event.rawDigestRef) {
-        outcomes.push({ eventId: event.eventId, classification: 'DUPLICATE_NO_OP', duplicateOf: previous.eventId })
+    // JSON tuple encoding avoids delimiter ambiguity in source identifiers.
+    const identity = JSON.stringify([event.sourceId, event.streamId, sequence.toString()])
+    const previousEventId = seenEventIds.get(event.eventId)
+    if (previousEventId) {
+      if (previousEventId.identity === identity && previousEventId.rawDigestRef === event.rawDigestRef) {
+        outcomes.push({ eventId: event.eventId, classification: 'DUPLICATE_NO_OP', duplicateOf: previousEventId.eventId })
       } else {
-        outcomes.push({ eventId: event.eventId, classification: 'QUARANTINED', reason: 'SAME_SOURCE_SEQUENCE_DIFFERENT_DIGEST' })
+        outcomes.push({
+          eventId: event.eventId,
+          classification: 'QUARANTINED',
+          reason: 'EVENT_ID_REUSED_WITH_DIFFERENT_SOURCE_IDENTITY',
+          previousSourceId: previousEventId.sourceId,
+          previousSequence: previousEventId.sequence,
+        })
         blocked = 'BLOCKED_CONFLICT'
       }
       continue
     }
-    seenBySourceSequence.set(identity, { eventId: event.eventId, rawDigestRef: event.rawDigestRef })
 
-    const previousEventId = seenEventIds.get(event.eventId)
-    if (previousEventId) {
+    const previous = seenBySourceSequence.get(identity)
+    if (previous) {
       outcomes.push({
         eventId: event.eventId,
         classification: 'QUARANTINED',
-        reason: 'EVENT_ID_REUSED_WITH_DIFFERENT_SOURCE_IDENTITY',
-        previousSourceId: previousEventId.sourceId,
-        previousSequence: previousEventId.sequence,
+        reason: previous.rawDigestRef === event.rawDigestRef
+          ? 'SAME_SOURCE_SEQUENCE_DIFFERENT_EVENT_ID'
+          : 'SAME_SOURCE_SEQUENCE_DIFFERENT_DIGEST',
       })
       blocked = 'BLOCKED_CONFLICT'
       continue
     }
-    seenEventIds.set(event.eventId, { sourceId: event.sourceId, sequence: sequence.toString() })
+    seenBySourceSequence.set(identity, { eventId: event.eventId, rawDigestRef: event.rawDigestRef })
+    seenEventIds.set(event.eventId, {
+      identity,
+      eventId: event.eventId,
+      sourceId: event.sourceId,
+      sequence: sequence.toString(),
+      rawDigestRef: event.rawDigestRef,
+    })
 
     if (blocked === 'BLOCKED_CONFLICT' || blocked === 'INVALID_INPUT') {
       outcomes.push({ eventId: event.eventId, classification: 'QUARANTINED', reason: 'STREAM_ALREADY_BLOCKED' })
@@ -391,7 +442,17 @@ export function replayStream({ streamId, initialSequence, events }) {
         continue
       }
       const activeIndex = activeEventIds.indexOf(supersedesRef)
-      if (activeIndex >= 0) activeEventIds.splice(activeIndex, 1)
+      if (activeIndex < 0) {
+        outcomes.push({
+          eventId: event.eventId,
+          classification: 'QUARANTINED',
+          reason: 'CORRECTION_TARGET_NOT_ACTIVE',
+          supersedesRef,
+        })
+        blocked = 'BLOCKED_CONFLICT'
+        continue
+      }
+      activeEventIds.splice(activeIndex, 1)
       activeEventIds.push(event.eventId)
       outcomes.push({ eventId: event.eventId, classification: 'CORRECTION_APPLIED', supersedesRef })
     } else {
@@ -429,7 +490,8 @@ export function compareReplayDeterminism(first, second) {
  * canonicalization only and MUST NOT be interpreted as a causal/global event order.
  * No X1-X7 composition witness is consumed here, so multi-stream composition stays unresolved.
  */
-export function replayStreams({ streams }) {
+export function replayStreams(input) {
+  const streams = isRecord(input) ? readOwn(input, 'streams') : undefined
   if (!Array.isArray(streams) || streams.length === 0 || streams.some((stream) =>
     !isRecord(stream) || typeof stream.streamId !== 'string' || !stream.streamId ||
     !Array.isArray(stream.events) || !/^(0|[1-9][0-9]*)$/.test(String(stream.initialSequence)))) {
