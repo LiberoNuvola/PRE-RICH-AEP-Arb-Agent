@@ -240,3 +240,20 @@ No new economic kernel, authority system, generic truth score, source-ranking al
 - D0, D1, independent external review and provider-specific conformance remain OPEN.
 - No S2/S3 capability is authorized.
 - No Cormia code or specification was changed.
+
+
+## 9. Cross-branch prior-art findings — 2026-11-03
+
+The full inventory and targeted source review of all 31 visible branches across IMMORTAL (27), Cormia (3) and Arb (1) are recorded in [BRANCH-PRIOR-ART-AUDIT-2026-11-03.md](BRANCH-PRIOR-ART-AUDIT-2026-11-03.md).
+
+This adds three material sources beyond the earlier main-only crosswalk:
+
+1. **IMMORTAL work/immortal-green-closure** already has a multi-oracle source registry and observation prototype: canonical payload/SHA-256, Ed25519 signed snapshot, exact source/feed/policy binding, currentness provider, revocation overlay and rollback/equivocation checks. Its historical Actions run #20 (40823847938) passed 53 focused tests. It is **not production-wired**: source/feed/key identities are fixtures, authority/currentness provider is unselected, process-local anti-rollback is not durable across restart, and no source/quorum/aggregation/USD-USDM policy is approved. Do not build a parallel price-feed registry or currentness mechanism in Arb.
+2. The same branch has multi-venue USDM observation/source matrices and a PRE-RICH ticket ProtectedCapital item-ledger/source-census prototype. These establish important lineage, independence, scope and completeness patterns, but the former is an indicative market-source discovery, not canonical EEV; the latter is PRE ticket-specific, accepts a caller-supplied snapshot, and explicitly does not prove source authority, complete ticket population or full ProtectedCapital.
+3. **IMMORTAL work/b3-materios-provenance-evidence** already has the generalized derivation contract, EXP-06 Evidence-as-Input, EXP-12 Observer/Authority Split and EXP-03/04/07/08/09/10 boundaries, plus structural harnesses. Those are prior internal research/conformance boundaries, not complete production economic functions. **Cormia work/exp-generalization-crosswalk** has a 2026-11-03 prior-art composition review and reuse matrix; **Cormia work/project-normative-contract** has PNC-bound mandate/runtime authority. Cormia operational mandate is not financial Principal authority.
+
+### Revised account/venue gap
+
+The residual candidate for Arb is now narrower still: **provider-specific observation and mapping of external broker/exchange account and trading-lifecycle data** (balances, orders, executions/fills, corrections, fees, positions, liabilities and settlement), where those semantics are not already covered by the exact source/provider contract. Price-only feeds should map to the existing IMMORTAL multi-oracle work rather than create an Arb oracle subsystem. PRE-RICH ticket item census should reuse/benchmark the existing IMMORTAL item-ledger boundaries rather than be copied as a generic brokerage ledger.
+
+This remains a candidate integration gap, not proven novelty. The 31-branch audit is a complete branch-tree inventory with targeted reading of relevant files, not a line-by-line audit or independent security certification of every file in all repositories.
