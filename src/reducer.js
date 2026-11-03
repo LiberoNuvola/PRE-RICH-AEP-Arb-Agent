@@ -42,7 +42,7 @@ function parseIsoMs(value) {
 
 function isOffsetDateTime(value) {
   return typeof value === 'string' &&
-    /^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$/.test(value) &&
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value) &&
     parseIsoMs(value) !== null
 }
 
@@ -96,7 +96,7 @@ export function normalizeMarketObservation(fixture) {
 
   for (const key of ['bidPrice', 'bidQuantity', 'askPrice', 'askQuantity']) {
     const value = readOwn(raw, key)
-    if (typeof value !== 'string' || !/^(0|[1-9][0-9]*)(\\.[0-9]+)?$/.test(value)) {
+    if (typeof value !== 'string' || !/^(0|[1-9][0-9]*)(\.[0-9]+)?$/.test(value)) {
       return Object.freeze({ qualityStatus: 'INVALID', reason: `DECIMAL_INVALID:${key}`, candidateEvaluable: false })
     }
   }
