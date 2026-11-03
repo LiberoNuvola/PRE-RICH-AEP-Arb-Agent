@@ -70,3 +70,14 @@ Passing workflows validate the candidate against synthetic fixtures on GitHub-ho
 The prior-art adaptation map and the contribution assessment are architectural research, not claims of standards conformance or originality. The IMMORTAL hand-off crosswalk records that Gate 23/24/30, R9 V1–V9 and EV1–EV7, EconomicAdmissionWitness, CanonicalTransitionEvidence, GOV-27 and Composition X1–X7 already cover substantial parts of the proposed evidence-to-economic boundary. Arb must not introduce a duplicate EvidenceQualification type or economic gate without a demonstrated unmapped requirement.
 
 The ProviderProfile and CollectionCoverage schemas are declarative adapter-side records only. They do not establish provider facts, implement live collection, prove account completeness, cryptographically verify evidence, close D0/D1 or grant authority.
+
+
+## 2026-11-03 — Full cross-branch prior-art audit (documentation-only)
+
+The [branch audit](docs/BRANCH-PRIOR-ART-AUDIT-2026-11-03.md) inventories all 27 visible IMMORTAL branches, all 3 Cormia branches and Arb's only branch. Recursive Git trees were inspected for all 31 branches; relevant evidence/oracle/admission/composition/authority/provider/EXP/provenance/prior-art files were then read selectively. This is not a line-by-line audit of every file or an independent security certification.
+
+The audit found additional internal prior art on IMMORTAL work/immortal-green-closure (multi-oracle signed registry/currentness prototype, multi-venue source matrices, PRE-RICH ProtectedCapital item ledger), IMMORTAL work/b3-materios-provenance-evidence (generalized derivation, EXP-06/EXP-12 and related EXP boundaries), IMMORTAL b1-hardening (synthetic multi-invariant admission) and Cormia work/exp-generalization-crosswalk / work/project-normative-contract (prior-art composition and project mandate/runtime authority). Their exact limitations and reuse boundaries are recorded in the audit.
+
+The contribution assessment is now narrowed to provider-specific external broker/exchange account and trading-lifecycle observation/mapping. No generic EvidenceQualification, price-feed registry, signature/currentness mechanism, authority layer or economic gate is proposed. No IMMORTAL or Cormia branch/code was changed; no provider or account was selected.
+
+The existing full S1 code/schema/negative-claim baseline remains run #29 (38 Node tests, 9 JSON schema/examples, 2 checkpoint checks and 6 negative evidence-claim checks). Subsequent crosswalk/assessment/README/readiness updates are documentation-only and are revalidated by the workflow runs triggered by their exact commits.
