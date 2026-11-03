@@ -9,7 +9,7 @@
 | Stage | Permitted scope | Current status |
 | --- | --- | --- |
 | S0 | Research, contracts, synthetic fixtures | Materialized in this repository |
-| S1 | Read-only observations, deterministic replay, projections, synthetic simulation | Candidate implementation; 38 Node tests, 9 schema validations, 2 per-stream checkpoint checks and provider-coverage rejection tests run on GitHub Actions |
+| S1 | Read-only observations, deterministic replay, projections, synthetic simulation | Read-only reference candidate; W1 CIP-30 and W2 Minswap V2 consumer-link tests run on GitHub Actions |
 | S2 | Paper/test profile with separately specified environment and account isolation | Not authorized / not implemented |
 | S3 | Bounded autonomous live execution | Not authorized; D0–D8 and exact profile/recovery gates remain open |
 | S4 | Multi-Principal/shared-resource operation | Not authorized; explicit composition/allocation contracts required |
@@ -63,7 +63,7 @@ S1 is suitable for review as an isolated, no-actuation reference package. It is 
 - [x] Dedicated repository exists and is separate from IMMORTAL and Cormia.
 - [x] Candidate schemas, fixtures, pure reducer and adversarial tests are materialized.
 - [x] Independent multi-stream replay and typed gross exposure preservation are covered by tests.
-- [x] Static no-actuation source checks scan all JavaScript under src.
+- [x] Static no-actuation source checks scan all JavaScript under src/ and wallet-companion/.
 - [x] GitHub Actions workflow uses read-only repository permission.
 - [x] Focused internal adversarial review recorded in [S1-ADVERSARIAL-REVIEW.md](S1-ADVERSARIAL-REVIEW.md).
 - [x] Provider-neutral evidence boundary documented in [PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md](PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md).
@@ -95,7 +95,7 @@ The [Provider-Neutral Evidence Adapter Contract](PROVIDER-EVIDENCE-ADAPTER-CONTR
 
 The ProviderProfile schema is only a template for declaring provider semantics; the current example is TEMPLATE_ONLY with no provider selected or documentation mapped. CollectionCoverageReport records are per data family, not an account-wide complete flag. COMPLETE_EMPTY is valid only when exact query scope, completion evidence, pagination completion, no truncation, a boundary reference and retention applicability are documented. A query-completion boundary with NON_ATOMIC state proves only that query's completion, not an atomic account snapshot.
 
-No provider is selected; no provider credentials, network client, account observation or adapter implementation exists. D0, D1 and independent external review remain OPEN. S2 and S3 remain unauthorized.
+The external broker/exchange ProviderProfile remains TEMPLATE_ONLY and no trading venue/client is selected. Separately, W1 supplies a CIP-30 read-only wallet port and W2 consumes a pinned IMMORTAL Minswap V2 Mainnet exact-USDM observer output; neither performs a network request from Arb or proves a complete account/DeFi snapshot. D0, D1 and independent external review remain OPEN. S2 and S3 remain unauthorized.
 
 ## 10. Contribution and novelty assessment
 

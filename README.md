@@ -1,4 +1,4 @@
-# PRE-RICH AEP Arb Agent — S1 Read-only Core + W1 Wallet Observer (v0.2.x)
+# PRE-RICH AEP Arb Agent — S1 Read-only Core + W1/W2 Cardano Companion (v0.2.x)
 
 **Status:** the S1 reducer/replay core remains a synthetic-only reference implementation. An isolated W1 module adds user-authorized CIP-30 reads only. This repository is not a live trading agent, venue adapter, financial authority, economic kernel or production account observer.
 
@@ -14,7 +14,7 @@
 - Keep simulation distinct from realized state.
 - Enforce a read-only capability allowlist and static no-actuation checks over all JavaScript files under src/ and wallet-companion/.
 
-There are no credentials, direct network clients, exchange endpoints, signing/submission methods, order methods or actuator adapters in this package. W1 uses only an injected CIP-30 browser-wallet bridge for read-only wallet data; it does not call RPC/indexer services or expose the wallet's full API.
+There are no credentials, direct network clients, exchange endpoints, signing/submission methods, order methods or actuator adapters in this package. W1 uses only an injected CIP-30 bridge for read-only wallet data. W2 consumes a serialized IMMORTAL Minswap V2 Mainnet USDM observation; it makes no Koios/Minswap network request and does not expose the wallet's full API.
 
 ## Run locally
 
@@ -38,7 +38,7 @@ The [provider-neutral adapter contract](docs/PROVIDER-EVIDENCE-ADAPTER-CONTRACT.
 
 ## Cardano wallet companion and IMMORTAL adapter coverage
 
-The [Cardano Wallet Companion architecture](docs/CARDANO-WALLET-COMPANION-ARCHITECTURE-v0.1.md) defines the non-custodial dApp boundary. W1 is now implemented as an isolated [read-only CIP-30 port](wallet-companion/cip30-read-only.js), with [W1 readiness and limitations](docs/W1-READINESS.md). It requests no signing/submission capability, does not persist sessions and does not connect to a wallet in CI.
+The [Cardano Wallet Companion architecture](docs/CARDANO-WALLET-COMPANION-ARCHITECTURE-v0.1.md) defines the non-custodial dApp boundary. W1 is an isolated [read-only CIP-30 port](wallet-companion/cip30-read-only.js). W2 adds a [consumer-side Minswap V2 LP-identity link](wallet-companion/minswap-v2-position-link.js) for the exact Mainnet USDM profile, consuming IMMORTAL's existing observer output. See [W1 readiness](docs/W1-READINESS.md) and [W2 readiness](docs/W2-READINESS.md). CI uses wallet/observer fixtures only; no live wallet or Koios query is performed.
 
 The [IMMORTAL EXP ↔ Cardano Adapter crosswalk](docs/IMMORTAL-CARDANO-EXP-ADAPTER-CROSSWALK-v0.1.md) maps all twelve EXP axes to the existing Cardano Adapter boundary, identifies reusable implementation and states the generalized-contract gaps. The existing Cardano execution witness is still PRE-RICH-shaped; Arb must not relabel Issue/Reveal/Claim/Expire or duplicate the economic kernel. Any generalized Cardano Adapter implementation belongs in IMMORTAL's adapter workstream after the canonical EXP contracts are available.
 
@@ -60,4 +60,4 @@ EXP-03 keeps asset identity/eligibility distinct from valuation, haircut, liquid
 
 ## Readiness
 
-S1 is a candidate read-only implementation with synthetic conformance evidence only. D0 Principal/financial authority and D1 Solo account/resource isolation remain open. This package does not authorize S2 paper trading or S3 live execution. See [S1 Readiness](docs/S1-READINESS.md), the [focused adversarial review](docs/S1-ADVERSARIAL-REVIEW.md), the [provider-neutral evidence adapter contract](docs/PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md), the [prior-art adaptation map](docs/PRIOR-ART-ADAPTATION.md), and the [contribution and novelty assessment](docs/CONTRIBUTION-AND-NOVELTY-ASSESSMENT.md). No provider profile, live adapter, account connection or provider conformance is implemented.
+S1/W1/W2 are read-only reference implementations with synthetic conformance evidence only. The W2 Minswap profile is Mainnet + exact USDM and does not prove live pool currentness or complete DeFi coverage. D0 Principal/financial authority and D1 Solo account/resource isolation remain open. This package does not authorize S2 paper trading or S3 live execution. See [S1 Readiness](docs/S1-READINESS.md), the [focused adversarial review](docs/S1-ADVERSARIAL-REVIEW.md), the [provider-neutral evidence adapter contract](docs/PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md), the [prior-art adaptation map](docs/PRIOR-ART-ADAPTATION.md), and the [contribution and novelty assessment](docs/CONTRIBUTION-AND-NOVELTY-ASSESSMENT.md). No provider profile, live adapter, account connection or provider conformance is implemented.
