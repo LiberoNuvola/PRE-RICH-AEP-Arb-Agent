@@ -70,8 +70,10 @@ S1 is suitable for review as an isolated, no-actuation reference package. It is 
 - [x] Prior-art adaptation map recorded in [PRIOR-ART-ADAPTATION.md](PRIOR-ART-ADAPTATION.md).
 - [x] ProviderProfile and per-family CollectionCoverage JSON Schemas with synthetic examples are materialized.
 - [x] Negative schema checks reject COMPLETE_EMPTY with non-exhausted pagination, non-zero count, or unknown boundary; reject NOT_REQUESTED marked as requested; reject REVIEWABLE profiles without provider identity/docs; and reject attempts to set Principal authority.
+- [x] Preliminary contribution/novelty assessment records prior-art overlap, open novelty questions and falsifiable research properties.
 - [ ] Independent external review of schema/reducer contracts and evidence limitations.
 - [ ] Provider-specific evidence and event identity semantics reviewed against an actual provider profile.
+- [ ] Formal decision-specific EvidenceQualification model and its property tests, after reviewing the exact IMMORTAL hand-off and composition contract.
 
 Separate authority gates remain open and are not prerequisites for keeping S1 read-only: D0 Principal/financial authority root and D1 account/resource isolation. They are mandatory before any paper/live capability is even considered. S3 additionally requires the full D0–D8 profile, economic admission, actuator boundary, reconciler and recovery contract.
 
@@ -94,3 +96,9 @@ The [Provider-Neutral Evidence Adapter Contract](PROVIDER-EVIDENCE-ADAPTER-CONTR
 The ProviderProfile schema is only a template for declaring provider semantics; the current example is TEMPLATE_ONLY with no provider selected or documentation mapped. CollectionCoverageReport records are per data family, not an account-wide complete flag. COMPLETE_EMPTY is valid only when exact query scope, completion evidence, pagination completion, no truncation, a boundary reference and retention applicability are documented. A query-completion boundary with NON_ATOMIC state proves only that query's completion, not an atomic account snapshot.
 
 No provider is selected; no provider credentials, network client, account observation or adapter implementation exists. D0, D1 and independent external review remain OPEN. S2 and S3 remain unauthorized.
+
+## 10. Contribution and novelty assessment
+
+The [Contribution and Novelty Assessment](CONTRIBUTION-AND-NOVELTY-ASSESSMENT.md) identifies the strongest existing overlaps: NautilusTrader execution reconciliation, OANDA account snapshot/update patterns, Flink/Debezium stream guarantees, Proof-of-Reserve/Proof-of-Liabilities systems, W3C/SLSA provenance and verification, NIST authentication/authorization separation, and ISDA/IOSCO/Basel reconciliation/netting practice.
+
+The current project does not claim those mechanisms as inventions. Its candidate research contribution is a decision-specific evidence qualification boundary across source scope, per-family completeness, temporal consistency, lineage/integrity, financial semantics, composition and authority, with IMMORTAL remaining the only normative economic kernel. This is a hypothesis, not an established novelty claim. The report defines eight falsifiable properties and comparative experiments. A broader systematic literature and patent search, formal model, provider-specific validation and independent review remain necessary.
