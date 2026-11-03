@@ -9,7 +9,7 @@
 | Stage | Permitted scope | Current status |
 | --- | --- | --- |
 | S0 | Research, contracts, synthetic fixtures | Materialized in this repository |
-| S1 | Read-only observations, deterministic replay, projections, synthetic simulation | Candidate implementation; 38 Node tests, 7 schema validations and 2 per-stream checkpoint checks passed on GitHub Actions run #10 |
+| S1 | Read-only observations, deterministic replay, projections, synthetic simulation | Candidate implementation; 38 Node tests, 7 schema validations and 2 per-stream checkpoint checks passed on GitHub Actions run #11 |
 | S2 | Paper/test profile with separately specified environment and account isolation | Not authorized / not implemented |
 | S3 | Bounded autonomous live execution | Not authorized; D0–D8 and exact profile/recovery gates remain open |
 | S4 | Multi-Principal/shared-resource operation | Not authorized; explicit composition/allocation contracts required |
@@ -62,8 +62,9 @@ S1 is suitable for review as an isolated, no-actuation reference package. It is 
 - [x] Independent multi-stream replay and typed gross exposure preservation are covered by tests.
 - [x] Static no-actuation source checks scan all JavaScript under src.
 - [x] GitHub Actions workflow uses read-only repository permission.
-- [x] GitHub Actions run #9 completed successfully: 38 Node tests, 7 schema documents and 2 per-stream checkpoint consistency checks; [run evidence](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41586219658).
+- [x] GitHub Actions run #11 completed successfully: 38 Node tests, 7 schema documents and 2 per-stream checkpoint consistency checks; [run evidence](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41586398713).
 - [x] Focused internal adversarial review recorded in [S1-ADVERSARIAL-REVIEW.md](S1-ADVERSARIAL-REVIEW.md).
+- [x] Provider-neutral adapter evidence boundary documented as a design candidate in [PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md](PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md).
 - [ ] Independent external review of schema/reducer contracts and evidence limitations.
 - [ ] Provider-specific evidence and event identity semantics reviewed against an actual provider profile.
 
@@ -71,7 +72,7 @@ Separate authority gates remain open and are not prerequisites for keeping S1 re
 
 ## 7. Residual limits
 
-The internal review report records open limitations: rawDigestRef equality is not cryptographic digest verification; no provider-specific fill schema or account snapshot proof exists; event sequencing and correction identity remain source-profile-specific; no global cross-stream order or X1–X7 composition is implemented. Static source checks do not form a security sandbox.
+The internal review report records open limitations: rawDigestRef equality is not cryptographic digest verification; no provider-specific fill schema or account snapshot proof exists; event sequencing and correction identity remain source-profile-specific; no global cross-stream order or X1–X7 composition is implemented. The provider-neutral contract defines a review checklist only; it does not close these limitations or implement a provider.
 
 ## 8. Ownership separation
 
@@ -80,3 +81,9 @@ The internal review report records open limitations: rawDigestRef equality is no
 - **Cormia:** operational project identity, workspace, Project Mandate, Task Manifest, task delegation, Runtime, PNC and execution of project tasks. Cormia operational authority does not grant financial authority.
 
 This repository does not amend IMMORTAL rules or Cormia specifications, and does not duplicate their authority systems.
+
+## 9. Provider evidence boundary
+
+The [Provider-Neutral Evidence Adapter Contract](PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md) separates source assertions, collection coverage, independent verification, and Principal/account authority. It specifies profile declarations for source identity, per-stream ordering/corrections, snapshots/pagination, timestamps, execution semantics, known exclusions, and bounded coverage states.
+
+This is a design-only document. No provider is selected; no provider profile, credentials, network client, account observation or adapter implementation exists. In particular, COMPLETE_EMPTY is bounded to the exact profile-defined query scope and snapshot boundary; no incomplete/unrequested/filtered category may be inferred as zero or absent. D0, D1 and independent external review remain OPEN. S2 and S3 remain unauthorized.
