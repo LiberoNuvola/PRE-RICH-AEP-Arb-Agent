@@ -77,20 +77,20 @@ Status meanings:
 | **EXP-11 — deterministic allocation / auction** | Supply deterministic transaction-build constraints, exact UTxO availability and transaction outcome evidence; preserve any source ordering or selection evidence relevant to reproducibility. | IMMORTAL/profile owns economically meaningful allocation policy, candidate set, admissibility, objective, tie-break and any risk/capital reservation; Arb owns strategy-side candidate generation. | **Not established as economic allocation.** UTxO coin selection and transaction input selection are chain realization details, not allocation of capital among competing economic candidates. Never let iteration order, mempool arrival or wallet coin selection silently become an economic priority rule. |
 | **EXP-12 — observer / authority split** | Expose the wallet API, ledger observer and protocol observer as separate evidence sources; bind source, action, actual transaction and post-state. Keep signing inside wallet/CIP-30; report refusals and account/network changes as explicit outcomes. | Principal/authority issuer owns financial mandate; IMMORTAL owns economic admissibility; wallet owns key custody/signing; verifier and observer remain distinct. | **Architectural boundary present; generalized actuator authority incomplete.** CIP-30 and existing Adapter evidence provide useful separation. They do not create a standing Arb Mandate, financial Principal, execution credential or revocation lifecycle. |
 
-## 4. Adapter capability groups required for a generalized Cardano consumer
+## 4. Capability groups for a generalized Cardano consumer
 
-The EXP crosswalk points to a set of composable Adapter capabilities, not twelve new EXP modules in the Adapter.
+The EXP crosswalk points to composable capabilities, not twelve new EXP modules in the Adapter. One ownership correction is important: **CIP-30 wallet connection is an Arb-side application integration port, not part of IMMORTAL's chain-neutral economic kernel or the core Cardano Adapter.** The shared Cardano Adapter may consume a typed wallet/signing port, but it should not depend directly on browser globals, wallet-vendor discovery, companion UI or local browser storage.
 
-### C-A — Wallet bridge
+### C-A — Arb Wallet Companion port (application edge; not Adapter core)
 - CIP-30 provider discovery and connection state;
 - capability/extension negotiation;
 - address, network and wallet-controlled UTxO reads;
 - account/network change and disconnect invalidation;
 - user-consented signature request and result handling when the interactive stage is authorized.
 
-Arb may consume this bridge as a companion. The wallet connector does not own generic account/DeFi completeness.
+Arb owns this browser/session boundary. It supplies typed, session-bound wallet facts and, only at the authorized interactive stage, a wallet signing capability to the transaction path. The wallet connector does not own generic account/DeFi completeness.
 
-### C-B — Ledger observation and transaction evidence
+### C-B — Cardano ledger observation and transaction evidence (shared Adapter boundary)
 - address/credential and exact asset identity;
 - UTxO, transaction, datum, redeemer and reference-input observations;
 - slot/block and validity-interval context;
@@ -125,6 +125,8 @@ The currently inspected CardanoExecutionAdapter is the starting point, but its c
 - keep observed transition facts distinct from canonical transition evidence;
 - make missing/contradictory/incomplete data explicit;
 - never derive or sign an economic decision in the Adapter.
+
+The Adapter should consume the C-A port through a narrow injected interface. CIP-30 provider names, browser events, UI consent prompts, browser storage and wallet preference handling stay outside the shared Adapter implementation. Where a backend observer is used, it is a distinct source from the wallet port and must retain its own provenance, scope and coverage.
 
 ## 5. Recommended dependency order
 
