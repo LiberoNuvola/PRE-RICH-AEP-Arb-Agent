@@ -9,7 +9,7 @@
 | Stage | Permitted scope | Current status |
 | --- | --- | --- |
 | S0 | Research, contracts, synthetic fixtures | Materialized in this repository |
-| S1 | Read-only observations, deterministic replay, projections, synthetic simulation | Candidate implementation; 28 Node tests and 7 schema validations plus checkpoint-coverage checks defined for next CI run |
+| S1 | Read-only observations, deterministic replay, projections, synthetic simulation | Candidate implementation; 29 Node tests, 7 schema validations and 2 per-stream checkpoint consistency checks passed on GitHub Actions run #4 |
 | S2 | Paper/test profile with separately specified environment and account isolation | Not authorized / not implemented |
 | S3 | Bounded autonomous live execution | Not authorized; D0–D8 and exact profile/recovery gates remain open |
 | S4 | Multi-Principal/shared-resource operation | Not authorized; explicit composition/allocation contracts required |
@@ -25,6 +25,7 @@
 7. Empty or incomplete observations do not imply empty orders, zero positions, zero liabilities or zero exposure.
 8. A simulation result never creates a realized fill, profit, settled proceeds, budget increase, mandate change or external side effect.
 9. A timeout or uncertain side effect cannot be treated as proof that a mutating action did not happen. The S1 package has no such mutating action path.
+10. Within a stream replay, an event ID reused with a different source/sequence identity is quarantined and blocks that stream; the previously accepted event lineage is not overwritten.
 
 ## 3. Multi-stream composition boundary
 
@@ -58,9 +59,9 @@ S1 is suitable for review as an isolated, no-actuation reference package. It is 
 - [x] Independent multi-stream replay and typed gross exposure preservation are covered by tests.
 - [x] Local no-actuation source guards pass.
 - [x] GitHub Actions workflow is defined with read-only repository permission.
-- [x] First GitHub Actions run #1 completed successfully: 28 Node tests, 6 schema validations; [run evidence](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41584700965).
-- [ ] Second CI run after the per-stream manifest checkpoint correction completes successfully.
-- [ ] Review of schema/reducer contracts and evidence limitations is recorded.
+- [x] GitHub Actions run #4 completed successfully: 29 Node tests, 7 schema documents and 2 per-stream checkpoint consistency checks; [run evidence](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41585214152).
+- [x] Focused schema/reducer review recorded: manifest now requires one checkpoint per stream; duplicate event-ID reuse across a different source/sequence identity is quarantined and tested.
+- [ ] Independent review of schema/reducer contracts and evidence limitations.
 
 Separate authority gates remain open and are not prerequisites for keeping S1 read-only: D0 Principal/financial authority root and D1 account/resource isolation. They are mandatory before any paper/live capability is even considered. S3 additionally requires the full D0–D8 profile, economic admission, actuator boundary, reconciler and recovery contract.
 
