@@ -21,7 +21,7 @@ The exact run logs show:
 - The synthetic coverage report has unique per-family records.
 - Static no-actuation checks passed over all JavaScript files under src.
 
-**Prior-art/assessment documentation checks:** runs [#27](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41692406897), [#28](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41692532061) and [#29](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41692538623) completed successfully on the contribution assessment, README and readiness documentation commits. The exact run #29 logs repeat the full 38-test, 9-schema, 2-checkpoint and 6 negative-claim results.
+**Internal prior-art reconciliation and final documentation verification:** [Run #31](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41693739831) passed after adding the IMMORTAL hand-off crosswalk. [Run #32](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41693974851) passed after narrowing the novelty assessment. [Run #33](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41694022403) revalidated the README, and [run #34](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41694033062) revalidated S1 readiness on exact HEAD ca823b8. These were documentation-only changes; the full code/schema/negative-claim results remain those from run #29.
 
 ## What the new schemas cover
 
@@ -67,4 +67,6 @@ These failures are retained as development history; no failed run is represented
 
 Passing workflows validate the candidate against synthetic fixtures on GitHub-hosted runners. They are not independent security certification, provider/venue conformance, real account ownership/control evidence, cryptographic digest verification, IMMORTAL economic admission, D0/D1 closure, Composition Contract X1–X7 evidence or permission to trade. Static source checks are defense-in-depth, not a sandbox or proof of universal absence of side effects.
 
-The prior-art adaptation map is architectural research, not a claim of standards conformance. The ProviderProfile and CollectionCoverage schemas are declarative gates only. They do not establish provider facts, implement live collection, prove account completeness, cryptographically verify evidence, or close any authority gate.
+The prior-art adaptation map and the contribution assessment are architectural research, not claims of standards conformance or originality. The IMMORTAL hand-off crosswalk records that Gate 23/24/30, R9 V1–V9 and EV1–EV7, EconomicAdmissionWitness, CanonicalTransitionEvidence, GOV-27 and Composition X1–X7 already cover substantial parts of the proposed evidence-to-economic boundary. Arb must not introduce a duplicate EvidenceQualification type or economic gate without a demonstrated unmapped requirement.
+
+The ProviderProfile and CollectionCoverage schemas are declarative adapter-side records only. They do not establish provider facts, implement live collection, prove account completeness, cryptographically verify evidence, close D0/D1 or grant authority.
