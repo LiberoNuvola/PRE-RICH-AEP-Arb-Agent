@@ -30,7 +30,7 @@ GitHub Actions runs these checks on pushes, pull requests and manual dispatch.
 
 ## Multi-stream boundary
 
-Each stream keeps its own cursor and event order. A gap/conflict blocks only that stream. Lexical sorting of result rows is presentation canonicalization only, not causal ordering. With multiple streams, composition remains `COMPOSITION_UNRESOLVED` until an explicit Composition Contract X1–X7 witness exists; this package does not implement that witness or aggregate stream state. Every stream must have its own matching initial checkpoint in the replay manifest.
+Each stream keeps its own cursor and event order. A gap/conflict blocks only that stream. Lexical sorting of result rows is presentation canonicalization only, not causal ordering. With multiple streams, composition remains COMPOSITION_UNRESOLVED until an explicit Composition Contract X1–X7 witness exists; this package does not implement that witness or aggregate stream state. Every stream must have its own matching initial checkpoint in the replay manifest.
 
 ## Order and fill lineage
 
@@ -38,7 +38,7 @@ A correction may supersede only an event that is currently active in its stream 
 
 ## OpenExposure boundary
 
-Gross records retain their own record, category, asset, unit, scope, horizon, status and evidence references. No scalar aggregation, conversion, netting, novation, ownership rewrite, valuation or admission is performed. Empty input means `INCOMPLETE`, not zero exposure.
+Gross records retain their own record, category, asset, unit, scope, horizon, status and evidence references. No scalar aggregation, conversion, netting, novation, ownership rewrite, valuation or admission is performed. Empty input means INCOMPLETE, not zero exposure.
 
 ## IMMORTAL EXP constraints
 
@@ -46,4 +46,4 @@ EXP-03 keeps asset identity/eligibility distinct from valuation, haircut, liquid
 
 ## Readiness
 
-S1 is a candidate read-only implementation with synthetic conformance evidence only. D0 Principal/financial authority and D1 Solo account/resource isolation remain open. This package does not authorize S2 paper trading or S3 live execution. See [S1 Readiness](docs/S1-READINESS.md) and the [focused adversarial review](docs/S1-ADVERSARIAL-REVIEW.md) for invariants, findings and unresolved limitations.
+S1 is a candidate read-only implementation with synthetic conformance evidence only. D0 Principal/financial authority and D1 Solo account/resource isolation remain open. This package does not authorize S2 paper trading or S3 live execution. See [S1 Readiness](docs/S1-READINESS.md), the [focused adversarial review](docs/S1-ADVERSARIAL-REVIEW.md), and the [provider-neutral evidence adapter contract](docs/PROVIDER-EVIDENCE-ADAPTER-CONTRACT.md). The provider contract is a design candidate only: no provider profile, live adapter, account connection or provider conformance is implemented.
