@@ -335,7 +335,7 @@ test('a positive wallet LP balance with an exhaustive empty UTxO response is con
 
 test('a malformed or unsupported pool candidate is rejected rather than linked', () => {
   const candidate = qualifiedPoolCandidate()
-  candidate.datumValidation.lpAsset.assetNameHex = '00'
+  candidate.datumValidation.lpAsset.assetNameHex = '0'
   const result = linkMinswapV2WalletPositions({
     walletSnapshot: walletSnapshot({ assets: [{ policyId: LP_POLICY, assetNameHex: LP_NAME, quantityRaw: '1' }] }),
     poolObservation: poolObservation({ candidates: [candidate] }),
