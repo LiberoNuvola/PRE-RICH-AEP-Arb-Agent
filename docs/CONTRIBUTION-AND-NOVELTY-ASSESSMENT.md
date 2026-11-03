@@ -7,16 +7,21 @@
 
 ## Executive conclusion
 
-Most individual technical mechanisms in the current Arb S1 design are established prior art. Event envelopes, deterministic replay, per-stream cursors, snapshot recovery, reconciliation, missing-versus-flat distinctions, provenance, cryptographic attestations, proof of reserves/liabilities, portfolio reconciliation, and legal netting requirements all have mature precedents.
+Most individual technical mechanisms in Arb S1 are established prior art. The targeted external review confirms substantial overlap with trading reconciliation, stream processing, proof-of-reserves/liabilities, provenance/attestation, source qualification and financial netting practice.
 
-The project must not claim to have invented those mechanisms.
+A second, decisive check against our own canonical IMMORTAL repository found that the broader evidence-to-economic-admission concept is also already substantially specified internally:
+- Notion Gate 23 defines PRE oracle source qualification and evidence classes E1–E14.
+- Notion Gates 24 and 30 define candidate discovery, exact source identity, canonical PriceReference qualification, state/phase binding and admissibility.
+- IMMORTAL R9 normatively defines EEV source, verification, freshness, deterministic derivation, conservative conversion, failure/equivocation and shock requirements (V1–V9), plus evidence artifacts EV1–EV7.
+- The IMMORTAL Economic Gate, PRE-RICH admission path, EconomicAdmissionWitness, Cardano input-binding checks and CanonicalTransitionEvidence already define the downstream economic decision and transaction-evidence boundary.
+- Composition Contract X1–X7 and GOV-27 already separate joint composition, canonical integrity, authorization, evidence and ruleset validity.
+- CAROB G1.6/E9 independently record the internal principles that authenticity is not consistency, authority or truth, and that source authority is typed and scoped.
 
-The defensible research hypothesis is narrower:
+Therefore we must **not** claim to have invented a universal evidence qualification layer, a separation of evidence from authority, or a new economic admission algorithm.
 
-> **A portable, decision-specific evidence-to-economic-admission boundary that makes the scope, completeness, freshness, lineage, verification, composition and authority limits of external financial evidence explicit before that evidence is consumed by a normative economic kernel.**
+The remaining Arb-specific candidate is narrower: a provider-neutral adapter and mapping layer for heterogeneous financial account/venue observations that preserves provider-specific identity, event/cursor/time semantics, per-family collection coverage and known exclusions, then maps those records into the existing IMMORTAL source-qualification and admission contracts without creating a parallel kernel.
 
-The potential contribution is the formal composition and enforcement of these boundaries across otherwise separate domains—not the individual primitives. The current repository does not yet implement or prove this end-to-end model. This document records a research hypothesis and a falsifiable development programme, not a demonstrated scientific novelty claim.
-
+This is a possible interoperability/engineering contribution, not an established scientific novelty claim. The current Arb repository does not yet implement this end-to-end mapping or demonstrate acceptance by a concrete provider profile and the existing IMMORTAL contracts.
 ## 1. Prior-art landscape
 
 ### 1.1 Trading systems already implement reconciliation and missing-data safety
@@ -183,26 +188,31 @@ The following should be described as implementation choices, safety invariants o
 - order/fill lifecycle tracking and gross exposure representation;
 - legal prerequisites for netting and novation.
 
-## 3. Candidate contribution: a decision-specific evidence boundary
+## 3. Revised candidate contribution: provider-neutral evidence mapping
 
-The candidate contribution is a **decision-specific evidence qualification contract** between external sources and the normative economic kernel.
+The general idea of a decision-specific evidence qualification contract is already substantially covered by IMMORTAL R9, Gates 23/24/30, GOV-27 and the existing economic-admission interfaces. A parallel Arb EvidenceQualification object would risk duplicating those contracts.
 
-It does not decide economic admission itself. It states which evidence is available, which claims that evidence supports, what scope/time/resource boundary it covers, what remains unknown, and which verification/authority requirements have or have not been met. IMMORTAL remains the only normative economic kernel and decides economic admission under its own rules.
+The candidate Arb-specific work is therefore to create a **provider-neutral adapter and mapping layer for heterogeneous financial account/venue observations**. It should preserve source-specific semantics and limitations, and then supply correctly scoped evidence to the existing IMMORTAL contracts.
 
-A future evidence-qualification record could combine these dimensions:
+The Arb layer may own:
+1. **Provider profile:** provider/product/environment, official API/message documentation, account/resource scope, data-family map and known exclusions.
+2. **Observation lineage:** original provider event identifiers when present, stream/cursor identity, source and receipt timestamps, raw evidence references, correction links and profile/normalizer versions.
+3. **Collection coverage:** per-family query scope, completion, pagination/continuation, snapshot/cursor boundary, retention, truncation, omissions and unresolved states.
+4. **Financial field mapping:** explicit instrument/asset/unit identity and source-specific order/fill/fee/settlement fields, without inferring missing semantics.
+5. **Reproducible evidence packet:** references to raw inputs, normalization/derivation versions and tests, without claiming cryptographic verification until raw-byte retrieval and recomputation exist.
+6. **Contract mapping:** an explicit crosswalk to the applicable existing IMMORTAL contract (for example R9 EV1–EV7 for an EEV input, or the appropriate source-qualification profile for a price reference).
 
-1. **Decision purpose:** the exact economic claim or downstream evaluation being supported. Requirements must be specific to the decision; an observation requiring only a public quote must not require a complete account snapshot.
-2. **Source/profile scope:** provider, product, environment, resource scope, profile version, official documentation basis and known exclusions.
-3. **Collection coverage:** per-data-family status, exact query scope, completion evidence, pagination exhaustion, snapshot/cursor boundary, retention status, truncation and omissions.
-4. **Temporal consistency:** source time meaning, receipt time, sequence/cursor semantics, freshness, gaps and atomicity. Data from different time boundaries cannot silently become one coherent account state.
-5. **Lineage and integrity:** provider identifiers as supplied, raw evidence reference, preserved bytes, canonicalization version, computed digest, transformation lineage and independent verification result.
-6. **Economic semantics:** explicit instrument/asset/unit mapping; order-versus-fill-versus-settlement distinction; gross obligations; correction/novation evidence; no inferred conversion, netting or settlement.
-7. **Authority and composition:** separate Principal and resource-control evidence, mandate scope, isolation evidence, and any required Composition Contract X1–X7 witness. The evidence adapter cannot close D0/D1 or grant authority.
+Arb must not own or recreate:
+- provider qualification policy where an applicable canonical qualification gate already exists;
+- authoritative EEV selection or its normative derivation;
+- ProtectedCapital, RiskBudget, viability, Ω or Economic Gate;
+- Principal/account authority or D0/D1 closure;
+- joint resource accounting or X1–X7 composition;
+- the final admission decision.
 
-The qualification output should be an evidence status with reasons and references, not an economic permission. Candidate statuses include QUALIFIED_FOR_DECLARED_PURPOSE, INCOMPLETE, STALE, CONFLICTED, UNVERIFIED, OUT_OF_SCOPE and UNAUTHORIZED. Exact status semantics and the consuming IMMORTAL interface remain to be specified and reviewed.
+A provider-neutral CollectionCoverageReport is only a statement about what the adapter requested and collected under a declared profile. It is not proof that the provider's universe is complete, that liabilities outside the queried scope do not exist, or that the data is authoritative for an economic decision.
 
-This model should be **claim- and purpose-scoped**, not a universal accountComplete boolean. An account-level or global completeness claim is valid only if the declared profile establishes the relevant scopes and boundaries.
-
+The resulting hand-off must use the existing IMMORTAL observation/admission interfaces. Do not define a second universal status vocabulary or permission token unless a concrete unmapped requirement is demonstrated and the canonical owner approves it.
 ## 4. Falsifiable properties to test
 
 The contribution only becomes substantive if these properties are formally defined and tested against adversarial fixtures and established implementations.
@@ -304,11 +314,12 @@ No IMMORTAL normative rules, shared branches or Cormia specifications are amende
 This is a targeted web-based prior-art sweep, not an exhaustive systematic literature review, patent search, legal opinion, freedom-to-operate analysis or peer-reviewed novelty evaluation. It has not examined every proprietary broker/exchange system, all account-aggregation products, all data-contract frameworks, or every academic database.
 
 Specific unresolved questions:
-- Does an existing system already offer a generic, machine-readable, decision-purpose-scoped evidence contract that couples per-family collection coverage, provenance verification, Principal authority and economic-kernel admission?
-- Can the contract be expressed as a small set of formal safety properties without duplicating the normative kernel?
-- Can it remain provider-neutral without flattening important provider-specific differences in finality, snapshots, corrections and account scope?
-- How should legal/account ownership evidence be represented across jurisdictions and custody arrangements?
-- Can the proposed properties be proven, model-checked or systematically tested, beyond example-based conformance?
+- Which requirements in Arb ProviderProfile/CollectionCoverage are genuinely not represented by IMMORTAL Gates 23/24/30, R9 EV1–EV7, GOV-27 and the existing admission witness?
+- Can a financial account/venue provider profile remain generic without flattening material provider-specific differences in finality, snapshots, corrections, scope and liabilities?
+- How should provider-supplied completeness and account-wide claims be independently challenged where hidden/off-platform liabilities may exist?
+- How should legal/account ownership evidence be represented across jurisdictions and custody arrangements without treating API authentication as ownership?
+- Can the provider-to-IMMORTAL mapping be tested against an actual provider profile and the canonical admission interface without new normative rules?
+- Can the proposed safety properties be proven, model-checked or systematically tested, beyond example-based conformance?
 
 Until these questions are answered, the correct description is **candidate integration contribution**, not “new algorithm”, “first of its kind”, “novel proof system” or “proven superior model”.
 
@@ -319,3 +330,28 @@ Until these questions are answered, the correct description is **candidate integ
 3. Do not add cryptographic implementation, live provider integration, S2 or S3 on the strength of this document.
 4. Next technical deliverable should be a formal EvidenceQualification model and its adversarial property tests, only after checking the exact IMMORTAL evidence/admission interface and composition contract.
 5. Independent external review and a broader literature/patent search remain necessary before any strong originality or IP claim.
+
+
+## 9. Internal prior-art reconciliation — decisive correction
+
+The following internal documents and implementation paths were inspected read-only on IMMORTAL main at 97b09a38742098f17a61eb07734c401aeedccc06:
+
+| Existing source | Established boundary | What Arb should reuse |
+|---|---|---|
+| Notion Gate 23, PRE Oracle Evidence Acquisition & Provider Qualification Matrix | E1–E14 source qualification, provenance, timestamp/freshness, independence, aggregation, depth, reproducibility, failure, historical robustness, on-chain representation | The qualification lifecycle and evidence-packet discipline where source semantics match; do not copy PRE-specific price criteria into account-data profiles |
+| Notion Gate 24, PRE Oracle Candidate Discovery & Evidence Collection | Exact identity → quote pair → provenance → evidence → qualification; candidate registry and correlation classification | Discovery/evidence ordering and explicit source-independence analysis |
+| Notion Gate 30, PRE PriceReference Canonical Source Qualification & Deployment Contract | PRE-specific phase/pool/UTxO/datum identity, price hierarchy, admissibility predicate, state machine and safe failure behavior | Exact PriceReference semantics only for PRE price-source integrations |
+| IMMORTAL R9, EEV Oracle and Valuation Contract | Normative V1–V9 and EV1–EV7 for authoritative source, verification, freshness, reproducibility, conservative conversion, valuation scope, fail-closed behavior, equivocation and Ω shocks | EEV evidence hand-off; no substitute EEV qualification or economic policy |
+| PRE-RICH EconomicAdmission and Adapter EconomicAdmissionWitness | Existing Gate/viability composition and binding of decision, observation, pre-state/action/post-state, EEV and executable liquidity | Exact downstream witness and input-binding contract |
+| CanonicalTransitionEvidence and EconomicAdmissionTransitionBinding | Action/state fingerprints and transaction-reference binding | Reproducible transition-evidence packet |
+| Composition Contract X1–X7 | Shared resource accounting, non-interference, atomicity/unresolved exposure, joint certification/gate and perimeter union | Existing joint composition gate; Arb stream-local replay is not a substitute |
+| GOV-27 | Canonical integrity AND authorization AND evidence AND ruleset authorization; EvidenceRef is only structural until resolved | Keep integrity, authority, evidence and ruleset checks independent |
+| CAROB G1.6 / E9 | Typed/scoped evidence authority, explicit conflict, no truth or authority inflation from recency, majority or model confidence | Internal conceptual precedent only; Carob policy is not an IMMORTAL financial rule |
+
+The repository also contains an explicit Issue Admission Provenance audit. It states that the admission algorithm, observation surface and refinement boundary exist, while a concrete authoritative EEV/protected-capital/refinement producer and complete end-to-end Issue evidence were still OPEN. Therefore the existence of a witness type must not be represented as proof that the producer or its evidence is complete.
+
+### Revised decision
+
+The candidate contribution is not a new generic evidence-to-economic-admission framework. It is the faithful, provider-neutral implementation of the upstream financial observation/mapping gap, with exact integration into existing IMMORTAL contracts. Its value must be demonstrated by a concrete provider profile, replayable evidence and a successful contract mapping—not by introducing another generic gate.
+
+No new EvidenceQualification schema or status machine should be added until a field-by-field gap analysis shows a requirement not already represented by the existing canonical interfaces.
