@@ -1,0 +1,637 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://immortal.invalid/arb/s1/provider-profile/0.1",
+  "title": "Arb S1 ProviderProfile design schema",
+  "description": "Declarative, version-pinned provider semantics. This schema does not define or imply a live provider integration.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recordType",
+    "schemaVersion",
+    "profileRef",
+    "profileVersion",
+    "status",
+    "provider",
+    "protocol",
+    "documentationBasis",
+    "resourceScope",
+    "dataFamilies",
+    "eventIdentity",
+    "streamModel",
+    "correctionModel",
+    "snapshotModel",
+    "timeModel",
+    "executionModel",
+    "knownExclusions",
+    "authorityBoundary"
+  ],
+  "properties": {
+    "recordType": {
+      "const": "ProviderProfile"
+    },
+    "schemaVersion": {
+      "const": "0.1"
+    },
+    "profileRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profileVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "TEMPLATE_ONLY",
+        "DRAFT",
+        "REVIEWABLE"
+      ]
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "providerRef",
+        "productRef",
+        "environment"
+      ],
+      "properties": {
+        "providerRef": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "productRef": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "environment": {
+          "enum": [
+            "UNSELECTED",
+            "SANDBOX",
+            "TEST",
+            "PREPROD",
+            "PRODUCTION"
+          ]
+        }
+      }
+    },
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "family",
+        "version"
+      ],
+      "properties": {
+        "family": {
+          "enum": [
+            "UNSELECTED",
+            "REST",
+            "WEBSOCKET",
+            "FIX",
+            "PROPRIETARY_STREAM",
+            "OTHER"
+          ]
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        }
+      }
+    },
+    "documentationBasis": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "documentRef",
+          "authority",
+          "revision",
+          "retrievedAt"
+        ],
+        "properties": {
+          "documentRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "authority": {
+            "enum": [
+              "OFFICIAL_PROVIDER",
+              "OFFICIAL_STANDARD",
+              "SECONDARY",
+              "UNKNOWN"
+            ]
+          },
+          "revision": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "retrievedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "resourceScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scopeModel",
+        "dimensions",
+        "partitionSemantics"
+      ],
+      "properties": {
+        "scopeModel": {
+          "enum": [
+            "UNSELECTED",
+            "ACCOUNT",
+            "SUBACCOUNT",
+            "PORTFOLIO",
+            "WALLET",
+            "RESOURCE_SET",
+            "OTHER",
+            "UNKNOWN"
+          ]
+        },
+        "dimensions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "partitionSemantics": {
+          "enum": [
+            "DOCUMENTED",
+            "PARTIALLY_DOCUMENTED",
+            "UNKNOWN",
+            "NOT_APPLICABLE"
+          ]
+        }
+      }
+    },
+    "dataFamilies": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "family",
+          "supportStatus",
+          "sourceOperationRef",
+          "completenessRuleRef"
+        ],
+        "properties": {
+          "family": {
+            "enum": [
+              "BALANCES",
+              "COLLATERAL",
+              "POSITIONS",
+              "OPEN_ORDERS",
+              "ORDER_HISTORY",
+              "FILLS",
+              "FEES",
+              "FUNDING",
+              "BORROW",
+              "TRANSFERS",
+              "SETTLEMENT",
+              "MARGIN",
+              "LIABILITIES",
+              "OTHER"
+            ]
+          },
+          "supportStatus": {
+            "enum": [
+              "SUPPORTED",
+              "PARTIALLY_SUPPORTED",
+              "UNAVAILABLE",
+              "NOT_APPLICABLE",
+              "UNKNOWN",
+              "NOT_MAPPED"
+            ]
+          },
+          "sourceOperationRef": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "completenessRuleRef": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "eventIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceIdentityScope",
+        "eventIdField",
+        "uniquenessScope",
+        "reuseBehavior",
+        "missingIdTreatment"
+      ],
+      "properties": {
+        "sourceIdentityScope": {
+          "enum": [
+            "PROVIDER",
+            "PRODUCT",
+            "ACCOUNT",
+            "STREAM",
+            "UNKNOWN"
+          ]
+        },
+        "eventIdField": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "uniquenessScope": {
+          "enum": [
+            "GLOBAL",
+            "PRODUCER",
+            "ACCOUNT",
+            "STREAM",
+            "UNKNOWN"
+          ]
+        },
+        "reuseBehavior": {
+          "enum": [
+            "NEVER_REUSED",
+            "REUSED_AFTER_RETENTION",
+            "REUSED_BY_EVENT_CLASS",
+            "UNKNOWN"
+          ]
+        },
+        "missingIdTreatment": {
+          "const": "NULL_NOT_SYNTHESIZED"
+        }
+      }
+    },
+    "streamModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequenceKind",
+        "sequenceScope",
+        "gapDetection",
+        "resetBehavior",
+        "duplicateDelivery"
+      ],
+      "properties": {
+        "sequenceKind": {
+          "enum": [
+            "MONOTONIC_PER_STREAM",
+            "OPAQUE_CURSOR",
+            "TIMESTAMP_ONLY",
+            "NONE",
+            "UNKNOWN"
+          ]
+        },
+        "sequenceScope": {
+          "enum": [
+            "STREAM",
+            "ACCOUNT",
+            "PRODUCER",
+            "GLOBAL",
+            "UNKNOWN"
+          ]
+        },
+        "gapDetection": {
+          "enum": [
+            "DOCUMENTED",
+            "PARTIAL",
+            "UNAVAILABLE",
+            "UNKNOWN"
+          ]
+        },
+        "resetBehavior": {
+          "enum": [
+            "DOCUMENTED",
+            "UNAVAILABLE",
+            "UNKNOWN"
+          ]
+        },
+        "duplicateDelivery": {
+          "enum": [
+            "DOCUMENTED",
+            "POSSIBLE",
+            "UNKNOWN"
+          ]
+        }
+      }
+    },
+    "correctionModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "semanticsStatus",
+        "targetIdentityField",
+        "lateCorrectionBehavior"
+      ],
+      "properties": {
+        "semanticsStatus": {
+          "enum": [
+            "DOCUMENTED",
+            "UNSUPPORTED",
+            "PARTIAL",
+            "UNKNOWN"
+          ]
+        },
+        "targetIdentityField": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "lateCorrectionBehavior": {
+          "enum": [
+            "DOCUMENTED",
+            "UNSUPPORTED",
+            "UNKNOWN"
+          ]
+        }
+      }
+    },
+    "snapshotModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "atomicity",
+        "snapshotTokenField",
+        "paginationSemantics",
+        "recoverySemantics",
+        "retentionSemantics"
+      ],
+      "properties": {
+        "atomicity": {
+          "enum": [
+            "ATOMIC_SHARED",
+            "PER_FAMILY",
+            "NON_ATOMIC",
+            "NONE",
+            "UNKNOWN"
+          ]
+        },
+        "snapshotTokenField": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "paginationSemantics": {
+          "enum": [
+            "DOCUMENTED_EXHAUSTION",
+            "CURSOR_CHAIN",
+            "PAGE_COUNT",
+            "NO_PAGINATION",
+            "UNKNOWN"
+          ]
+        },
+        "recoverySemantics": {
+          "enum": [
+            "CURSOR_BACKFILL",
+            "SNAPSHOT_RESTART",
+            "FULL_RESCAN",
+            "NOT_AVAILABLE",
+            "UNKNOWN"
+          ]
+        },
+        "retentionSemantics": {
+          "enum": [
+            "DOCUMENTED",
+            "PARTIAL",
+            "UNKNOWN"
+          ]
+        }
+      }
+    },
+    "timeModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceTimeMeaning",
+        "sourceTimePrecision",
+        "timezoneSemantics",
+        "clockQuality"
+      ],
+      "properties": {
+        "sourceTimeMeaning": {
+          "enum": [
+            "EVENT_OCCURRENCE",
+            "PUBLICATION",
+            "SERVER_RECEIPT",
+            "MIXED",
+            "UNKNOWN"
+          ]
+        },
+        "sourceTimePrecision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "timezoneSemantics": {
+          "enum": [
+            "UTC",
+            "OFFSET_AWARE",
+            "PROFILE_DEFINED",
+            "UNKNOWN"
+          ]
+        },
+        "clockQuality": {
+          "enum": [
+            "DOCUMENTED",
+            "DEGRADED",
+            "UNKNOWN"
+          ]
+        }
+      }
+    },
+    "executionModel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "semanticsStatus",
+        "fieldMappings"
+      ],
+      "properties": {
+        "semanticsStatus": {
+          "enum": [
+            "DOCUMENTED",
+            "PARTIAL",
+            "UNKNOWN",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "fieldMappings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "semanticField",
+              "sourceField",
+              "unitRef",
+              "guarantee"
+            ],
+            "properties": {
+              "semanticField": {
+                "enum": [
+                  "ORDER_ID",
+                  "CLIENT_ORDER_ID",
+                  "EXECUTION_ID",
+                  "FILL_ID",
+                  "INSTRUMENT",
+                  "BASE_ASSET",
+                  "QUOTE_ASSET",
+                  "QUANTITY",
+                  "PRICE",
+                  "FEE",
+                  "FEE_ASSET",
+                  "LIQUIDITY_ROLE",
+                  "EXECUTION_TIME",
+                  "SETTLEMENT_STATE",
+                  "CORRECTION_REFERENCE",
+                  "OTHER"
+                ]
+              },
+              "sourceField": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1
+              },
+              "unitRef": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1
+              },
+              "guarantee": {
+                "enum": [
+                  "PROVIDER_GUARANTEED",
+                  "DOCUMENTED_BUT_CONDITIONAL",
+                  "OBSERVED_ONLY",
+                  "UNKNOWN",
+                  "NOT_EXPOSED"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "knownExclusions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "authorityBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canSetPrincipalAuthority",
+        "canSetAccountOwnership",
+        "containsCredentialMaterial"
+      ],
+      "properties": {
+        "canSetPrincipalAuthority": {
+          "const": false
+        },
+        "canSetAccountOwnership": {
+          "const": false
+        },
+        "containsCredentialMaterial": {
+          "const": false
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "DRAFT",
+              "REVIEWABLE"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "provider": {
+            "properties": {
+              "providerRef": {
+                "type": "string"
+              },
+              "productRef": {
+                "type": "string"
+              },
+              "environment": {
+                "enum": [
+                  "SANDBOX",
+                  "TEST",
+                  "PREPROD",
+                  "PRODUCTION"
+                ]
+              }
+            }
+          },
+          "documentationBasis": {
+            "minItems": 1
+          },
+          "protocol": {
+            "properties": {
+              "family": {
+                "not": {
+                  "const": "UNSELECTED"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
