@@ -4,75 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-  <title>Arb Agent — Wallet Companion</title>
+  <title>Arb Agent</title>
   <link rel="stylesheet" href="popup.css">
-  <script defer src="popup.js"></script>
 </head>
 <body>
   <main class="shell">
-    <header class="topbar">
-      <div class="brand">
-        <span class="brand-mark">A</span>
-        <span><strong>ARB AGENT</strong><small>WALLET INTELLIGENCE</small></span>
-      </div>
-      <span class="mode-pill"><span class="dot"></span> READ-ONLY</span>
-    </header>
-
-    <section class="intro">
-      <p class="eyebrow">CARDANO · WALLET COMPANION · W1</p>
-      <h1>Il tuo wallet.<br><em>Una vista più chiara.</em></h1>
-      <p>Collega un wallet Cardano presente nella scheda attiva. Le chiavi restano nel wallet: Arb esegue soltanto letture.</p>
-      <p id="active-origin" class="origin">Origine attiva: in attesa…</p>
-    </section>
-
-    <section class="panel" aria-labelledby="connection-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">01 / CONNECTION</p><h2 id="connection-title">Collega il wallet</h2></div>
-        <span class="step-number">01</span>
-      </div>
-      <label for="wallet-select">Provider CIP-30 rilevati nella scheda attiva</label>
-      <select id="wallet-select" aria-label="Seleziona wallet" disabled>
-        <option value="">Ricerca wallet…</option>
-      </select>
-      <button id="connect-button" class="primary" type="button" disabled>Connetti e leggi</button>
-      <div class="button-row">
-        <button id="refresh-button" class="secondary" type="button" disabled>Aggiorna lettura</button>
-        <button id="clear-button" class="quiet" type="button" disabled>Pulisci vista</button>
-      </div>
-      <p id="connection-status" class="status" role="status" aria-live="polite">La connessione avviene soltanto dopo il tuo clic e il consenso nel wallet.</p>
-    </section>
-
-    <section id="wallet-panel" class="panel wallet-panel" hidden aria-labelledby="wallet-title">
-      <div class="section-heading">
-        <div><p class="eyebrow">02 / WALLET SNAPSHOT</p><h2 id="wallet-title">Stato osservato</h2></div>
-        <span id="evidence-pill" class="evidence-pill">UNVERIFIED</span>
-      </div>
-      <div class="metric-grid">
-        <article class="metric"><span>RETE</span><strong id="network-value">—</strong><small id="network-detail">—</small></article>
-        <article class="metric"><span>UTXO WALLET</span><strong id="utxo-value">—</strong><small id="utxo-detail">—</small></article>
-      </div>
-      <div class="data-row"><span>Wallet provider</span><strong id="provider-value">—</strong></div>
-      <div class="data-row"><span>Change address (CBOR)</span><code id="address-value">—</code></div>
-      <div class="data-row"><span>Osservato alle</span><code id="observed-value">—</code></div>
-      <div class="subsection">
-        <div class="section-heading compact"><div><p class="eyebrow">RAW ASSET INVENTORY</p><h3>Quantità grezze</h3></div></div>
-        <p class="note">Unità grezze restituite dal wallet: nessun prezzo, controvalore, PnL o classificazione economica.</p>
-        <div id="asset-list" class="asset-list"><p class="muted">Nessuna lettura disponibile.</p></div>
-      </div>
-      <div class="notice">
-        <strong>Limiti della lettura</strong>
-        <ul>
-          <li>Il network ID 0 identifica una testnet, ma non distingue Preprod da Preview.</li>
-          <li>Gli UTxO restituiti riguardano il wallet, non le posizioni detenute da smart contract.</li>
-          <li>La lettura è non atomica e non prova identità del Principal, proprietà economica o completezza DeFi.</li>
-        </ul>
-      </div>
-    </section>
-
-    <footer>
-      <span>ARB AGENT / W1</span>
-      <span>NON-CUSTODIAL · NO SIGNING · NO SUBMISSION</span>
-    </footer>
+    <header class="brand"><span class="mark">A</span><span><strong>ARB AGENT</strong><small>WALLET INTELLIGENCE</small></span></header>
+    <p class="eyebrow">CARDANO · WALLET COMPANION</p>
+    <h1>Il tuo wallet.<br><em>Una vista più chiara.</em></h1>
+    <p class="copy">Apri l'applicazione Arb Agent sul suo sito dedicato. Lace verrà richiesto direttamente da Arb, non dalla pagina che stai visitando.</p>
+    <a class="launch" href="https://liberonuvola.github.io/PRE-RICH-AEP-Arb-Agent/app/" target="_blank" rel="noopener noreferrer">Apri Arb Agent <span aria-hidden="true">↗</span></a>
+    <p class="foot">NON-CUSTODIAL · W1 READ-ONLY<br>Le chiavi restano in Lace.</p>
   </main>
 </body>
 </html>

@@ -85,10 +85,12 @@ The static UI in `app/` composes the existing W1 port and the existing CBOR valu
 This is an initial PWA-style shell (manifest and service worker), not a deployment or security certification. Browser-specific installation eligibility and compatibility with every wallet/browser have not yet been verified. The next gate is local browser verification with a real CIP-30 wallet, followed by a controlled hosted test. Exact Preprod/Preview binding and W2's live observer remain unresolved; no live DeFi or economic projection is presented.
 
 
-## 8. Chromium extension pilot (2026-11-04)
 
-A Manifest V3 browser extension now packages the W1 desktop interaction in a toolbar popup. Its source lives in browser-extension/; npm run build:extension creates a self-contained unpacked folder and ZIP in dist/. The bundle is generated from the existing W1 CIP-30 port and the existing Cardano Value CBOR decoder; the source modules remain authoritative.
 
-The extension requests only activeTab and scripting, with no persistent host permissions. On popup use it injects a short-lived main-world bridge into the active tab because CIP-30's window.cardano namespace is injected into webpages, not assumed on an extension origin. The popup calls only discovery and the W1 read-only snapshot operation. The bridge is removed after each request; no wallet snapshot is stored by the extension.
+## 8. First-party dApp launch boundary (2026-11-04)
 
-This design has an explicit origin caveat: enable() is called from the active page's origin, which is the origin the wallet may display as the requesting dApp. The active site can potentially inspect page-scoped wallet API activity and data after authorization. The local pilot must be used only on trusted origins; a dedicated Arb Agent origin and a separate threat-model review are required before public distribution. Real-wallet popup permission behavior has not yet been verified. The ZIP is not a signed Web Store package.
+The desktop extension is now a no-permission Manifest V3 launcher. It no longer injects scripts into the active tab and cannot make Lace connection requests from arbitrary websites. It opens the Arb Agent dApp at the repository's GitHub Pages project URL; the page itself uses window.cardano and the existing W1 CIP-30 read-only port after an explicit user click. The extension manifest contains no permissions, host permissions, service worker or background script.
+
+The static deployment is built from app/ plus the two existing wallet-companion modules required by the page. It does not reimplement wallet semantics. A Pages deployment workflow publishes the site from the Immortal-Protocol branch.
+
+Origin limitation: standard GitHub Pages project sites for the account share the same liberonuvola.github.io origin even though the application has a repository-specific path. This is not full browser origin isolation. The source and page content are controlled by this repository and the launcher no longer executes on third-party pages, but a dedicated custom domain/subdomain should be configured before broad production use or any future signing capability. CI remains synthetic; it does not authorize or connect Lace.
