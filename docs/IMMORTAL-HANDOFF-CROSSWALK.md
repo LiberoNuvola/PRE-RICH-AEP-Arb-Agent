@@ -323,3 +323,14 @@ The initial candidate maps account.status to balance snapshots; outboundAccountP
 **Coverage constraints:** account/order/trade families have separate queries and timestamps; no atomic cross-family snapshot is documented. Order/trade history queries have a 24-hour maximum time interval; myTrades has a maximum page size of 1000 and fromId/time filters are mutually exclusive. Some historical cumulative quote quantities may be unavailable. Coverage must therefore be per-family/per-query, with explicit query bounds and terminal pagination evidence.
 
 **Non-regression:** documentation only. No provider client, signature code, credential, account connection, schema/reducer change, verifier, economic rule, EEV, ProtectedCapital, RiskBudget, netting, authority or actuator. S1 remains synthetic/read-only; provider selection and conformance remain OPEN; D0/D1 and independent review remain OPEN; S2/S3 unauthorized.
+
+
+## 15. Provider observation reconciliation contract — 2026-11-04
+
+The [Provider Observation Reconciliation Contract v0.1](OBSERVATION-RECONCILIATION-CONTRACT-v0.1.md) defines adapter-level reconciliation for multiple immutable ObservationRecords that describe one provider fact. For the Binance Spot candidate, the trade identity key is `(providerProfileRef, accountScopeRef, symbol, tradeId)`; order ID, execution ID and event ID remain distinct.
+
+REST and stream observations retain separate raw references and digests. Digest inequality alone is not a conflict. MATCHED requires complete scoped identity and agreement on comparable trade fields; missing fields are INCOMPLETE and disagreement is CONFLICTED. Only MATCHED may emit one derived trade projection referencing every contributing observation.
+
+The existing `projectOrderLifecycle` exact-digest replay rule is unchanged. The adapter must reconcile provider-specific REST/stream observations before passing one fill projection to the generic reducer. This reconciliation is not yet implemented.
+
+**Non-regression:** design documentation only; no parser/client, schema/reducer, verifier, authority, economic rule or actuator. S1 remains synthetic/read-only; provider selection/conformance, D0/D1 and independent review remain OPEN; S2/S3 unauthorized.
