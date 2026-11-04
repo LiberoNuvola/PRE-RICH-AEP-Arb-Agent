@@ -69,9 +69,9 @@ Provider observation reconciliation boundary: [contract v0.1](docs/OBSERVATION-R
 
 ## W1 desktop launcher and hosted dApp
 
-The Brave/Chromium extension is a no-permission Manifest V3 launcher for the Arb Agent dApp. It does not inspect the active tab or inject scripts into unrelated pages. Lace's CIP-30 provider is discovered and enabled by the dApp itself, after the user's explicit click. Build the launcher with `npm run build:extension`; install the ZIP through `brave://extensions` → Developer mode → Load unpacked. See the [connection and origin notes](docs/BROWSER-EXTENSION-INSTALLATION.md).
+The Brave/Chromium extension is a no-permission Manifest V3 launcher for the first-party Arb Agent dApp. It does not inspect the active tab or inject scripts into unrelated pages. Lace's CIP-30 provider is discovered and enabled by the dApp itself, after the user's explicit click. Build the launcher with `npm run build:extension`; install the ZIP through `brave://extensions` → Developer mode → Load unpacked. See the [connection and deployment instructions](docs/BROWSER-EXTENSION-INSTALLATION.md).
 
-The static dApp is built with `npm run build:pages`; its Pages workflow is ready, but publication requires the repository owner to select **Settings → Pages → Build and deployment → Source: GitHub Actions** once. Standard GitHub Pages project paths share the account hostname origin and are not separate browser origins. Do not connect the main Lace wallet from that shared host; configure a dedicated custom domain/subdomain first.
+The dApp is prepared for Cloudflare Pages Git integration: project root `/`, build command `npm run build:pages`, output directory `dist/pages`, production branch `Immortal-Protocol`. Cloudflare assigns a dedicated `<project>.pages.dev` HTTPS hostname; the launcher must be updated with the actual chosen hostname after the Pages project is created. Do not connect Lace to the shared GitHub Pages project origin.
 
 ## W1 PWA shell
 

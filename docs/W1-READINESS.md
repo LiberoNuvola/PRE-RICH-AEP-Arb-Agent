@@ -87,10 +87,12 @@ This is an initial PWA-style shell (manifest and service worker), not a deployme
 
 
 
-## 8. First-party dApp launch boundary (2026-11-04)
 
-The desktop extension is now a no-permission Manifest V3 launcher. It no longer injects scripts into the active tab and cannot make Lace connection requests from arbitrary websites. It opens the Arb Agent dApp at the repository's GitHub Pages project URL; the page itself uses window.cardano and the existing W1 CIP-30 read-only port after an explicit user click. The extension manifest contains no permissions, host permissions, service worker or background script.
 
-The static deployment is built from app/ plus the two existing wallet-companion modules required by the page. It does not reimplement wallet semantics. A Pages deployment workflow publishes the site from the Immortal-Protocol branch.
+## 8. First-party dApp launcher and Cloudflare Pages preparation (2026-11-04)
 
-Origin limitation: standard GitHub Pages project sites for the account share the same liberonuvola.github.io origin even though the application has a repository-specific path. This is not full browser origin isolation. The source and page content are controlled by this repository and the launcher no longer executes on third-party pages, but a dedicated custom domain/subdomain should be configured before broad production use or any future signing capability. CI remains synthetic; it does not authorize or connect Lace.
+The desktop extension is a no-permission Manifest V3 launcher. It does not inspect the active tab and does not inject scripts into third-party pages. It opens the separately hosted Arb Agent dApp; the page itself accesses window.cardano and uses the existing W1 CIP-30 read-only port after an explicit user click.
+
+The source is prepared for Cloudflare Pages Git integration: root /, build command npm run build:pages, output directory dist/pages, production branch Immortal-Protocol. A dedicated project hostname <project>.pages.dev is preferred to the shared GitHub Pages account hostname. The project is not yet provisioned: the repository owner must create it in a Cloudflare account, scope GitHub access to this repository, run the first deployment, and provide the exact production URL. The extension launcher must then be updated and rebuilt with that verified URL.
+
+The former GitHub Pages workflow was removed because the repository Pages site was not enabled and the workflow's default token could not configure it. No wallet authorization is performed by CI. The Cloudflare hostname and deployed content must be verified before connecting Lace.

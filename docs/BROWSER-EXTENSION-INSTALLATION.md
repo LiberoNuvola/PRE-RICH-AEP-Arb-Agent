@@ -1,45 +1,48 @@
 # Arb Agent — Brave + Lace W1 wallet companion
 
 **Desktop target:** Brave + Lace  
-**Extension:** Manifest V3 launcher, version 0.2.0  
+**Extension:** Manifest V3 launcher  
 **Wallet integration:** existing W1 read-only CIP-30 dApp  
-**Status:** project site deployment; synthetic CI only, no live-wallet authorization by CI
+**Hosting target:** Cloudflare Pages project hostname (`<project>.pages.dev`)  
+**Status:** source prepared; Pages project still needs to be created in the user's Cloudflare account
 
-## Connection model
+## Why a dedicated Pages hostname
 
-CIP-30 is a webpage-based dApp-wallet bridge. Lace injects its provider as `window.cardano.lace` into webpages; a dApp requests access by calling `enable()`. The extension itself must not request Lace access from an arbitrary active tab.
+CIP-30 is a webpage-based dApp-wallet bridge. Lace injects its provider as `window.cardano.lace` into webpages; a dApp requests access by calling `enable()`. The extension must not request Lace access from an arbitrary active tab.
 
-The browser extension is only a launcher. It has no permissions, does not inspect the active tab, and does not inject code into unrelated sites. It opens:
+A static Cloudflare Pages project gets its own `<project>.pages.dev` hostname over HTTPS. This avoids using the shared GitHub Pages account hostname. Choose a project name dedicated to Arb Agent, for example `arb-agent-liberonuvola` if available. The resulting URL is not guessed or assumed; copy the actual production hostname from Cloudflare after first deployment.
 
-`https://liberonuvola.github.io/PRE-RICH-AEP-Arb-Agent/app/`
+## One-time Cloudflare setup
 
-The Arb Agent page discovers `window.cardano` and calls the existing W1 read-only port only after the user presses Connect. Lace should identify the Arb Agent page as the requesting dApp.
+1. Create a Cloudflare account at https://dash.cloudflare.com/ (the Pages Free plan is sufficient for this static pilot).
+2. Open **Workers & Pages → Create application → Pages → Connect to Git**.
+3. Authorize Cloudflare Pages to access only the GitHub repository `LiberoNuvola/PRE-RICH-AEP-Arb-Agent`.
+4. Choose branch `Immortal-Protocol` as the production branch.
+5. Configure the build:
+   - Framework preset: None
+   - Root directory: `/`
+   - Build command: `npm run build:pages`
+   - Build output directory: `dist/pages`
+6. Save and deploy. Cloudflare will assign the project a `<project>.pages.dev` hostname. Enable/confirm HTTPS and copy the exact production URL.
 
-## Install in Brave
+Cloudflare's Git integration builds and deploys after pushes to the configured production branch. Keep Cloudflare's GitHub app access limited to this repository.
+
+## After the first deployment
+
+The exact Pages hostname is a required input for the next repository update. The launcher URL and the deployment/readiness record must be pinned to the actual hostname, then the updated ZIP must be rebuilt and installed in Brave. Do not connect Lace through the old GitHub Pages URL.
+
+## Install the Brave launcher
 
 1. Extract `arb-agent-chromium.zip` into a permanent folder.
 2. Open `brave://extensions`.
 3. Enable Developer mode.
-4. Select Load unpacked and choose the extracted folder containing `manifest.json`.
-5. Pin Arb Agent and click its toolbar icon.
+4. Select **Load unpacked** and choose the extracted folder containing `manifest.json`.
+5. Pin Arb Agent and click its toolbar icon to open the dedicated dApp.
 
-The extension manifest has no permissions, host permissions, background scripts, content scripts or service worker.
+The launcher has no browser permissions, host permissions, background scripts, content scripts or service worker. It does not inspect the active tab, inject scripts into third-party sites or talk directly to Lace.
 
-## GitHub Pages origin limitation
-
-The app is deployed at a project-specific path. Standard GitHub Pages project sites for the same account share the `liberonuvola.github.io` hostname origin. A different URL path is not a separate browser origin. The app source and deploy are controlled by this repository, and the launcher no longer executes inside a third-party page; however, before broad production use or any future signing capability, configure a dedicated custom domain/subdomain for stronger origin isolation.
-
-Before approving a Lace prompt, verify that the requesting site is the expected Arb Agent Pages site. Do not approve prompts on unrelated websites.
-
-## W1 boundary and remaining checks
+## W1 boundary
 
 The dApp calls only `enable()`, `getNetworkId()`, `getChangeAddress()`, `getBalance()` and `getUtxos()`. No signing, submission, API/RPC, indexer, exchange, credentials, seed phrase or private-key handling is implemented. CIP-30 network ID 0 does not distinguish Preprod from Preview.
 
 CI uses mocked providers; it does not connect Lace. Real Brave + Lace permission and read-only behavior must still be tested manually. The extension ZIP is not a signed Web Store package.
-
-
-## Deployment blocker and required owner setting
-
-The static Pages build step passed, but the first deploy attempt stopped at Configure GitHub Pages because this repository has no Pages site configured yet. The default GITHUB_TOKEN cannot create/enable the Pages site; the action's enablement mode requires a separate PAT or GitHub App with administration:write and pages:write. The safe one-time setup is for the repository owner to open Settings → Pages → Build and deployment → Source and select GitHub Actions. Then run the Arb Agent dApp Pages workflow.
-
-Do not connect the main Lace wallet to the default GitHub Pages project URL: project sites under this account share the liberonuvola.github.io origin. Before wallet authorization, use a custom domain/subdomain dedicated to Arb Agent, update the launcher and Pages CNAME/configuration, and verify HTTPS plus the exact requesting origin.
