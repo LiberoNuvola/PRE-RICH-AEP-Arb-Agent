@@ -6,8 +6,12 @@ test('Chromium extension is a no-permission launcher for the Arb dApp URL',async
  const [m,h,i]=await Promise.all([read('../dist/arb-agent-chromium/manifest.json'),read('../dist/arb-agent-chromium/popup.html'),read('../dist/arb-agent-chromium/INSTALL.txt')]);
  const manifest=JSON.parse(m);assert.equal(manifest.manifest_version,3);assert.equal(manifest.action.default_popup,'popup.html');
  assert.equal(Object.hasOwn(manifest,'permissions'),false);assert.equal(Object.hasOwn(manifest,'host_permissions'),false);
- assert.match(h,/https:\/\/liberonuvola\.github\.io\/PRE-RICH-AEP-Arb-Agent\/app\//);assert.match(h,/target="_blank"/);assert.match(h,/rel="noopener noreferrer"/);assert.doesNotMatch(h,/<script\b/);
- assert.match(i,/launcher only/);assert.match(i,/custom isolated Arb Agent domain/);
+ assert.match(h,/Connessione non ancora attivata/);
+ assert.match(h,/Cloudflare Pages/);
+ assert.doesNotMatch(h,/github\\.io|pages\\.dev|target="_blank"/);
+ assert.doesNotMatch(h,/<script\\b/);
+ assert.match(i,/safe placeholder launcher/);
+ assert.match(i,/verified dedicated Cloudflare Pages project URL/);
 });
 test('hosted dApp build includes the existing W1 module and decoder',async()=>{
  const [h,m,p,d]=await Promise.all([read('../dist/pages/app/index.html'),read('../dist/pages/app/main.js'),read('../dist/pages/wallet-companion/cip30-read-only.js'),read('../dist/pages/wallet-companion/minswap-v2-position-link.js')]);

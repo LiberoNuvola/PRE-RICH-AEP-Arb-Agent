@@ -11,10 +11,8 @@ await rm(dist,{recursive:true,force:true});await mkdir(folder,{recursive:true});
 for(const n of ['manifest.json','popup.html','popup.css'])await writeFile(path.join(folder,n),await readFile(path.join(source,n)));
 await writeFile(path.join(folder,'INSTALL.txt'),[
 'ARB AGENT — BRAVE / CHROMIUM WALLET COMPANION','','Extract this ZIP, open brave://extensions, enable Developer mode, and choose Load unpacked.',
-'Select the extracted folder containing manifest.json.','','The extension is a launcher only. It requests no browser permissions and does not inspect',
-'the active tab or inject scripts into unrelated websites. It opens the Arb Agent dApp URL.',
-'The dApp itself uses the existing W1 read-only CIP-30 port.','','The GitHub Pages project URL uses the account pages hostname. Other project sites under that',
-'same hostname share the browser origin; a custom isolated Arb Agent domain is recommended',
-'before broad production use or any future signing feature.',''
+'Select the extracted folder containing manifest.json.','','The extension is currently a safe placeholder launcher. It requests no browser permissions,',
+'does not inspect the active tab, inject scripts, open another site, or request wallet access.',
+'It will be linked to the verified dedicated Cloudflare Pages project URL after deployment.',''
 ].join('\n'),'utf8');
 await zip(folder,path.join(dist,'arb-agent-chromium.zip'));console.log('Built dist/arb-agent-chromium.zip');

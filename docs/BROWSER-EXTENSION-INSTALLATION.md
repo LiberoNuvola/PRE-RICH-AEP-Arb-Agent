@@ -46,3 +46,8 @@ The launcher has no browser permissions, host permissions, background scripts, c
 The dApp calls only `enable()`, `getNetworkId()`, `getChangeAddress()`, `getBalance()` and `getUtxos()`. No signing, submission, API/RPC, indexer, exchange, credentials, seed phrase or private-key handling is implemented. CIP-30 network ID 0 does not distinguish Preprod from Preview.
 
 CI uses mocked providers; it does not connect Lace. Real Brave + Lace permission and read-only behavior must still be tested manually. The extension ZIP is not a signed Web Store package.
+
+
+## Current safe state
+
+The current extension popup intentionally does not contain a destination URL and cannot initiate wallet access. Do not reuse an older ZIP that points to the GitHub Pages project path. After the Cloudflare project has been created, its exact hostname will be written into the launcher, the ZIP will be rebuilt, and the old extension package will be replaced in Brave.

@@ -8,3 +8,5 @@ h1{margin:0 0 13px;font:500 34px/.99 Georgia,serif;letter-spacing:-.04em}h1 em{c
 .copy{margin:0;color:var(--muted);font-size:12px;line-height:1.6}
 .launch{display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding:13px 14px;border-radius:9px;background:var(--accent);color:#102019;text-decoration:none;font-size:12px;font-weight:750}
 .launch:hover{background:var(--accent2)}.foot{margin:16px 0 0;color:#72877a;font-size:8px;letter-spacing:.12em;line-height:1.7}
+
+.status{margin-top:18px;padding:13px;border:1px solid #51452e;border-radius:9px;background:#211f17;color:#d7c8a8;font-size:11px;line-height:1.55}.status strong,.status span{display:block}.status span{margin-top:5px;color:#b8aa8c}
