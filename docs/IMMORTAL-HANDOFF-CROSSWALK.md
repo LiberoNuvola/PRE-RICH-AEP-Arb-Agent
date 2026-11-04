@@ -299,3 +299,14 @@ Findings:
 - The remaining candidate contribution is provider-specific read-only account/trading lifecycle collection, correction handling, per-family coverage and cross-family reconciliation, with no netting, valuation, economic admission or actuation.
 
 **Non-regression:** no schema, application code, IMMORTAL economic rule, EEV policy, ProtectedCapital partition, RiskBudget, verifier registry or authority was changed. S1 remains synthetic/read-only; D0/D1 and independent review remain OPEN; S2/S3 remain unauthorized.
+
+
+## 13. Official provider API candidate assessment — 2026-11-04
+
+The [Provider API Candidate Assessment](PROVIDER-API-CANDIDATE-ASSESSMENT-2026-11-04.md) compares official Binance Spot/Margin, Kraken Spot and Coinbase Advanced Trade documentation.
+
+**Provisional recommendation:** Binance Spot is the first synthetic profile candidate because its official documentation exposes a useful first lifecycle slice across account balances, orders, trades/fills, commissions and private user-data events; its permission model distinguishes USER_DATA from TRADE. Margin borrow/repay and interest are documented separately and are deliberately deferred to a distinct follow-on profile.
+
+This is not a provider selection, implementation approval or conformance claim. The assessment records endpoint-specific history windows, pagination, lack of established cross-family atomic snapshots, and product-family exclusions. Kraken remains a strong historical-ledger/export comparator; Coinbase Advanced Trade remains a useful orders/fills/WebSocket comparator.
+
+**Non-regression:** documentation only; no schema, reducer, provider client, credential, account connection, IMMORTAL contract, EXP semantics, economic gate, verifier, authority or actuator changed. S1 remains synthetic/read-only; D0/D1 and independent review remain OPEN; S2/S3 remain unauthorized.
