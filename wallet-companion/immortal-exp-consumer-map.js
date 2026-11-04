@@ -165,25 +165,32 @@ function validateW2Result(w2) {
   }
 
   const acquisition = pool.acquisitionEvidence
-  if (!isRecord(acquisition) ||
-      acquisition.endpoint !== '/asset_utxos' ||
-      acquisition.extended !== true ||
-      acquisition.addressFilter !== EXPECTED_POOL_ADDRESS ||
-      acquisition.exactAssetFilter?.policyId?.toLowerCase() !== EXPECTED_USDM_UNIT.slice(0, 56) ||
-      acquisition.exactAssetFilter?.assetNameHex?.toLowerCase() !== EXPECTED_USDM_UNIT.slice(56) ||
-      !isRecord(acquisition.pagination) ||
-      acquisition.pagination.complete !== true ||
-      !Number.isSafeInteger(acquisition.pagination.pageSize) ||
-      acquisition.pagination.pageSize <= 0 ||
-      !Number.isSafeInteger(acquisition.pagination.pageCount) ||
-      acquisition.pagination.pageCount <= 0 ||
-      !Array.isArray(acquisition.requestEvidence) ||
-      acquisition.pagination.pageCount !== acquisition.requestEvidence.length ||
-      !isRecord(acquisition.validatorIdentityCheck) ||
-      acquisition.validatorIdentityCheck.expectedPaymentCredential !== EXPECTED_POOL_SCRIPT_HASH ||
-      acquisition.validatorIdentityCheck.invalidRows !== 0 ||
-      acquisition.validatorIdentityCheck.validatedRows !== acquisition.pagination.returnedUtxoCount) {
-    throw new ImmortalConsumerMappingError('W2_POOL_ACQUISITION_SCOPE_INVALID', 'W2 Koios query scope, validator identity or pagination does not match the pinned Minswap profile')
+  const acquisitionErrors = []
+  if (!isRecord(acquisition)) acquisitionErrors.push('acquisitionEvidence')
+  else {
+    if (acquisition.endpoint !== '/asset_utxos') acquisitionErrors.push('endpoint')
+    if (acquisition.extended !== true) acquisitionErrors.push('extended')
+    if (acquisition.addressFilter !== EXPECTED_POOL_ADDRESS) acquisitionErrors.push('addressFilter')
+    if (acquisition.exactAssetFilter?.policyId?.toLowerCase() !== EXPECTED_USDM_UNIT.slice(0, 56)) acquisitionErrors.push('exactAssetFilter.policyId')
+    if (acquisition.exactAssetFilter?.assetNameHex?.toLowerCase() !== EXPECTED_USDM_UNIT.slice(56)) acquisitionErrors.push('exactAssetFilter.assetNameHex')
+    if (!isRecord(acquisition.pagination)) acquisitionErrors.push('pagination')
+    else {
+      if (acquisition.pagination.complete !== true) acquisitionErrors.push('pagination.complete')
+      if (!Number.isSafeInteger(acquisition.pagination.pageSize) || acquisition.pagination.pageSize <= 0) acquisitionErrors.push('pagination.pageSize')
+      if (!Number.isSafeInteger(acquisition.pagination.pageCount) || acquisition.pagination.pageCount <= 0) acquisitionErrors.push('pagination.pageCount')
+      if (!Number.isSafeInteger(acquisition.pagination.returnedUtxoCount) || acquisition.pagination.returnedUtxoCount < 0) acquisitionErrors.push('pagination.returnedUtxoCount')
+    }
+    if (!Array.isArray(acquisition.requestEvidence)) acquisitionErrors.push('requestEvidence')
+    else if (acquisition.pagination?.pageCount !== acquisition.requestEvidence.length) acquisitionErrors.push('requestEvidence.pageCount')
+    if (!isRecord(acquisition.validatorIdentityCheck)) acquisitionErrors.push('validatorIdentityCheck')
+    else {
+      if (acquisition.validatorIdentityCheck.expectedPaymentCredential !== EXPECTED_POOL_SCRIPT_HASH) acquisitionErrors.push('validatorIdentityCheck.expectedPaymentCredential')
+      if (acquisition.validatorIdentityCheck.invalidRows !== 0) acquisitionErrors.push('validatorIdentityCheck.invalidRows')
+      if (acquisition.validatorIdentityCheck.validatedRows !== acquisition.pagination?.returnedUtxoCount) acquisitionErrors.push('validatorIdentityCheck.validatedRows')
+    }
+  }
+  if (acquisitionErrors.length > 0) {
+    throw new ImmortalConsumerMappingError('W2_POOL_ACQUISITION_SCOPE_INVALID', 'W2 Koios query scope is invalid: ' + acquisitionErrors.join(', '))
   }
 
   for (const request of acquisition.requestEvidence) {
