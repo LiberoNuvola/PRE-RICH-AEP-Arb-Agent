@@ -85,13 +85,14 @@ The existing full S1 code/schema/negative-claim baseline remains run #29 (38 Nod
 
 ## 2026-11-04 — W1/W2/W3 integrated S1 conformance
 
-**Latest full run:** [S1 Read-only Conformance — success](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41777123475)  
-**Commit:** [aec90afabc37bcd39a77fb628bd3d57f67f7e3d3](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/commit/aec90afabc37bcd39a77fb628bd3d57f67f7e3d3)
+**Latest full run for the W3 hardened consumer mapper:** [S1 Read-only Conformance — success](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41777844296)  
+**Tested commit:** [298d5c974a0ef3180404aaf704e5fdf00751b05e](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/commit/298d5c974a0ef3180404aaf704e5fdf00751b05e)
 
-- **73 Node tests passed / 0 failed**.
+- **77 Node tests passed / 0 failed**.
 - 9 synthetic JSON documents passed schema validation.
 - 2 replay checkpoint checks and 6 negative evidence-claim checks passed.
 - Static no-actuation checks passed across src/ and wallet-companion/.
-- W3 tests verify exact identity-only EXP-03 mapping, unverified EXP-06 provenance, no inferred RiskBudget/exposure/ProtectedCapital under EXP-10, no UniversalEconomicState zero fallback and no Economic Gate invocation.
+- The W3 tests reject wrong wallet network/provider, wrong Minswap query scope, malformed response digests, non-USDM pool pairs and conflicted envelopes with matches.
+- W3 does not infer EXP-03 eligibility/valuation/haircut, EXP-06 independent verification/currentness or EXP-10 RiskBudget/exposure. It does not invoke UniversalEconomicState or the Economic Gate.
 
 This is synthetic read-only conformance evidence. No live wallet, Koios request, provider/account connection, transaction or economic admission was exercised. It does not close EXP-03/06/10, D0/D1 or S2/S3 readiness.
