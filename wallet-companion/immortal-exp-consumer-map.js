@@ -10,6 +10,11 @@
 const W2_SCHEMA = 'arb.cardano.minswap-v2-wallet-link.v1'
 const W2_CLASSIFICATION = 'WALLET_LP_ASSET_TO_POOL_IDENTITY_LINK_NOT_ECONOMIC_POSITION_VERIFICATION'
 const W2_POOL_CLASSIFICATION = 'WALLET_BALANCE_ASSERTION_MATCHES_POOL_SPECIFIC_LP_ASSET'
+const W2_CONFLICT_CLASSIFICATION = 'CONFLICTED_SOURCE_ASSERTIONS'
+const EXPECTED_USDM_UNIT = 'c48cbb3d5e57ed56e276bc45f99ab39abe94e6cd7ac39fb402da47ad0014df105553444d'
+const EXPECTED_POOL_ADDRESS = 'addr1z84q0denmyep98ph3tmzwsmw0j7zau9ljmsqx6a4rvaau66j2c79gy9l76sdg0xwhd7r0c0kna0tycz4y5s6mlenh8pq777e2a'
+const EXPECTED_POOL_SCRIPT_HASH = 'ea07b733d932129c378af627436e7cbc2ef0bf96e0036bb51b3bde6b'
+const EXPECTED_LP_POLICY_ID = 'f5808c2c990d86da54bfc97d89cee6efa20cd8461616359478d96b4c'
 const IMMORTAL_OBSERVER = Object.freeze({
   repository: 'LiberoNuvola/Immortal-Protocol',
   branch: 'work/immortal-green-closure',
@@ -33,6 +38,20 @@ function isRecord(value) {
 
 function nonEmpty(value) {
   return typeof value === 'string' && value.trim().length > 0
+}
+
+function isOffsetDateTime(value) {
+  if (typeof value !== 'string' ||
+      !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$/.test(value)) {
+    return false
+  }
+  return Number.isFinite(Date.parse(value))
+}
+
+function requireExact(value, expected, code, label) {
+  if (value !== expected) {
+    throw new ImmortalConsumerMappingError(code, label + ' does not match the pinned W2 profile')
+  }
 }
 
 function assetIdentity(value, label) {
@@ -64,11 +83,22 @@ function assetIdentity(value, label) {
 }
 
 function validateW2Result(w2) {
+  const isConflict = isRecord(w2) &&
+    w2.status === 'CONFLICTED_WALLET_BALANCE_VS_EMPTY_UTXO_RESPONSE'
   if (!isRecord(w2) ||
       w2.schemaVersion !== W2_SCHEMA ||
-      w2.classification !== W2_CLASSIFICATION ||
+      (w2.classification !== W2_CLASSIFICATION &&
+        !(isConflict && w2.classification === W2_CONFLICT_CLASSIFICATION)) ||
       w2.network !== 'cardano-mainnet' ||
-      !nonEmpty(w2.status) ||
+      ![
+        'LP_ASSET_LINKED_TO_OBSERVED_POOL',
+        'PARTIAL_LINKED_WITH_REJECTIONS',
+        'AMBIGUOUS_POOL_IDENTITY',
+        'PARTIAL_WITH_AMBIGUOUS_POOL_IDENTITY',
+        'WALLET_LP_ASSET_WITHOUT_QUALIFIED_OBSERVED_POOL',
+        'NO_MATCHING_WALLET_LP_ASSET_IN_OBSERVED_USDM_POOL_SET',
+        'CONFLICTED_WALLET_BALANCE_VS_EMPTY_UTXO_RESPONSE',
+      ].includes(w2.status) ||
       !Array.isArray(w2.matchedPositions) ||
       !isRecord(w2.walletSource) ||
       !isRecord(w2.poolSource) ||
@@ -76,11 +106,101 @@ function validateW2Result(w2) {
     throw new ImmortalConsumerMappingError('W2_RESULT_INVALID', 'Input is not a supported W2 Minswap V2 Mainnet identity-link result')
   }
 
+  if (isConflict && w2.matchedPositions.length !== 0) {
+    throw new ImmortalConsumerMappingError('W2_CONFLICT_HAS_MATCHES', 'A conflicted W2 wallet snapshot cannot contain matched positions')
+  }
+
   if (w2.observerSource.schema !== IMMORTAL_OBSERVER.schema ||
       w2.observerSource.commitSha !== IMMORTAL_OBSERVER.commitSha ||
       w2.observerSource.blobSha !== IMMORTAL_OBSERVER.blobSha ||
       w2.observerSource.path !== IMMORTAL_OBSERVER.path) {
     throw new ImmortalConsumerMappingError('IMMORTAL_OBSERVER_PIN_MISMATCH', 'W2 observer source is not the reviewed IMMORTAL observer version')
+  }
+
+  const wallet = w2.walletSource
+  requireExact(wallet.bridge, 'CIP-30', 'W2_WALLET_BRIDGE_MISMATCH', 'walletSource.bridge')
+  if (wallet.networkId !== 1 ||
+      !nonEmpty(wallet.walletName) ||
+      !isOffsetDateTime(wallet.observedAt) ||
+      wallet.consistency !== 'NON_ATOMIC_CROSS_METHOD_OBSERVATION') {
+    throw new ImmortalConsumerMappingError('W2_WALLET_CONTEXT_INVALID', 'W2 wallet source is not a consistent CIP-30 Mainnet read assertion')
+  }
+  const walletAssertion = wallet.sourceAssertion
+  if (!isRecord(walletAssertion) ||
+      walletAssertion.schemaVersion !== 'arb.cardano.wallet-read.v1' ||
+      walletAssertion.evidenceClass !== 'SOURCE_ASSERTION_UNVERIFIED' ||
+      walletAssertion.sourceOperation !== 'CIP30_GETBALANCE' ||
+      walletAssertion.sourceReference !== 'CIP-30:getBalance' ||
+      !nonEmpty(walletAssertion.evidenceVersion) ||
+      walletAssertion.verificationStatus !== 'UNVERIFIED' ||
+      walletAssertion.rawBalanceCborIncludedInLinkResult !== false ||
+      walletAssertion.fingerprintStability !== 'CHECKED_BEFORE_AND_AFTER_READ' ||
+      (walletAssertion.evidenceDigest !== null &&
+        !/^[0-9a-f]{64}$/i.test(String(walletAssertion.evidenceDigest))) ||
+      (walletAssertion.observationReference !== null &&
+        !nonEmpty(walletAssertion.observationReference))) {
+    throw new ImmortalConsumerMappingError('W2_WALLET_SOURCE_ASSERTION_INVALID', 'W2 wallet source assertion does not preserve the reviewed CIP-30 provenance boundary')
+  }
+
+  const utxoCoverage = wallet.utxoCoverage
+  if (!isRecord(utxoCoverage) ||
+      !['EXHAUSTIVE_RESPONSE_EMPTY', 'EXHAUSTIVE_RESPONSE_NONEMPTY'].includes(utxoCoverage.status) ||
+      utxoCoverage.scope !== 'UTXOS_CONTROLLED_BY_CONNECTED_WALLET' ||
+      utxoCoverage.pagination !== 'NOT_USED' ||
+      !Number.isSafeInteger(utxoCoverage.returnedCount) ||
+      utxoCoverage.returnedCount < 0 ||
+      (utxoCoverage.status === 'EXHAUSTIVE_RESPONSE_EMPTY') !== (utxoCoverage.returnedCount === 0)) {
+    throw new ImmortalConsumerMappingError('W2_WALLET_COVERAGE_INVALID', 'W2 wallet UTxO coverage is not a valid exhaustive CIP-30 response')
+  }
+
+  const pool = w2.poolSource
+  requireExact(pool.provider, 'Koios', 'W2_POOL_PROVIDER_MISMATCH', 'poolSource.provider')
+  requireExact(pool.currentness, 'KOIOS_CURRENT_ASSET_UTXO_QUERY_WITHOUT_EXPLICIT_TIP_BINDING', 'W2_POOL_CURRENTNESS_UNKNOWN', 'poolSource.currentness')
+  if (pool.walletAndPoolReadsAtomic !== false ||
+      pool.paginationComplete !== true ||
+      !isOffsetDateTime(pool.startedAt) ||
+      !isOffsetDateTime(pool.completedAt) ||
+      Date.parse(pool.completedAt) < Date.parse(pool.startedAt)) {
+    throw new ImmortalConsumerMappingError('W2_POOL_OBSERVATION_CONTEXT_INVALID', 'W2 pool observation time, atomicity or pagination context is invalid')
+  }
+
+  const acquisition = pool.acquisitionEvidence
+  if (!isRecord(acquisition) ||
+      acquisition.endpoint !== '/asset_utxos' ||
+      acquisition.extended !== true ||
+      acquisition.addressFilter !== EXPECTED_POOL_ADDRESS ||
+      acquisition.exactAssetFilter?.policyId?.toLowerCase() !== EXPECTED_USDM_UNIT.slice(0, 56) ||
+      acquisition.exactAssetFilter?.assetNameHex?.toLowerCase() !== EXPECTED_USDM_UNIT.slice(56) ||
+      !isRecord(acquisition.pagination) ||
+      acquisition.pagination.complete !== true ||
+      !Number.isSafeInteger(acquisition.pagination.pageSize) ||
+      acquisition.pagination.pageSize <= 0 ||
+      !Number.isSafeInteger(acquisition.pagination.pageCount) ||
+      acquisition.pagination.pageCount <= 0 ||
+      !Array.isArray(acquisition.requestEvidence) ||
+      acquisition.pagination.pageCount !== acquisition.requestEvidence.length ||
+      !isRecord(acquisition.validatorIdentityCheck) ||
+      acquisition.validatorIdentityCheck.expectedPaymentCredential !== EXPECTED_POOL_SCRIPT_HASH ||
+      acquisition.validatorIdentityCheck.invalidRows !== 0 ||
+      acquisition.validatorIdentityCheck.validatedRows !== acquisition.pagination.returnedUtxoCount) {
+    throw new ImmortalConsumerMappingError('W2_POOL_ACQUISITION_SCOPE_INVALID', 'W2 Koios query scope, validator identity or pagination does not match the pinned Minswap profile')
+  }
+
+  for (const request of acquisition.requestEvidence) {
+    if (!isRecord(request) ||
+        request.status !== 200 ||
+        request.method !== 'POST' ||
+        !nonEmpty(request.url) ||
+        !/^[0-9a-f]{64}$/i.test(String(request.bodySha256 ?? '')) ||
+        request.digestAlgorithm !== 'SHA-256' ||
+        request.digestProducer !== 'IMMORTAL_MINSWAP_READ_ONLY_OBSERVER') {
+      throw new ImmortalConsumerMappingError('W2_POOL_REQUEST_EVIDENCE_INVALID', 'A Koios response digest or its provenance metadata is missing or malformed')
+    }
+  }
+
+  if (Number.isSafeInteger(pool.exactUsdmCandidateCount) &&
+      pool.exactUsdmCandidateCount < w2.matchedPositions.length) {
+    throw new ImmortalConsumerMappingError('W2_POOL_CANDIDATE_COUNT_INVALID', 'Matched positions exceed the exact-USDM observed candidate count')
   }
 
   const matches = w2.matchedPositions.map((link, index) => {
@@ -97,23 +217,39 @@ function validateW2Result(w2) {
     const lpAsset = assetIdentity(link.lpAsset, 'matchedPositions[' + index + '].lpAsset')
     const pairA = assetIdentity(link.poolIdentity.datumAssetA, 'matchedPositions[' + index + '].datumAssetA')
     const pairB = assetIdentity(link.poolIdentity.datumAssetB, 'matchedPositions[' + index + '].datumAssetB')
+    const tx = link.poolIdentity.transactionContext
+    const outRef = String(link.poolIdentity.utxoRef ?? '').toLowerCase()
+    const parts = outRef.split('#')
 
     if (lpAsset.kind !== 'CARDANO_NATIVE_ASSET' ||
+        lpAsset.policyId !== EXPECTED_LP_POLICY_ID ||
         link.walletBalance.unit !== lpAsset.unit ||
         link.walletBalance.source !== 'CIP30_GETBALANCE' ||
         link.walletBalance.sourceAssertion !== 'WALLET_API_REPORTED_AGGREGATE_BALANCE' ||
         !/^[1-9][0-9]*$/.test(String(link.walletBalance.quantityRaw)) ||
         link.poolIdentity.protocol !== 'MinswapV2' ||
         link.poolIdentity.network !== 'cardano-mainnet' ||
-        !nonEmpty(link.poolIdentity.utxoRef) ||
+        parts.length !== 2 ||
+        !/^[0-9a-f]{64}$/.test(parts[0]) ||
+        !/^(0|[1-9][0-9]*)$/.test(parts[1]) ||
         !/^[0-9a-f]{64}$/i.test(String(link.poolIdentity.datumHash ?? '')) ||
-        !nonEmpty(link.poolIdentity.inlineDatumCborHex) ||
+        !/^(?:[0-9a-f]{2})+$/i.test(String(link.poolIdentity.inlineDatumCborHex ?? '')) ||
+        !isOffsetDateTime(link.walletObservedAt) ||
+        !isOffsetDateTime(link.poolIdentity.sourceObserverCompletedAt) ||
+        link.poolIdentity.sourceCurrentness !== pool.currentness ||
+        !isRecord(tx) ||
+        String(tx.txHash ?? '').toLowerCase() !== parts[0] ||
+        !/^[0-9a-f]{64}$/i.test(String(tx.blockHash ?? '')) ||
+        !Number.isSafeInteger(tx.blockHeight) || tx.blockHeight <= 0 ||
+        !Number.isSafeInteger(tx.absoluteSlot) || tx.absoluteSlot <= 0 ||
+        !Number.isSafeInteger(tx.blockTime) || tx.blockTime <= 0 ||
+        (pairA.unit !== EXPECTED_USDM_UNIT && pairB.unit !== EXPECTED_USDM_UNIT) ||
         link.ownership.beneficialOwnership !== 'NOT_ESTABLISHED' ||
         link.ownership.principalBinding !== 'NOT_ESTABLISHED' ||
         link.economics.marketValue !== 'NOT_VALUED' ||
         link.economics.riskBudget !== 'NOT_DERIVED' ||
         link.economics.protectedCapital !== 'NOT_DERIVED') {
-      throw new ImmortalConsumerMappingError('W2_MATCH_SEMANTICS_INVALID', 'W2 link does not preserve its identity-only / non-economic classification')
+      throw new ImmortalConsumerMappingError('W2_MATCH_SEMANTICS_INVALID', 'W2 link does not preserve its exact Mainnet/USDM identity-only and non-economic classification')
     }
 
     return Object.freeze({
@@ -123,7 +259,7 @@ function validateW2Result(w2) {
       poolUtxoRef: link.poolIdentity.utxoRef,
       datumHash: String(link.poolIdentity.datumHash).toLowerCase(),
       inlineDatumCborHex: String(link.poolIdentity.inlineDatumCborHex).toLowerCase(),
-      transactionContext: link.poolIdentity.transactionContext ?? null,
+      transactionContext: link.poolIdentity.transactionContext,
       poolCurrentness: link.poolIdentity.sourceCurrentness,
       walletObservedAt: link.walletObservedAt,
       poolObservedAt: link.poolIdentity.sourceObserverCompletedAt,
@@ -131,7 +267,7 @@ function validateW2Result(w2) {
     })
   })
 
-  return Object.freeze({ w2, matches: Object.freeze(matches) })
+  return Object.freeze({ w2, matches })
 }
 
 function sourceEvidenceAssessment(w2, matches) {
