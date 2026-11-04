@@ -285,3 +285,17 @@ The review confirms that Arb's ProviderProfile, CollectionCoverageReport and Obs
 The matrix does not add a generic financial ledger, netting engine, valuation policy, RiskBudget, EvidenceQualification, verifier registry or economic gate. It preserves gross facts and lifecycle distinctions, and requires a concrete provider's official contract before any schema extension or provider selection.
 
 **Non-regression:** S1 remains synthetic/read-only; no provider is selected or connected; D0/D1 and independent review remain OPEN; S2/S3 remain unauthorized.
+
+
+## 12. Account/trading overlap and IMMORTAL reuse audit — 2026-11-04
+
+The [Account/Trading Overlap & IMMORTAL Reuse Audit v0.1](ACCOUNT-TRADING-OVERLAP-IMMORTAL-REUSE-AUDIT-v0.1.md) performs the field-level comparison requested in the prior section.
+
+Findings:
+- IMMORTAL multi-venue/oracle work already supplies exact asset identity, source lineage, venue-vs-indexer independence, raw observation and coverage patterns; it is not an external broker account lifecycle adapter.
+- The PRE-RICH ProtectedCapital item ledger supplies reusable item identity, snapshot binding, explicit classification, blocker and aggregate-reconciliation patterns; it is PRE-RICH-specific and explicitly does not prove source completeness or full ProtectedCapital.
+- R9/EV1–EV7 and EconomicAdmissionWitness remain IMMORTAL-owned valuation/admission boundaries. Provider balances, account equity, positions or marks do not become EEV by naming.
+- Arb OpenExposure is already a gross-only projection. It must not become a universal account ledger; a concrete unresolved binding remains between each exposure item's `evidenceRef` and its exact ObservationRecord / EXP-06 tuple.
+- The remaining candidate contribution is provider-specific read-only account/trading lifecycle collection, correction handling, per-family coverage and cross-family reconciliation, with no netting, valuation, economic admission or actuation.
+
+**Non-regression:** no schema, application code, IMMORTAL economic rule, EEV policy, ProtectedCapital partition, RiskBudget, verifier registry or authority was changed. S1 remains synthetic/read-only; D0/D1 and independent review remain OPEN; S2/S3 remain unauthorized.
