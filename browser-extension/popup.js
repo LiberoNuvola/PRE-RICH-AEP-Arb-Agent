@@ -76,7 +76,7 @@ function populateWallets(wallets) {
   }
 
   walletSelect.disabled = discoveredWallets.length === 0;
-  connectButton.disabled = discoveredWallets.length === 0;
+  connectButton.disabled = discoveredWallets.length === 0 || !walletSelect.value;
 }
 
 function renderAssets(decodedBalance) {
