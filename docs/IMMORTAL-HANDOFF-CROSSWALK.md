@@ -310,3 +310,16 @@ The [Provider API Candidate Assessment](PROVIDER-API-CANDIDATE-ASSESSMENT-2026-1
 This is not a provider selection, implementation approval or conformance claim. The assessment records endpoint-specific history windows, pagination, lack of established cross-family atomic snapshots, and product-family exclusions. Kraken remains a strong historical-ledger/export comparator; Coinbase Advanced Trade remains a useful orders/fills/WebSocket comparator.
 
 **Non-regression:** documentation only; no schema, reducer, provider client, credential, account connection, IMMORTAL contract, EXP semantics, economic gate, verifier, authority or actuator changed. S1 remains synthetic/read-only; D0/D1 and independent review remain OPEN; S2/S3 remain unauthorized.
+
+
+## 14. Binance Spot read-only endpoint mapping — 2026-11-04
+
+The [Binance Spot Read-Only Candidate — Endpoint and Field Mapping v0.1](BINANCE-SPOT-READONLY-CANDIDATE-ENDPOINT-MAPPING-v0.1.md) pins the candidate source operations, fields, identity rules, timestamp units, pagination constraints and REST/stream reconciliation boundaries.
+
+The initial candidate maps account.status to balance snapshots; outboundAccountPosition and balanceUpdate to balance observations; allOrders/order.status to order lifecycle; executionReport to order/execution events; myTrades to trade history; account.commission to current commission schedule; and allOrderLists/listStatus to parent order-list lifecycle.
+
+**Important non-double-counting rule:** executionReport and myTrades may describe the same underlying trade. Preserve both raw observations, bind them to the scoped provider trade identity, and project one trade only. Execution ID, trade ID and order ID remain distinct. Prevented/STP matches are not fills.
+
+**Coverage constraints:** account/order/trade families have separate queries and timestamps; no atomic cross-family snapshot is documented. Order/trade history queries have a 24-hour maximum time interval; myTrades has a maximum page size of 1000 and fromId/time filters are mutually exclusive. Some historical cumulative quote quantities may be unavailable. Coverage must therefore be per-family/per-query, with explicit query bounds and terminal pagination evidence.
+
+**Non-regression:** documentation only. No provider client, signature code, credential, account connection, schema/reducer change, verifier, economic rule, EEV, ProtectedCapital, RiskBudget, netting, authority or actuator. S1 remains synthetic/read-only; provider selection and conformance remain OPEN; D0/D1 and independent review remain OPEN; S2/S3 unauthorized.
