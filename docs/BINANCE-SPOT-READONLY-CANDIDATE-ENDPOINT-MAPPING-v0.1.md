@@ -164,3 +164,44 @@ Margin is cited only to establish separate borrow/repay and interest-history ope
 Documentation only. No schema, reducer, application code, client, signature code, credentials, account connection, verifier, evidence registry, economic state, valuation, EEV, ProtectedCapital, RiskBudget, netting, authority or actuator changed.
 
 S1 remains synthetic/read-only. Provider selection, provider conformance, D0/D1 and independent review remain OPEN. S2/S3 remain unauthorized.
+
+
+## 11. Synthetic conformance execution boundary
+
+The 16 vectors in section 8 are now classified against the existing S1 reducer contract before any provider-specific implementation:
+
+| Vector | Existing contract exercised | Expected disposition |
+|---|---|---|
+| BSC-01 balances, free/locked/zero | `classifyAccountSnapshot` plus raw fixture preservation | Preserve decimal strings and explicit zero rows; no balance valuation |
+| BSC-02 zero omission enabled | ProviderProfile conformance | Reject profile configuration; omitted assets remain unknown |
+| BSC-03 executionReport + myTrades same trade | Provider identity reconciliation before lifecycle projection | Preserve two raw observations, one scoped trade identity |
+| BSC-04 exact repeated stream event | `replayStream` | Exact event/source/stream/sequence/digest duplicate is a no-op |
+| BSC-05 reused event identity, changed digest | `replayStream` | Block stream as conflict |
+| BSC-06 cancel/replace | Order identity mapping | Preserve original and replacement order IDs with explicit replace lineage |
+| BSC-07 OCO parent/member orders | Order-list mapping | Preserve parent list ID and member order IDs separately |
+| BSC-08 prevented/STP match | Event-family classification | Not a fill; do not add to executed quantity |
+| BSC-09 query window > 24h | Collection request planning | Reject before collection; no silent window truncation |
+| BSC-10 1000-row page | CollectionCoverage | Full page is not terminal proof; remain PARTIAL until continuation/exhaustion evidence |
+| BSC-11 negative cumulative quote quantity | Raw field interpretation | Preserve raw sentinel and mark unavailable; never coerce to zero |
+| BSC-12 stream reconnect gap | `replayStream` | Gap blocks that stream; coverage stays PARTIAL until separately evidenced repair |
+| BSC-13 REST/stream temporal skew | ObservationRecord and per-family coverage | Preserve each clock; no atomic snapshot or cross-family causal order |
+| BSC-14 fee asset differs from base/quote | Raw trade/fee mapping | Preserve commissionAsset exactly; do not infer quote denomination |
+| BSC-15 missing/mixed time units | ProviderProfile time contract | UNKNOWN / non-conformant until one source unit is pinned per field/profile |
+| BSC-16 balance delta without transfer ID | Event-family classification | Preserve balance delta only; transfer identity and lifecycle remain UNKNOWN |
+
+### 11.1 Existing reducer compatibility finding
+
+The generic reducer's `projectOrderLifecycle` deduplicates a repeated `fillId` only when both quantity and `rawDigestRef` match. A Binance `executionReport` and its corresponding `myTrades` row are distinct raw observations and will normally have different raw digests even when they refer to the same provider trade ID.
+
+Therefore, these two records must **not** be fed as duplicate FILL events to `projectOrderLifecycle`. First preserve both ObservationRecords and reconcile them at the provider-observation identity layer using the documented scoped trade identity; only the single reconciled trade projection may be supplied to the generic lifecycle reducer. If the two observations disagree on quantity, order identity, commission or commission asset, preserve both and classify the reconciliation as CONFLICTED. This is a mapping requirement, not permission to weaken the reducer's exact-digest duplicate rule.
+
+The current S1 reducer does not implement this Binance-specific reconciliation. The conformance vectors must make this gap visible; they must not hide it in test-only code or claim that a provider adapter exists.
+
+### 11.2 What the vectors do not prove
+
+- They do not establish provider selection, production readiness, live API behavior, or the completeness of Binance account history.
+- They do not add typed balance/fee/transfer schemas or a provider-specific normalizer.
+- They do not prove raw digest integrity, signature validity, Principal attribution, D0/D1, independent verification, or IMMORTAL economic qualification.
+- They do not authorize any TRADE, Margin, transfer, withdrawal, credential-management or actuator capability.
+
+**Current gate:** documentation and synthetic test design only. S1 remains read-only. Provider selection/conformance, D0/D1 and independent review remain OPEN; S2/S3 remain unauthorized.
