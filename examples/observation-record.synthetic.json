@@ -1,6 +1,6 @@
 {
   "recordType": "ObservationRecord",
-  "envelopeVersion": "arb-event-envelope/0.1",
+  "envelopeVersion": "arb-event-envelope/0.2",
   "eventId": "fixture:event:alpha:AAA-USDX:41",
   "eventKind": "MarketQuoteObserved",
   "evidenceClass": "OBSERVED",
@@ -8,7 +8,10 @@
     "sourceId": "fixture:public-feed:alpha",
     "sourceEventId": "fixture:source-event:alpha:41",
     "streamId": "fixture:public-feed:alpha:instrument:AAA-USDX",
-    "sequence": {"kind": "monotonic-per-stream", "value": "41"}
+    "sequence": {
+      "kind": "monotonic-per-stream",
+      "value": "41"
+    }
   },
   "scope": {
     "profileRef": "synthetic-public-market-profile",
@@ -25,16 +28,24 @@
     "effectiveAt": null,
     "clockQuality": "SOURCE_TIME_PRESENT"
   },
-  "relations": {"correlationRef": null, "causationRef": null, "supersedesRef": null},
+  "relations": {
+    "correlationRef": null,
+    "causationRef": null,
+    "supersedesRef": null
+  },
   "evidence": {
     "rawEvidenceRef": "fixture:raw:market-quote-41",
     "rawDigestRef": "fixture:digest:raw-41",
     "normalizedDigestRef": "fixture:digest:normalized-41",
     "canonicalizationVersion": "fixture-canonicalization/0.1",
     "verificationRef": null,
-    "verificationStatus": "NOT_VERIFIED"
+    "verificationStatus": "NOT_VERIFIED",
+    "evidenceVersion": "fixture-market-quote-payload/1.0"
   },
-  "quality": {"status": "VALID", "reasons": []},
+  "quality": {
+    "status": "VALID",
+    "reasons": []
+  },
   "payload": {
     "instrumentKey": "AAA/USDX",
     "bidPrice": "10.125",
