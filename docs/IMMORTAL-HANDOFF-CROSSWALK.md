@@ -274,3 +274,14 @@ The [Security and Verification Prior-Art Addendum](SECURITY-VERIFICATION-PRIOR-A
 
 **Non-regression:** no new Arb EvidenceQualification type, source registry, signature/currentness service, execution permission authority, risk budget, economic kernel or trading actuator is introduced. S1 remains synthetic/read-only; D0/D1 and S2/S3 gates remain OPEN.
 
+
+
+## 11. Account and trading lifecycle mapping — 2026-11-04
+
+The [Account & Trading Lifecycle — IMMORTAL Mapping Matrix v0.1](ACCOUNT-TRADING-LIFECYCLE-IMMORTAL-MAPPING-MATRIX-v0.1.md) maps balances, orders, fills/executions, fees, positions, liabilities/financing, transfers, collateral and settlement to the existing IMMORTAL state aggregates and EXP boundaries.
+
+The review confirms that Arb's ProviderProfile, CollectionCoverageReport and ObservationRecord v0.2 already provide a provider-neutral evidence envelope and per-family coverage. The remaining contract gap is typed, provider-specific field mapping for balances, positions, collateral, liabilities, financing and settlement; the generic ObservationRecord payload intentionally does not validate those semantics.
+
+The matrix does not add a generic financial ledger, netting engine, valuation policy, RiskBudget, EvidenceQualification, verifier registry or economic gate. It preserves gross facts and lifecycle distinctions, and requires a concrete provider's official contract before any schema extension or provider selection.
+
+**Non-regression:** S1 remains synthetic/read-only; no provider is selected or connected; D0/D1 and independent review remain OPEN; S2/S3 remain unauthorized.
