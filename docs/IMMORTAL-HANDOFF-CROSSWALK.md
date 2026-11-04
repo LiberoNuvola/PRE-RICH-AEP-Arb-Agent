@@ -257,3 +257,20 @@ This adds three material sources beyond the earlier main-only crosswalk:
 The residual candidate for Arb is now narrower still: **provider-specific observation and mapping of external broker/exchange account and trading-lifecycle data** (balances, orders, executions/fills, corrections, fees, positions, liabilities and settlement), where those semantics are not already covered by the exact source/provider contract. Price-only feeds should map to the existing IMMORTAL multi-oracle work rather than create an Arb oracle subsystem. PRE-RICH ticket item census should reuse/benchmark the existing IMMORTAL item-ledger boundaries rather than be copied as a generic brokerage ledger.
 
 This remains a candidate integration gap, not proven novelty. The 31-branch audit is a complete branch-tree inventory with targeted reading of relevant files, not a line-by-line audit or independent security certification of every file in all repositories.
+
+
+## 10. Security and tool-receipt prior art — 2026-11-04
+
+The [Security and Verification Prior-Art Addendum](SECURITY-VERIFICATION-PRIOR-ART-ADDENDUM-2026-11-04.md) records two new external references:
+
+- **Substrate 1.10.3/1.10.4 (Flux Point plugins):** narrows the read-only command exemption, then adds bounded fail-closed judgment and symlink-safe hook execution. It is an opt-in, static command tripwire, not an egress sandbox, account mandate or economic authority.
+- **Orynq tool-receipts (#227):** binds a registered scheme's signed content to the recorded response and uses own-property-only verifier/commitment lookup; null registries fail closed. The verifier distinguishes response binding from call/request binding.
+
+### EXP disposition
+
+- **EXP-06:** Orynq is implementation prior art for binding a receipt to the raw response it claims to attest. Arb's current `rawDigestRef` equality still does not retrieve/recompute raw bytes or prove signer trust. Reuse the contract pattern; do not create another evidence registry.
+- **EXP-12:** both systems reinforce separation of command permission, observation, verification, call attribution and authority. Neither verifier success nor hook success supplies Principal/mandate or economic admission.
+- **EXP-03 / EXP-07 / EXP-08 / EXP-10:** no new semantic coverage. These changes do not establish asset eligibility/valuation, regime/hysteresis, netting/offset or RiskBudget/exposure.
+
+**Non-regression:** no new Arb EvidenceQualification type, source registry, signature/currentness service, execution permission authority, risk budget, economic kernel or trading actuator is introduced. S1 remains synthetic/read-only; D0/D1 and S2/S3 gates remain OPEN.
+
