@@ -36,3 +36,10 @@ Before approving a Lace prompt, verify that the requesting site is the expected 
 The dApp calls only `enable()`, `getNetworkId()`, `getChangeAddress()`, `getBalance()` and `getUtxos()`. No signing, submission, API/RPC, indexer, exchange, credentials, seed phrase or private-key handling is implemented. CIP-30 network ID 0 does not distinguish Preprod from Preview.
 
 CI uses mocked providers; it does not connect Lace. Real Brave + Lace permission and read-only behavior must still be tested manually. The extension ZIP is not a signed Web Store package.
+
+
+## Deployment blocker and required owner setting
+
+The static Pages build step passed, but the first deploy attempt stopped at Configure GitHub Pages because this repository has no Pages site configured yet. The default GITHUB_TOKEN cannot create/enable the Pages site; the action's enablement mode requires a separate PAT or GitHub App with administration:write and pages:write. The safe one-time setup is for the repository owner to open Settings → Pages → Build and deployment → Source and select GitHub Actions. Then run the Arb Agent dApp Pages workflow.
+
+Do not connect the main Lace wallet to the default GitHub Pages project URL: project sites under this account share the liberonuvola.github.io origin. Before wallet authorization, use a custom domain/subdomain dedicated to Arb Agent, update the launcher and Pages CNAME/configuration, and verify HTTPS plus the exact requesting origin.
