@@ -67,6 +67,10 @@ S1/W1/W2 are read-only reference implementations with synthetic conformance evid
 Provider observation reconciliation boundary: [contract v0.1](docs/OBSERVATION-RECONCILIATION-CONTRACT-v0.1.md) defines scoped provider identity, immutable evidence preservation, MATCHED/INCOMPLETE/CONFLICTED outcomes, and the adapter-before-reducer boundary. Design-only; no provider client or live integration.
 
 
-## W1 Cardano PWA shell
+## W1 desktop browser extension
 
-The initial static [W1 Wallet Companion PWA](app/index.html) wraps the existing read-only CIP-30 port without changing its semantics. Serve the repository root with `npm run serve:w1` and open `http://localhost:4173/app/`. The browser wallet must be installed in that browser and the app must be served from a secure context (localhost is suitable for local testing). The PWA shell has no RPC, indexer, exchange, credential, signing or transaction-submission integration. Its service worker caches only the static app shell; it does not persist wallet observations or promise offline wallet access.
+The installable desktop pilot is a Manifest V3 [Chromium extension](browser-extension/manifest.json) for Chrome and Edge. Build it with `npm run build:extension`; the output is `dist/arb-agent-chromium.zip`. Install locally through the browser's **Load unpacked** developer-mode flow. It reuses the existing W1 CIP-30 port and Cardano Value decoder. The extension asks only for `activeTab` and `scripting`, has no persistent host permissions, and performs no signing or submission. Its wallet connection is made from the active page origin, so use only a trusted page; see the [installation and security boundary](docs/BROWSER-EXTENSION-INSTALLATION.md). The CI workflow uploads the generated ZIP as a downloadable build artifact. This is a local pilot, not a signed Web Store release.
+
+## W1 PWA shell
+
+The static [W1 Wallet Companion PWA](app/index.html) remains a browser/mobile-WebView prototype and development surface. Serve the repository root with `npm run serve:w1` and open `http://localhost:4173/app/`. It wraps the same read-only CIP-30 port without changing its semantics. The browser wallet must inject CIP-30 into the page origin and the app must be served from a secure context (localhost is suitable for local testing). The PWA shell has no RPC, indexer, exchange, credential, signing or transaction-submission integration. Its service worker caches only the static app shell; it does not persist wallet observations or promise offline wallet access. It is not a native Android/iOS application.

@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile, readdir } from 'node:fs/promises'
 
-const sourceDirectories = ['../src/', '../wallet-companion/', '../app/']
+const sourceDirectories = ['../src/', '../wallet-companion/', '../app/', '../browser-extension/']
 const sourceFiles = (await Promise.all(sourceDirectories.map(async (directory) => {
   const paths = await readdir(new URL(directory, import.meta.url), { recursive: true })
   return paths.filter((path) => path.endsWith('.js')).map((path) => `${directory}${path}`)

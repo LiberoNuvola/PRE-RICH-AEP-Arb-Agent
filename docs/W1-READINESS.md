@@ -83,3 +83,12 @@ The static UI in `app/` composes the existing W1 port and the existing CBOR valu
 - `test/w1-pwa-shell.test.js` checks the shell contract; `test/no-actuation.test.js` now scans `app/` as well as `src/` and `wallet-companion/`.
 
 This is an initial PWA-style shell (manifest and service worker), not a deployment or security certification. Browser-specific installation eligibility and compatibility with every wallet/browser have not yet been verified. The next gate is local browser verification with a real CIP-30 wallet, followed by a controlled hosted test. Exact Preprod/Preview binding and W2's live observer remain unresolved; no live DeFi or economic projection is presented.
+
+
+## 8. Chromium extension pilot (2026-11-04)
+
+A Manifest V3 browser extension now packages the W1 desktop interaction in a toolbar popup. Its source lives in browser-extension/; npm run build:extension creates a self-contained unpacked folder and ZIP in dist/. The bundle is generated from the existing W1 CIP-30 port and the existing Cardano Value CBOR decoder; the source modules remain authoritative.
+
+The extension requests only activeTab and scripting, with no persistent host permissions. On popup use it injects a short-lived main-world bridge into the active tab because CIP-30's window.cardano namespace is injected into webpages, not assumed on an extension origin. The popup calls only discovery and the W1 read-only snapshot operation. The bridge is removed after each request; no wallet snapshot is stored by the extension.
+
+This design has an explicit origin caveat: enable() is called from the active page's origin, which is the origin the wallet may display as the requesting dApp. The active site can potentially inspect page-scoped wallet API activity and data after authorization. The local pilot must be used only on trusted origins; a dedicated Arb Agent origin and a separate threat-model review are required before public distribution. Real-wallet popup permission behavior has not yet been verified. The ZIP is not a signed Web Store package.
