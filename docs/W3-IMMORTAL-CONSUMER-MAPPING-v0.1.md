@@ -118,7 +118,9 @@ W2 provenance pass-through:
 - `wallet-companion/minswap-v2-position-link.js`
 - `test/minswap-v2-position-link.test.js`
 
-The test suite covers exact identity-only mapping, raw LP quantity preservation, missing wallet digest and observation reference, pass-through of Koios body digests, unbound chain-tip/currentness, absent RiskBudget, no fabricated exposure/ProtectedCapital, no zero UniversalEconomicState fallback, and no Economic Gate invocation.
+The test suite covers exact identity-only mapping, raw LP quantity preservation, missing wallet digest and observation reference, pass-through of Koios body digests, unbound chain-tip/currentness, absent RiskBudget, no fabricated exposure/ProtectedCapital, no zero UniversalEconomicState fallback, no Economic Gate invocation, exact wallet Mainnet/CIP-30 context, exact Minswap validator/USDM query scope, response-digest provenance, exact-USDM datum pair and conflict-envelope consistency.
+
+The hardened W3 source mapping was validated by [GitHub Actions run 41777844296](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41777844296): **77 Node tests passed / 0 failed**, 9 schema documents passed, 2 replay checkpoint checks and 6 negative evidence-claim checks passed, and the static no-actuation checks passed. The tested code commit is [298d5c974a0ef3180404aaf704e5fdf00751b05e](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/commit/298d5c974a0ef3180404aaf704e5fdf00751b05e).
 
 The mapping is a non-normative consumer-readiness report. It is not an IMMORTAL qualification, verifier attestation, economic decision, or trade authorization. No live wallet, Koios call or transaction is used in CI.
 
