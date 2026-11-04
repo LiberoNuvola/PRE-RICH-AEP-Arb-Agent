@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises'
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8')
 
-test('W1 PWA shell is installable and points to the existing read-only wallet port', async () => {
+test('W1 PWA manifest and service-worker shell point to the existing read-only wallet port', async () => {
   const [html, manifest, main, worker] = await Promise.all([
     read('../app/index.html'),
     read('../app/manifest.webmanifest'),
