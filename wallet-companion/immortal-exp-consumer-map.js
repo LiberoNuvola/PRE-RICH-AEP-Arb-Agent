@@ -87,8 +87,9 @@ function validateW2Result(w2) {
     w2.status === 'CONFLICTED_WALLET_BALANCE_VS_EMPTY_UTXO_RESPONSE'
   if (!isRecord(w2) ||
       w2.schemaVersion !== W2_SCHEMA ||
-      (w2.classification !== W2_CLASSIFICATION &&
-        !(isConflict && w2.classification === W2_CONFLICT_CLASSIFICATION)) ||
+      (isConflict
+        ? w2.classification !== W2_CONFLICT_CLASSIFICATION
+        : w2.classification !== W2_CLASSIFICATION) ||
       w2.network !== 'cardano-mainnet' ||
       ![
         'LP_ASSET_LINKED_TO_OBSERVED_POOL',
@@ -228,35 +229,37 @@ function validateW2Result(w2) {
     const outRef = String(link.poolIdentity.utxoRef ?? '').toLowerCase()
     const parts = outRef.split('#')
 
-    if (lpAsset.kind !== 'CARDANO_NATIVE_ASSET' ||
-        lpAsset.policyId !== EXPECTED_LP_POLICY_ID ||
-        link.walletBalance.unit !== lpAsset.unit ||
-        link.walletBalance.source !== 'CIP30_GETBALANCE' ||
-        link.walletBalance.sourceAssertion !== 'WALLET_API_REPORTED_AGGREGATE_BALANCE' ||
-        !/^[1-9][0-9]*$/.test(String(link.walletBalance.quantityRaw)) ||
-        link.poolIdentity.protocol !== 'MinswapV2' ||
-        link.poolIdentity.network !== 'cardano-mainnet' ||
-        parts.length !== 2 ||
-        !/^[0-9a-f]{64}$/.test(parts[0]) ||
-        !/^(0|[1-9][0-9]*)$/.test(parts[1]) ||
-        !/^[0-9a-f]{64}$/i.test(String(link.poolIdentity.datumHash ?? '')) ||
-        !/^(?:[0-9a-f]{2})+$/i.test(String(link.poolIdentity.inlineDatumCborHex ?? '')) ||
-        !isOffsetDateTime(link.walletObservedAt) ||
-        !isOffsetDateTime(link.poolIdentity.sourceObserverCompletedAt) ||
-        link.poolIdentity.sourceCurrentness !== pool.currentness ||
-        !isRecord(tx) ||
-        String(tx.txHash ?? '').toLowerCase() !== parts[0] ||
-        !/^[0-9a-f]{64}$/i.test(String(tx.blockHash ?? '')) ||
-        !Number.isSafeInteger(tx.blockHeight) || tx.blockHeight <= 0 ||
-        !Number.isSafeInteger(tx.absoluteSlot) || tx.absoluteSlot <= 0 ||
-        !Number.isSafeInteger(tx.blockTime) || tx.blockTime <= 0 ||
-        (pairA.unit !== EXPECTED_USDM_UNIT && pairB.unit !== EXPECTED_USDM_UNIT) ||
-        link.ownership.beneficialOwnership !== 'NOT_ESTABLISHED' ||
-        link.ownership.principalBinding !== 'NOT_ESTABLISHED' ||
-        link.economics.marketValue !== 'NOT_VALUED' ||
-        link.economics.riskBudget !== 'NOT_DERIVED' ||
-        link.economics.protectedCapital !== 'NOT_DERIVED') {
-      throw new ImmortalConsumerMappingError('W2_MATCH_SEMANTICS_INVALID', 'W2 link does not preserve its exact Mainnet/USDM identity-only and non-economic classification')
+    const matchErrors = []
+    if (lpAsset.kind !== 'CARDANO_NATIVE_ASSET') matchErrors.push('lpAsset.kind')
+    if (lpAsset.policyId !== EXPECTED_LP_POLICY_ID) matchErrors.push('lpAsset.policyId')
+    if (link.walletBalance.unit !== lpAsset.unit) matchErrors.push('walletBalance.unit')
+    if (link.walletBalance.source !== 'CIP30_GETBALANCE') matchErrors.push('walletBalance.source')
+    if (link.walletBalance.sourceAssertion !== 'WALLET_API_REPORTED_AGGREGATE_BALANCE') matchErrors.push('walletBalance.sourceAssertion')
+    if (!/^[1-9][0-9]*$/.test(String(link.walletBalance.quantityRaw))) matchErrors.push('walletBalance.quantityRaw')
+    if (link.poolIdentity.protocol !== 'MinswapV2') matchErrors.push('poolIdentity.protocol')
+    if (link.poolIdentity.network !== 'cardano-mainnet') matchErrors.push('poolIdentity.network')
+    if (parts.length !== 2 || !/^[0-9a-f]{64}$/.test(parts[0]) || !/^(0|[1-9][0-9]*)$/.test(parts[1])) matchErrors.push('poolIdentity.utxoRef')
+    if (!/^[0-9a-f]{64}$/i.test(String(link.poolIdentity.datumHash ?? ''))) matchErrors.push('poolIdentity.datumHash')
+    if (!/^(?:[0-9a-f]{2})+$/i.test(String(link.poolIdentity.inlineDatumCborHex ?? ''))) matchErrors.push('poolIdentity.inlineDatumCborHex')
+    if (!isOffsetDateTime(link.walletObservedAt)) matchErrors.push('walletObservedAt')
+    if (!isOffsetDateTime(link.poolIdentity.sourceObserverCompletedAt)) matchErrors.push('poolIdentity.sourceObserverCompletedAt')
+    if (link.poolIdentity.sourceCurrentness !== pool.currentness) matchErrors.push('poolIdentity.sourceCurrentness')
+    if (!isRecord(tx)) matchErrors.push('poolIdentity.transactionContext')
+    else {
+      if (String(tx.txHash ?? '').toLowerCase() !== parts[0]) matchErrors.push('transactionContext.txHash')
+      if (!/^[0-9a-f]{64}$/i.test(String(tx.blockHash ?? ''))) matchErrors.push('transactionContext.blockHash')
+      if (!Number.isSafeInteger(tx.blockHeight) || tx.blockHeight <= 0) matchErrors.push('transactionContext.blockHeight')
+      if (!Number.isSafeInteger(tx.absoluteSlot) || tx.absoluteSlot <= 0) matchErrors.push('transactionContext.absoluteSlot')
+      if (!Number.isSafeInteger(tx.blockTime) || tx.blockTime <= 0) matchErrors.push('transactionContext.blockTime')
+    }
+    if (pairA.unit !== EXPECTED_USDM_UNIT && pairB.unit !== EXPECTED_USDM_UNIT) matchErrors.push('poolIdentity.datumAssetPair.USDM')
+    if (link.ownership.beneficialOwnership !== 'NOT_ESTABLISHED') matchErrors.push('ownership.beneficialOwnership')
+    if (link.ownership.principalBinding !== 'NOT_ESTABLISHED') matchErrors.push('ownership.principalBinding')
+    if (link.economics.marketValue !== 'NOT_VALUED') matchErrors.push('economics.marketValue')
+    if (link.economics.riskBudget !== 'NOT_DERIVED') matchErrors.push('economics.riskBudget')
+    if (link.economics.protectedCapital !== 'NOT_DERIVED') matchErrors.push('economics.protectedCapital')
+    if (matchErrors.length > 0) {
+      throw new ImmortalConsumerMappingError('W2_MATCH_SEMANTICS_INVALID', 'W2 link has invalid identity/provenance fields: ' + matchErrors.join(', '))
     }
 
     return Object.freeze({
