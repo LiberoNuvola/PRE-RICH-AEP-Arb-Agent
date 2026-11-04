@@ -1,7 +1,7 @@
 # W1 — Cardano Wallet Companion Read-only Readiness
 
 **Revision:** 0.1 — 2026-11-03  
-**Status:** implemented reference slice; not a deployed PWA and no user wallet has been connected by CI  
+**Status:** read-only reference slice plus initial static PWA shell; not deployed and no live user wallet has been connected by CI  
 **Owner:** PRE-RICH AEP Arb Agent application edge  
 **Boundary:** CIP-30 read-only port only; IMMORTAL Cardano Adapter and economic kernel unchanged
 
@@ -68,3 +68,18 @@ The GitHub Actions workflow remains read-only (contents: read). CI uses mocked p
 W1 is a narrow reference implementation, not a complete wallet UI, network verifier, ledger indexer or portfolio engine. It is suitable for an isolated integration review and synthetic conformance. Before W2, select an exact Cardano network identity and a specific read-only protocol observer, then prove wallet-to-protocol position linkage and per-family coverage without mixing environments.
 
 W1 passing does not authorize W2 protocol integration automatically, W4 signing, S2 paper trading or S3 live execution. D0/D1 and the applicable D0–D8 authority/recovery gates remain separate.
+
+
+## 7. Initial PWA shell (2026-11-04)
+
+The static UI in `app/` composes the existing W1 port and the existing CBOR value decoder. It provides provider discovery, an explicit user-click connection, manual refresh, local session close, raw lovelace/native-asset quantities, wallet UTxO response count, and visible evidence/coverage limitations.
+
+- No framework, runtime dependency, provider RPC, indexer, API client, backend, credential store or new economic logic is introduced.
+- The app reads `window.cardano` only at the application edge; the W1 module remains dependency-injected and browser-global-free.
+- `enable()` is reached only from the Connect button handler. Refresh calls only the existing W1 read facade.
+- The UI does not decode addresses, convert token decimals, price assets, aggregate portfolio value, infer LP positions or invoke the W3 economic consumer mapping.
+- The service worker caches the static shell only. It does not store wallet data or provide offline wallet reads.
+- The content security policy limits connections to the same origin. The app contains no remote provider endpoints or transaction-signing/submission calls.
+- `test/w1-pwa-shell.test.js` checks the shell contract; `test/no-actuation.test.js` now scans `app/` as well as `src/` and `wallet-companion/`.
+
+This is an initial installable shell, not a deployment, security certification or proof of compatibility with every wallet/browser. The next gate is local browser verification with a real CIP-30 wallet, followed by a controlled hosted test. Exact Preprod/Preview binding and W2's live observer remain unresolved; no live DeFi or economic projection is presented.

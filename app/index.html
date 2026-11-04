@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b25">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <title>Arb Agent — Cardano Wallet Companion</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./main.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Arb Agent home">
+        <span class="brand-mark">A</span>
+        <span><strong>ARB AGENT</strong><small>WALLET INTELLIGENCE</small></span>
+      </a>
+      <span class="mode-pill"><span class="dot"></span> READ-ONLY MODE</span>
+    </header>
+
+    <section class="hero">
+      <p class="eyebrow">CARDANO · WALLET COMPANION · W1</p>
+      <h1>Il tuo wallet.<br><em>Una vista più chiara.</em></h1>
+      <p class="lede">Collega un wallet Cardano per leggere il suo stato. Le chiavi restano nel wallet: Arb non firma, non invia transazioni e non custodisce fondi.</p>
+    </section>
+
+    <section class="panel connect-panel" aria-labelledby="connect-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">01 / CONNECTION</p><h2 id="connect-title">Collega il wallet</h2></div>
+        <span class="step-number">01</span>
+      </div>
+      <label for="wallet-select">Provider CIP-30 rilevati</label>
+      <div class="connect-row">
+        <select id="wallet-select" aria-label="Seleziona wallet"><option value="">Ricerca wallet…</option></select>
+        <button id="connect-button" type="button" disabled>Connetti</button>
+      </div>
+      <p id="connection-status" class="status" role="status" aria-live="polite">La connessione avviene solo dopo il tuo clic e la conferma nel wallet.</p>
+      <div class="button-row">
+        <button id="refresh-button" class="button-secondary" type="button" disabled>Aggiorna lettura</button>
+        <button id="disconnect-button" class="button-quiet" type="button" disabled>Disconnetti</button>
+      </div>
+    </section>
+
+    <section id="wallet-panel" class="panel wallet-panel" hidden aria-labelledby="wallet-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">02 / WALLET SNAPSHOT</p><h2 id="wallet-title">Stato osservato</h2></div>
+        <span id="evidence-pill" class="evidence-pill">UNVERIFIED</span>
+      </div>
+      <div class="metric-grid">
+        <article class="metric"><span>RETE</span><strong id="network-value">—</strong><small id="network-detail">—</small></article>
+        <article class="metric"><span>UTXO WALLET</span><strong id="utxo-value">—</strong><small id="utxo-detail">—</small></article>
+      </div>
+      <div class="data-row"><span>Wallet provider</span><strong id="provider-value">—</strong></div>
+      <div class="data-row"><span>Change address (CBOR)</span><code id="address-value">—</code></div>
+      <div class="data-row"><span>Osservato alle</span><code id="observed-value">—</code></div>
+      <div class="subsection">
+        <div class="section-heading compact"><div><p class="eyebrow">RAW ASSET INVENTORY</p><h3>Quantità lette dal wallet</h3></div></div>
+        <p class="note">Gli importi sono unità grezze: nessun prezzo, controvalore, PnL o classificazione economica viene calcolato.</p>
+        <div id="asset-list" class="asset-list"><p class="muted">Nessuna lettura disponibile.</p></div>
+      </div>
+      <div class="notice">
+        <strong>Limiti della lettura</strong>
+        <ul>
+          <li>Il network ID 0 identifica una rete testnet, non distingue Preprod da Preview.</li>
+          <li>Gli UTxO mostrati sono quelli restituiti dal wallet; non rappresentano le posizioni detenute da smart contract.</li>
+          <li>La lettura è non atomica e non prova identità del Principal, proprietà economica o completezza DeFi.</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer>
+      <span>ARB AGENT / W1</span>
+      <span>NON-CUSTODIAL · NO SIGNING · NO SUBMISSION</span>
+    </footer>
+  </main>
+</body>
+</html>
