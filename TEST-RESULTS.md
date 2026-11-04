@@ -81,3 +81,17 @@ The audit found additional internal prior art on IMMORTAL work/immortal-green-cl
 The contribution assessment is now narrowed to provider-specific external broker/exchange account and trading-lifecycle observation/mapping. No generic EvidenceQualification, price-feed registry, signature/currentness mechanism, authority layer or economic gate is proposed. No IMMORTAL or Cormia branch/code was changed; no provider or account was selected.
 
 The existing full S1 code/schema/negative-claim baseline remains run #29 (38 Node tests, 9 JSON schema/examples, 2 checkpoint checks and 6 negative evidence-claim checks). Subsequent crosswalk/assessment/README/readiness updates are documentation-only and are revalidated by the workflow runs triggered by their exact commits.
+
+
+## 2026-11-04 — W1/W2/W3 integrated S1 conformance
+
+**Latest full run:** [S1 Read-only Conformance — success](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/actions/runs/41777123475)  
+**Commit:** [aec90afabc37bcd39a77fb628bd3d57f67f7e3d3](https://github.com/LiberoNuvola/PRE-RICH-AEP-Arb-Agent/commit/aec90afabc37bcd39a77fb628bd3d57f67f7e3d3)
+
+- **73 Node tests passed / 0 failed**.
+- 9 synthetic JSON documents passed schema validation.
+- 2 replay checkpoint checks and 6 negative evidence-claim checks passed.
+- Static no-actuation checks passed across src/ and wallet-companion/.
+- W3 tests verify exact identity-only EXP-03 mapping, unverified EXP-06 provenance, no inferred RiskBudget/exposure/ProtectedCapital under EXP-10, no UniversalEconomicState zero fallback and no Economic Gate invocation.
+
+This is synthetic read-only conformance evidence. No live wallet, Koios request, provider/account connection, transaction or economic admission was exercised. It does not close EXP-03/06/10, D0/D1 or S2/S3 readiness.
