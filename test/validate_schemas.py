@@ -63,7 +63,32 @@ def validate_coverage_family_uniqueness(report, label):
 
 
 validate("schemas/fixture-pack.schema.json", "fixtures/arb-s1-fixture.v0.1.json")
-validate("schemas/observation-record.schema.json", "examples/observation-record.synthetic.json")
+observation_record = validate(
+    "schemas/observation-record.schema.json",
+    "examples/observation-record.synthetic.json"
+)
+if observation_record["evidence"]["evidenceVersion"] == observation_record["evidence"]["canonicalizationVersion"]:
+    raise AssertionError("evidenceVersion must remain distinct from canonicalizationVersion")
+if observation_record["evidence"]["evidenceVersion"] == observation_record["envelopeVersion"]:
+    raise AssertionError("evidenceVersion must remain distinct from envelopeVersion")
+
+observation_validator = validator_for("schemas/observation-record.schema.json")
+missing_evidence_version = deepcopy(observation_record)
+del missing_evidence_version["evidence"]["evidenceVersion"]
+assert_rejected(
+    observation_validator,
+    missing_evidence_version,
+    "ObservationRecord missing EXP-06 evidenceVersion"
+)
+
+verified_without_reference = deepcopy(observation_record)
+verified_without_reference["evidence"]["verificationStatus"] = "VERIFIED_BY_SEPARATE_VERIFIER"
+verified_without_reference["evidence"]["verificationRef"] = None
+assert_rejected(
+    observation_validator,
+    verified_without_reference,
+    "positive verification status without verificationRef"
+)
 validate("schemas/replay-manifest.schema.json", "examples/replay-manifest.synthetic.json")
 validate_manifest_stream_coverage("examples/replay-manifest.synthetic.json")
 validate("schemas/replay-manifest.schema.json", "examples/multistream-replay-manifest.synthetic.json")
