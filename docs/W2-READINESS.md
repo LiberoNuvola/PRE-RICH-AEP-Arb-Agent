@@ -84,3 +84,10 @@ The fixture envelopes are synthetic. No actual user wallet was connected, no liv
 W2 is a consumer-side identity-link reference slice. It does not complete a production wallet companion. Before calling a pool position current or valuation-ready, IMMORTAL must supply/qualify a currentness and chain-tip evidence contract and the relevant EXP-03/06/10 mappings; Arb must then consume that existing contract. No second chain observer, oracle, EvidenceQualification registry or economic gate should be created here.
 
 W2 does not authorize W3 economic projection, W4 signing/submission, S2 paper trading or S3 live execution. D0/D1 and the relevant D0–D8 authority/recovery gates remain separate.
+
+
+## 8. EXP-06 source-evidence pass-through
+
+The W2 output exposes the original Koios query scope, pagination-completion metadata and response-body SHA-256 digests produced by the pinned IMMORTAL observer. It identifies the digest producer and does not label these values independently verified evidence.
+
+The W2 wallet source assertion now explicitly records that its observation reference and evidence digest are absent, that raw balance CBOR is not copied into the link result, and that the CIP-30 read remains unverified. This is deliberate: W2 does not manufacture an EvidenceBoundRef or claim economic qualification from a wallet API response.

@@ -265,6 +265,12 @@ test('links an exact wallet LP asset to one qualified IMMORTAL Minswap V2 pool c
   assert.equal(link.poolIdentity.poolUtxoLastUpdateAgeMsAtObserverCompletion, String(expectedAge))
   assert.equal(link.poolIdentity.datumAssetB.unit, SECOND_POLICY)
   assert.equal(link.poolIdentity.transactionContext.blockHeight, 10589026)
+  assert.equal(result.walletSource.sourceAssertion.sourceOperation, 'CIP30_GETBALANCE')
+  assert.equal(result.walletSource.sourceAssertion.evidenceDigest, null)
+  assert.equal(result.walletSource.sourceAssertion.verificationStatus, 'UNVERIFIED')
+  assert.equal(result.poolSource.acquisitionEvidence.pagination.complete, true)
+  assert.equal(result.poolSource.acquisitionEvidence.requestEvidence[0].bodySha256, RESPONSE_SHA)
+  assert.equal(result.poolSource.acquisitionEvidence.requestEvidence[0].digestProducer, 'IMMORTAL_MINSWAP_READ_ONLY_OBSERVER')
 })
 
 test('Mainnet Minswap profile rejects a testnet CIP-30 wallet', () => {

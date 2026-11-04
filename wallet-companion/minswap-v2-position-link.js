@@ -327,6 +327,14 @@ function validateWalletSnapshot(snapshot) {
     observedAt: snapshot.observedAt,
     accountContext,
     utxoCount: utxos.length,
+    utxoCoverage: Object.freeze({
+      status: utxoCoverage.status,
+      scope: utxoCoverage.scope,
+      pagination: utxoCoverage.pagination,
+      atomicity: utxoCoverage.atomicity,
+      returnedCount: utxoCoverage.returnedCount,
+    }),
+    fingerprintStability: accountContext.fingerprintStability,
     decodedBalance,
   })
 }
@@ -626,6 +634,21 @@ export function linkMinswapV2WalletPositions({ walletSnapshot, poolObservation }
       networkId: 1,
       utxoCount: wallet.utxoCount,
       consistency: 'NON_ATOMIC_CROSS_METHOD_OBSERVATION',
+      sourceAssertion: Object.freeze({
+        schemaVersion: 'arb.cardano.wallet-read.v1',
+        evidenceClass: 'SOURCE_ASSERTION_UNVERIFIED',
+        sourceOperation: 'CIP30_GETBALANCE',
+        sourceReference: 'CIP-30:getBalance',
+        observationReference: null,
+        evidenceDigest: null,
+        evidenceVersion: wallet.provider.apiVersion
+          ? 'CIP-30_API_' + wallet.provider.apiVersion
+          : 'CIP-30_API_VERSION_UNKNOWN',
+        verificationStatus: 'UNVERIFIED',
+        rawBalanceCborIncludedInLinkResult: false,
+        fingerprintStability: wallet.fingerprintStability,
+      }),
+      utxoCoverage: wallet.utxoCoverage,
     }),
     poolSource: Object.freeze({
       provider: observer.provider.name,
@@ -636,6 +659,32 @@ export function linkMinswapV2WalletPositions({ walletSnapshot, poolObservation }
       exactUsdmCandidateCount: observer.candidates.length,
       structurallyQualifiedPoolCount: [...poolsByLpUnit.values()].reduce((count, candidates) => count + candidates.length, 0),
       walletAndPoolReadsAtomic: false,
+      acquisitionEvidence: Object.freeze({
+        endpoint: observer.acquisition.endpoint,
+        exactAssetFilter: Object.freeze({ ...observer.acquisition.exactAssetFilter }),
+        addressFilter: observer.acquisition.addressFilter,
+        extended: observer.acquisition.extended,
+        pagination: Object.freeze({
+          complete: observer.acquisition.pagination.complete,
+          pageSize: observer.acquisition.pagination.pageSize,
+          pageCount: observer.acquisition.pagination.pages.length,
+          returnedUtxoCount: observer.acquisition.returnedUtxoCount,
+        }),
+        requestEvidence: Object.freeze(observer.acquisition.requestEvidence.map((item) => Object.freeze({
+          url: item.url,
+          method: item.method,
+          status: item.status,
+          responseDate: item.responseDate ?? null,
+          bodySha256: item.bodySha256,
+          digestAlgorithm: 'SHA-256',
+          digestProducer: 'IMMORTAL_MINSWAP_READ_ONLY_OBSERVER',
+        }))),
+        validatorIdentityCheck: Object.freeze({
+          expectedPaymentCredential: observer.acquisition.validatorIdentityCheck.expectedPaymentCredential,
+          validatedRows: observer.acquisition.validatorIdentityCheck.validatedRows,
+          invalidRows: observer.acquisition.validatorIdentityCheck.invalidRows,
+        }),
+      }),
     }),
     decodedWalletBalance: wallet.decodedBalance,
     matchedPositions: Object.freeze(matches),
