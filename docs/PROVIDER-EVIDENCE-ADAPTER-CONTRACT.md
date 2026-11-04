@@ -2,7 +2,7 @@
 
 **Status:** design contract only; not an implemented provider adapter, provider profile, or conformance result  
 **Scope:** future read-only S1 evidence ingestion boundary  
-**Revision:** 0.1 — 2026-11-03
+**Revision:** 0.2 — 2026-11-04
 
 ## 1. Purpose and non-authority
 
@@ -144,8 +144,9 @@ The current S1 reducer compares rawDigestRef values but does not retrieve raw by
 
 For every artifact, keep separate:
 - rawEvidenceRef: where the original evidence can be retrieved;
-- rawDigestRef: the digest claim/reference supplied or recorded;
+- rawDigestRef: the digest claim/reference for the retained original evidence bytes;
 - normalizedDigestRef: a reference for the normalized representation;
+- evidenceVersion: the source evidence representation/schema version; use the explicit string `UNKNOWN` if the source provides no such version;
 - canonicalizationVersion: the exact normalization/canonicalization rule;
 - verificationStatus: NOT_VERIFIED, VERIFIED_BY_SEPARATE_VERIFIER, UNVERIFIABLE, or REJECTED;
 - verificationRef: a link to the independent verification record, if one exists.
@@ -186,7 +187,9 @@ A provider profile is not ready for implementation review until all applicable i
 - [ ] Pagination, rate-limit, retention, snapshot and recovery semantics documented.
 - [ ] Per-stream event identity, cursor, ordering, duplicate and correction semantics documented.
 - [ ] Order/fill/fee/asset/settlement fields mapped with units and source guarantees.
-- [ ] Raw evidence retention, canonicalization and independent verification method specified.
+- [ ] EXP-06 tuple mapped exactly: source reference, observation reference, raw evidence digest, source evidence version and verification status.
+- [ ] Any positive verification status resolves to independent verification evidence bound to that exact tuple.
+- [ ] Receipt signature, response binding and request/call binding are reported as separate claims; no response-bound → call-bound inference.
 - [ ] Partial, stale, unavailable, gapped and conflicted outcomes represented without zero/absence inference.
 - [ ] Account-completeness claims bounded to the documented scope.
 - [ ] D0 and D1 evidence reviewed separately by the appropriate authority.
@@ -197,4 +200,47 @@ Passing this checklist would establish only that a provider-specific, read-only 
 
 ## 9. Current decision
 
-This is a provider-neutral design candidate. No provider has been selected, no provider documentation has been mapped, no account has been connected, no adapter has been implemented, and no provider conformance is claimed. S1 remains synthetic-only. D0, D1 and independent external review remain OPEN. S2 paper/test and S3 live execution remain unauthorized.
+This is a provider-neutral design candidate, revised to map the existing EXP-06 tuple exactly. No provider has been selected, no provider documentation has been mapped, no account has been connected, no adapter has been implemented, and no provider conformance is claimed. S1 remains synthetic-only. D0, D1 and independent external review remain OPEN. S2 paper/test and S3 live execution remain unauthorized.
+
+
+### 5.1 Exact binding to the IMMORTAL EXP-06 input
+
+The existing IMMORTAL EXP-06 boundary is:
+
+`EvidenceBoundInput = (sourceReference, observationReference, evidenceDigest, evidenceVersion, verificationStatus)`
+
+Arb must map this tuple to the existing `ObservationRecord` fields; it must not create a parallel qualification object.
+
+| EXP-06 member | Arb field / binding rule | Non-equivalence that must be preserved |
+|---|---|---|
+| `sourceReference` | `source.sourceId`, resolved under the exact `scope.profileRef` + `scope.profileVersion` and the corresponding provider-profile source-operation mapping | Provider brand, profileRef alone, or an endpoint label that does not identify the actual source operation is insufficient |
+| `observationReference` | `eventId`, the stable Arb observation-envelope identity | Do not substitute `source.sourceEventId`: it is optional and is the provider's event identity, not the Arb observation reference |
+| `evidenceDigest` | `evidence.rawDigestRef`, bound to the bytes retrievable through `evidence.rawEvidenceRef` | Do not substitute `normalizedDigestRef`; it identifies a different representation |
+| `evidenceVersion` | `evidence.evidenceVersion`, the source evidence format/schema version | Do not substitute `envelopeVersion`, `scope.profileVersion`, `canonicalizationVersion`, or the derivation/ruleset version |
+| `verificationStatus` | `evidence.verificationStatus` | A structural `quality.status = VALID` is not a verification result |
+
+The `evidenceVersion` field is required in ObservationRecord v0.2. If the source does not declare a version, the adapter must record `UNKNOWN`; it must not borrow another version field to make the EXP-06 tuple appear complete. Unknown source format/version limits the claims that can be made about semantic interpretation, even if the exact captured bytes can still be integrity-checked.
+
+A positive `VERIFIED_BY_SEPARATE_VERIFIER` status must carry a non-empty `verificationRef`. That reference must resolve to the independent verification evidence for the exact tuple above. At minimum, the referenced verification material must identify the verifier, method/version, exact checked artifact and digest, result, and verification time. A null or unresolved reference cannot support a positive status. This contract does not define a second verifier registry or verifier schema: the verification artifact is supplied under the canonical IMMORTAL EXP-06 evidence boundary and its trust policy remains external to the collector.
+
+### 5.2 Receipt verification — response binding and call binding
+
+Where a provider or tool returns a signed receipt, the referenced verification evidence must keep these claims separate:
+
+- **Signature validity:** the signature validates under the selected verifier and its independently governed trust policy.
+- **Response binding:** the signed commitment matches the digest of the exact retained response bytes represented by `rawDigestRef`.
+- **Call/request binding:** the signed or independently verified context binds that response to the exact request identity/hash and relevant resource scope for this collection.
+
+A valid signature without a response commitment is not a response-bound receipt. A response-bound receipt is not necessarily call-bound. When the scheme does not sign or otherwise independently bind request context, call binding remains `NOT_ESTABLISHED`; it must not be inferred from response integrity, timestamps, a matching account label or the fact that the collector initiated the request.
+
+These are claims within the referenced verification evidence, not new universal ObservationRecord booleans. A future selected provider profile must document the receipt scheme and its request/response binding semantics against official source material before it can claim either property. No receipt scheme is selected in this revision.
+
+### 5.3 EXP-12 preservation
+
+The existing ObservationRecord remains an observation produced by a collector. The verification reference identifies a separate verifier result. Neither object grants authorization. The downstream authority reference must remain separately supplied by the existing IMMORTAL authorization boundary; Arb's provider profile, collector and verifier cannot create or mutate it.
+
+The required logical order remains:
+
+`Observation → Evidence → Authorization`
+
+EXP-06 verification is an input to that boundary, not the authorization itself. Missing, altered, stale, conflicting, unresolved or wrongly scoped evidence remains `UNVERIFIABLE` / rejected under the applicable canonical contract.
