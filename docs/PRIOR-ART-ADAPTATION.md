@@ -107,3 +107,13 @@ Reference: https://www.rfc-editor.org/rfc/rfc9162.html
 ## What is not imported
 
 No standard is imported as a universal provider guarantee. No provider is selected. No signature implementation, cryptographic hashing implementation, RDF graph, FIX client, market-data feed, account connection, or live adapter is added in this change.
+
+
+## 7. Agent execution guard and tool-receipt response binding — external implementation references
+
+The 2026-11-03/04 Flux Point work adds two useful implementation precedents, recorded in detail in the [security and verification prior-art addendum](SECURITY-VERIFICATION-PRIOR-ART-ADDENDUM-2026-11-04.md):
+
+- **Substrate 1.10.3/1.10.4:** a repo-opt-in, static command chokepoint with narrowed read-only exemptions and fail-closed behavior when judgment cannot complete. Reuse the bounded/fail-closed control pattern only where a local command policy is genuinely needed. Do not describe it as a complete egress sandbox or financial authorization.
+- **Orynq tool-receipts:** scheme verifier plus a response-commitment function, with own-property-only dispatch and negative handling for missing/null verifier configuration. Reuse this as prior art for EXP-06 response integrity and EXP-12 verifier separation. Keep response binding distinct from call/request binding and from Principal authority.
+
+These do not supersede CloudEvents, PROV-O, JCS or DSSE in the evidence architecture and do not justify a parallel evidence registry, signature/currentness mechanism or qualification state machine in Arb.
