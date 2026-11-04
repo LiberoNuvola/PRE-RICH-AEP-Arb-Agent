@@ -218,6 +218,7 @@ test('ambiguous and conflicted W2 sources remain unresolved', () => {
   assert.equal(ambiguous.status, 'IDENTITY_UNRESOLVED_NOT_ECONOMICALLY_EVALUABLE')
   const conflicted = mapArbObservationToImmortalExp(validW2({
     status: 'CONFLICTED_WALLET_BALANCE_VS_EMPTY_UTXO_RESPONSE',
+    classification: 'CONFLICTED_SOURCE_ASSERTIONS',
     matchedPositions: [],
   }))
   assert.equal(conflicted.status, 'IDENTITY_UNRESOLVED_NOT_ECONOMICALLY_EVALUABLE')
@@ -241,4 +242,45 @@ test('W3 mapping is explicitly non-normative and delegates EXP semantics to IMMO
   assert.ok(IMMORTAL_EXP_CONSUMER_MAP_V0_1.immortalOwns.includes('EXP-06'))
   assert.ok(IMMORTAL_EXP_CONSUMER_MAP_V0_1.immortalOwns.includes('EXP-10 economic semantics and qualification'))
   assert.equal(IMMORTAL_EXP_CONSUMER_MAP_V0_1.proposalStatus, 'No new IMMORTAL semantics or canonical schema adopted')
+})
+
+test('conflicted W2 status must use the conflict envelope and contain no matches', () => {
+  const wrong = validW2({
+    status: 'CONFLICTED_WALLET_BALANCE_VS_EMPTY_UTXO_RESPONSE',
+    matchedPositions: [],
+  })
+  assert.throws(() => mapArbObservationToImmortalExp(wrong), (error) => error.code === 'W2_RESULT_INVALID')
+
+  const invalid = validW2({
+    status: 'CONFLICTED_WALLET_BALANCE_VS_EMPTY_UTXO_RESPONSE',
+    classification: 'CONFLICTED_SOURCE_ASSERTIONS',
+  })
+  invalid.matchedPositions = [validW2().matchedPositions[0]]
+  assert.throws(() => mapArbObservationToImmortalExp(invalid), (error) => error.code === 'W2_CONFLICT_HAS_MATCHES')
+})
+
+test('W3 rejects wrong wallet network/provider and wrong Minswap acquisition scope', () => {
+  const wrongNetwork = validW2()
+  wrongNetwork.walletSource.networkId = 0
+  assert.throws(() => mapArbObservationToImmortalExp(wrongNetwork), (error) => error.code === 'W2_WALLET_CONTEXT_INVALID')
+
+  const wrongProvider = validW2()
+  wrongProvider.walletSource.bridge = 'other'
+  assert.throws(() => mapArbObservationToImmortalExp(wrongProvider), (error) => error.code === 'W2_WALLET_BRIDGE_MISMATCH')
+
+  const wrongScope = validW2()
+  wrongScope.poolSource.acquisitionEvidence.exactAssetFilter.assetNameHex = '00'
+  assert.throws(() => mapArbObservationToImmortalExp(wrongScope), (error) => error.code === 'W2_POOL_ACQUISITION_SCOPE_INVALID')
+})
+
+test('W3 rejects invalid Koios response digest provenance', () => {
+  const w2 = validW2()
+  w2.poolSource.acquisitionEvidence.requestEvidence[0].bodySha256 = 'xyz'
+  assert.throws(() => mapArbObservationToImmortalExp(w2), (error) => error.code === 'W2_POOL_REQUEST_EVIDENCE_INVALID')
+})
+
+test('W3 rejects a pool pair that does not contain exact Moneta USDM', () => {
+  const w2 = validW2()
+  w2.matchedPositions[0].poolIdentity.datumAssetA = { policyId: SECOND_POLICY, assetNameHex: '', unit: SECOND_POLICY }
+  assert.throws(() => mapArbObservationToImmortalExp(w2), (error) => error.code === 'W2_MATCH_SEMANTICS_INVALID')
 })
