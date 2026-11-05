@@ -219,10 +219,6 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 16. Balance delta without unique transaction reference — do not invent transfer identity.
 17. externalLockUpdate lock/unlock change — preserve as a separate encumbrance observation; do not manufacture a debt, collateral agreement or settlement reference.
 18. externalLockUpdate and a fill with the same asset/amount/time but no shared provider identity — do not join them.
-33. A SOR `executionReport` has `tradeId=-1`, `matchType=ONE_PARTY_TRADE_REPORT` and `allocId`; preserve it as a SOR allocation candidate, not a direct trade or an empty event.
-34. `executionReport.allocId` equals `myAllocations.allocationId` in the same scoped account/symbol — bind those two observations to one allocation; changed quantity/price/quoteQty/commission/asset is CONFLICTED.
-35. One SOR order contains both direct trade IDs and allocation IDs — preserve separate execution items under one parent order; do not deduplicate by orderId or add order-level executedQty/cummulativeQuoteQty again.
-36. SOR route uses another eligible quote book — apply the submitted order symbol's quote asset to the user's account movement; do not use the underlying book's quote asset.
 19. account.commission schedule and a trade's actual commission — preserve schedule and charged amount as distinct fact types.
 20. balanceUpdate and outboundAccountPosition reflecting a similar asset movement without a shared event/transaction ID — preserve both observations and do not claim independent corroboration or a single merged event.
 21. JSON/SBE balanceUpdate, externalLockUpdate and outboundAccountPosition share one stream subscription context; equal subscriptionId plus asset/time/amount does not create a cross-family event or transaction identity.
@@ -237,6 +233,10 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 30. `account.commission` or `computeCommissionRates` observed near a trade — do not infer the historical applied rate or recalculate its actual commission.
 31. Multiple fills with one order ID but different trade IDs and commission assets — preserve one commission attribute per trade; do not aggregate/deduplicate by order ID.
 32. BNB discount enabled but actual `commissionAsset` reports another asset — preserve the actual asset; do not infer BNB payment from the tariff flags.
+33. A SOR `executionReport` has `tradeId=-1`, `matchType=ONE_PARTY_TRADE_REPORT` and `allocId`; preserve it as a SOR allocation candidate, not a direct trade or an empty event.
+34. `executionReport.allocId` equals `myAllocations.allocationId` in the same scoped account/symbol — bind those two observations to one allocation; changed quantity/price/quoteQty/commission/asset is CONFLICTED.
+35. One SOR order contains both direct trade IDs and allocation IDs — preserve separate execution items under one parent order; do not deduplicate by orderId or add order-level executedQty/cummulativeQuoteQty again.
+36. SOR route uses another eligible quote book — apply the submitted order symbol's quote asset to the user's account movement; do not use the underlying book's quote asset.
 
 ## 9. Official sources reviewed
 
