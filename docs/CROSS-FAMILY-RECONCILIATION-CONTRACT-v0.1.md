@@ -102,7 +102,14 @@ A relation status never upgrades ObservationRecord quality, verifies raw bytes, 
 | Balance | External collateral lock | The event semantics permit an `ENCUMBERS_OR_RELEASES` relation in principle; record-level relation to a specific balance update/snapshot remains unlinked without a documented shared identity | Do not link on asset/amount/time/subscriptionId; do not count the same units as both free executable balance and an additional collateral asset; lock event alone does not establish a debt or its creditor |
 | Direct trade / SOR allocation | Derived Spot asset movement | Each complete item has a derivable account-side base/quote movement and a separate commission component; SOR uses the submitted order symbol's quote asset | This is an item-level flow projection, not a live balance or native position; do not reconstruct complete account inventory from executions alone or add `free` and `locked` as separate holdings |
 | Direct trade / SOR allocation | Spot account balance | The execution item may partially explain subsequent asset balances, using side, submitted-symbol base/quote mapping and actual commission asset | Compare item effects to balance state only as partial explanatory evidence; balances also change through non-trade services and have no exact shared snapshot cursor |
-| Balance | Borrow/liability | A loan disbursement could affect an asset balance while also establishing a liability | Require explicit loan/borrow identity and product-specific source semantics; never infer a loan from a balance increase. Margin remains outside the current Spot candidate |
+| Margin borrow / repay | Margin liability snapshot | Borrow/repay history has per-operation txId, BORROW/REPAY type, status, asset and scope; Cross/Isolated snapshots expose borrowed and interest by asset | Only CONFIRMED operations describe completed account effects; snapshots are state, not additional debt events; preserve Cross and Isolated scopes separately |
+| Margin borrow/repay | USER_LIABILITY_CHANGE stream event | The stream reports asset, update type, principal and interest quantities | No txId or originating obligation ID in the stream schema; do not deduplicate to REST by asset/amount/time alone |
+| Margin repay | Actual interest history | A repayment row contains principal and interest components; interestHistory independently records interest charges by txId and type | Preserve principal, repay-interest and interest-history facts distinctly; do not double-count or join to an originating borrow without an explicit shared ID |
+| Margin capital-flow | Borrow/repay and Margin transfer history | Capital-flow rows expose id, tranId, type, asset, symbol and amount | Keep ID namespaces separate; the published schemas do not establish tranId=borrow-repay txId or equality with Wallet transfer tranId |
+| Margin collateral/risk snapshot | Borrowed assets / Margin liabilities | Margin account exposes free/locked/borrowed/interest/netAsset and risk ratios | Metrics are profile-valued risk/snapshot observations, not extra assets, debts, or independent collateral agreement; do not sum with constituent rows |
+| Margin force liquidation | Margin order / debt lifecycle | Force-liquidation record can link to Margin order by scoped orderId | Liquidation execution is not itself proof of debt repayment or full liability discharge; reconcile resulting trades and later liability state separately |
+| Small-liability exchange | Source/target asset liability | History records a source asset/amount and target asset/amount | Preserve as debt-denomination conversion; no original debt ID or settlement/discharge proof is exposed |
+| Balance | Borrow/liability | A loan disbursement could affect an asset balance while also establishing a liability | Require explicit loan/borrow identity and product-specific source semantics; never infer a loan from a balance increase. Spot remains outside Margin liability scope |
 | Liability | Settlement | Settlement may discharge an established right/obligation | Require the same obligation identity, authorized settlement reference, asset/amount, lifecycle state and applicable finality evidence; discharge once |
 | Internal Wallet transfer | Source/destination product-wallet balances | Wallet history `tranId` plus direction-coded `type` records one cross-wallet operation; the record does not carry the balance-stream's event ID | Keep the `tranId` record and each balance observation separate; no amount/asset/time-only pairing; a product transfer is not a trade, borrow, repayment, settlement or novation |
 | Wallet deposit/withdrawal | External chain movement | Binance history row `id` identifies its internal record; `txId` identifies the chain transaction; network, asset, addresses/tags and status provide context | `txId` alone may not identify a unique output/token event; require chain-specific asset and sub-event evidence for cross-platform joins; do not confuse `withdrawOrderId` or internal row `id` with `txId` |
@@ -138,12 +145,32 @@ For Spot, direct trades and SOR allocations are separate execution-item families
 
 `outboundAccountPosition` supplies the assets possibly changed by one account update; `balanceUpdate` is limited in the docs to deposits, withdrawals and transfers between accounts. The balance APIs expose no shared account event cursor or atomic snapshot watermark. A post-gap snapshot can restore current point-state, not missing history. The Wallet REST histories `GET /sapi/v1/asset/transfer`, `GET /sapi/v1/capital/deposit/hisrec` and `GET /sapi/v1/capital/withdraw/history` expose distinct internal `tranId` / row `id` / chain `txId` identities. They are mapped only as supporting cross-family references; they are outside the current Spot-only collection allowlist and require separate profile/scope approval. None of these identifiers is carried by the Spot balance events, so a record-level pairing with `balanceUpdate` or `outboundAccountPosition` remains unproven. Universal-transfer history is only available for six months; deposit/withdrawal history query windows are limited to 90 days. Margin/Futures, liability, transfer execution and settlement-finality semantics remain separate families.
 
+
+## 6.1 Companion Margin evidence boundary
+
+The Binance Margin documentation supplies more than one liability view:
+
+- operation history (`GET /sapi/v1/margin/borrow-repay`) with BORROW/REPAY, txId, status and principal/interest breakdown;
+- current account-state snapshots (`/sapi/v1/margin/account`, `/sapi/v1/margin/isolated/account`) with per-asset borrowed/interest/free/locked/netAsset and aggregate risk measures;
+- actual interest history (`/sapi/v1/margin/interestHistory`) and separate rate context;
+- capital-flow and wallet-transfer history with separate identity fields;
+- a Risk Data Stream event (`USER_LIABILITY_CHANGE`) without a provider transaction ID in its schema;
+- liquidation and small-liability exchange records as separate lifecycle families.
+
+These sources support a Margin candidate profile, not a universal liability ledger. Cross Margin and Isolated Margin are different product scopes. The current Spot-only S1 allowlist does not call any Margin endpoint or subscribe to any Margin Risk Data Stream. In particular, the Margin change log removed the legacy listenKey documentation on 2025-11-10 and recommends migration to `POST /sapi/v1/userListenToken` plus `userDataStream.subscribe.listenToken`; payload schema references alone do not prove that an Arb Margin stream adapter, event ordering contract or complete account stream has been implemented.
+
 Official provider references:
 - [Spot User Data Stream](https://developers.binance.com/en/docs/products/spot/user-data-stream)
 - [Spot Smart Order Routing FAQ](https://developers.binance.com/en/docs/products/spot/faqs/sor_faq)
 - [Spot API Glossary](https://developers.binance.com/en/docs/products/spot/faqs/spot_glossary)
 - [Binance Wallet REST API — Asset](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/asset)
 - [Binance Wallet REST API — Capital](https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/capital)
+- [Binance Margin REST API — Account](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/account)
+- [Binance Margin REST API — Borrow and Repay](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/borrow-repay)
+- [Binance Margin REST API — Transfer](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/transfer)
+- [Binance Margin REST API — Trade / liquidation](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/trade)
+- [Binance Margin WebSocket event schemas](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/ws-streams/~schemas)
+- [Binance Margin Trading change log](https://developers.binance.com/en/docs/products/margin-trading/change-log)
 - [Spot Commission Rates FAQ](https://developers.binance.com/en/docs/products/spot/faqs/commission_faq)
 - [Spot WebSocket stream event schemas](https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-streams/~schemas)
 - [SBE lifecycle — Production](https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/sbe_schema_lifecycle_prod.json) and [Spot Testnet](https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/sbe_schema_lifecycle_testnet.json): pin schema by environment (PROD 3:5; TESTNET 3:6 as of 2026-11-05)
@@ -178,6 +205,7 @@ Implemented in Arb:
 Not implemented:
 - cross-family join/relation resolver;
 - transfer-to-obligation discharge and EXP-09 novation qualification resolver (design only; no runtime implementation);
+- Margin borrow/repay, interest and liability-state parser/reconciler (documentation crosswalk only; no runtime implementation);
 - SOR allocation parser/reconciler for the documented `allocId` ↔ `allocationId` relation;
 - complete Spot asset-movement and balance reconciliation; the current Binance contract exposes no adequate account cursor/atomic boundary;
 - typed ProviderProfile mappings for balance, collateral, direct trades, SOR allocations, liability, transfer and settlement fields;
