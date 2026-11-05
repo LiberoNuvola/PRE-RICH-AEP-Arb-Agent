@@ -107,3 +107,20 @@ Minimum tests:
 This contract adds no provider client, API request, credentials, live account access, signature verifier, schema migration, economic rule, valuation, EEV, ProtectedCapital, RiskBudget, netting, mandate, authority, actuator or execution capability.
 
 S1 remains synthetic/read-only. Provider selection and provider conformance remain OPEN. D0/D1 and independent review remain OPEN. S2/S3 remain unauthorized.
+
+
+## 10. Synthetic implementation status — 2026-11-05
+
+The pure `reconcileTradeObservationCandidates` implementation now covers the matching core over already-normalized candidate records. It requires:
+- an explicit caller-supplied `TRADE_EXECUTION` mapping and operation reference;
+- the complete scoped key `profileRef + profileVersion + accountScopeRef + symbol + tradeId`;
+- one REST and one STREAM source identity;
+- agreement on order ID, quantity, price, commission amount and commission asset;
+- quote-quantity agreement when both sides expose it;
+- no unresolved correction/supersession relation.
+
+Raw digest inequality across the two channels is allowed. Within one channel, an exact repeated observation identity/digest is a no-op; changed content for that identity or multiple distinct identities for the same scoped trade key is CONFLICTED. Decimal comparison is exact (base-10 string normalization only); each original source string remains in `sourceValues`. A single source remains INCOMPLETE and emits no reconciled projection. Explicit non-trade sentinels are kept outside the trade projection.
+
+**Implementation boundary:** this is a comparison core over synthetic normalized candidates, not a Binance parser, ProviderProfile verifier, account client or provider conformance result. `sourceOperationMappingStatus` remains NOT_VERIFIED; raw bytes/digests are not retrieved or recomputed; verifier trust is not assessed. The matched projection does not assert settlement, position state, netting, authority or economic admission.
+
+**Downstream integration remains OPEN:** `projectOrderLifecycle` currently consumes a fill's `rawDigestRef` and treats changed digests for the same fill identity as a conflict. A cross-channel reconciled projection intentionally has two different raw digests. Do not select one source digest or substitute a locally invented digest. The adapter-to-lifecycle evidence interface must be specified so the generic reducer can bind a reconciliation artifact and all source ObservationRecord references without weakening the existing replay rule.
