@@ -133,13 +133,13 @@ test('malformed stream input cannot create a partial replay', () => {
 const exposureOne = {
   recordRef: 'fixture:exposure:position:AAA', category: 'REALIZED_POSITION',
   assetRef: 'fixture:asset:AAA', unitRef: 'fixture:unit:AAA', scopeRef: 'fixture:scope:principal-1',
-  horizonRef: 'fixture:horizon:current', status: 'OPEN', evidenceRef: 'fixture:evidence:position-1',
+  horizonRef: 'fixture:horizon:current', status: 'OPEN', observationRefs: ['fixture:event:position:AAA:rest', 'fixture:event:position:AAA:stream'],
   grossQuantity: '2.500', principalRef: 'fixture:principal:1',
 }
 const exposureTwo = {
   recordRef: 'fixture:exposure:obligation:USDX', category: 'ECONOMIC_OBLIGATION',
   assetRef: 'fixture:asset:USDX', unitRef: 'fixture:unit:USDX', scopeRef: 'fixture:scope:principal-1',
-  horizonRef: 'fixture:horizon:settlement-1', status: 'PENDING', evidenceRef: 'fixture:evidence:obligation-1',
+  horizonRef: 'fixture:horizon:settlement-1', status: 'PENDING', observationRefs: ['fixture:event:obligation:USDX:1'],
   grossQuantity: '25.00', obligationRef: 'fixture:obligation:1', principalRef: 'fixture:principal:1',
 }
 
@@ -151,6 +151,7 @@ test('OpenExposure keeps gross typed entries distinct and never creates a scalar
   assert.equal(result.grossItems[1].grossQuantity, '25.00')
   assert.equal(result.grossItems[0].unitRef, 'fixture:unit:AAA')
   assert.equal(result.grossItems[1].unitRef, 'fixture:unit:USDX')
+  assert.deepEqual(result.grossItems[0].observationRefs, ['fixture:event:position:AAA:rest', 'fixture:event:position:AAA:stream'])
   assert.equal(result.compositionStatus, 'COMPOSITION_UNRESOLVED')
   assert.equal(result.nettingStatus, 'NOT_EVALUATED')
   assert.equal(result.nettingApplied, false)
@@ -159,6 +160,22 @@ test('OpenExposure keeps gross typed entries distinct and never creates a scalar
   assert.equal(result.aggregateValue, null)
   assert.equal(result.economicAdmissionGranted, false)
   assert.equal(result.authorityGranted, false)
+})
+
+test('OpenExposure requires one or more unique ObservationRecord eventId references', () => {
+  const missing = { ...exposureOne }
+  delete missing.observationRefs
+  assert.equal(classifyOpenExposureSet({ recordType: 'OpenExposureSet', items: [missing] }).qualityStatus, 'INVALID')
+
+  const empty = { ...exposureOne, observationRefs: [] }
+  assert.equal(classifyOpenExposureSet({ recordType: 'OpenExposureSet', items: [empty] }).qualityStatus, 'INVALID')
+
+  const duplicate = { ...exposureOne, observationRefs: ['fixture:event:same', 'fixture:event:same'] }
+  assert.equal(classifyOpenExposureSet({ recordType: 'OpenExposureSet', items: [duplicate] }).qualityStatus, 'INVALID')
+
+  const legacyEvidenceRef = { ...exposureOne, evidenceRef: 'fixture:evidence:opaque' }
+  delete legacyEvidenceRef.observationRefs
+  assert.equal(classifyOpenExposureSet({ recordType: 'OpenExposureSet', items: [legacyEvidenceRef] }).qualityStatus, 'INVALID')
 })
 
 test('empty exposure input does not mean zero exposure', () => {

@@ -174,7 +174,7 @@ References:
 | Artifact provenance and independent verification | W3C PROV-O, SLSA, in-toto, DSSE | References and role separation; no cryptographic verification implementation | Reuse/adapt |
 | Cryptographic completeness/integrity | JCS, DSSE, Merkle proofs and PoL literature | rawDigestRef string equality only | Not implemented; material gap |
 | Principal/account authority separation | NIST ZTA and authorization frameworks | D0/D1 remain OPEN; adapter cannot set either | Established principle; financial binding remains unproven |
-| Gross obligations and legal netting | ISDA/IOSCO/Basel | Typed gross OpenExposure; no netting/novation | Established principle; explicit evidence binding remains a design requirement |
+| Gross obligations and legal netting | ISDA/IOSCO/Basel | Typed gross OpenExposure; no netting/novation; v0.3 binds items to ObservationRecord eventIds | Established principle; eventId resolution and EXP-06 reliance remain open |
 | Cross-stream/resource composition | Flink consistent snapshots; financial portfolio and netting frameworks | Composition X1–X7 remains unresolved absent its explicit witness | Partial overlap; exact financial composition semantics need evidence |
 | Evidence-to-economic admission hand-off | IMMORTAL R9, Gates 23/24/30, EXP-06/12, multi-oracle registry/observation prototype, ProtectedCapital item ledger, EconomicAdmissionWitness, GOV-27 and X1–X7 already define substantial boundaries | Arb is currently an S1 synthetic observer; no live provider/account integration or complete hand-off exists | Provider-specific account/venue lifecycle mapping only; not a new evidence framework, oracle registry or economic gate |
 

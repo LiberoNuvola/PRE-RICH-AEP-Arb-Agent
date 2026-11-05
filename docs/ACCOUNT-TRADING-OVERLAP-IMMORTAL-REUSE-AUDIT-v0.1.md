@@ -64,11 +64,11 @@ Arb's current distinct candidate remains narrower: a provider-specific, read-onl
 | rawEvidenceRef / rawDigestRef / evidenceVersion | Reference to raw evidence, digest reference and source evidence format version | EXP-06 tuple | A digest reference string is not raw-byte retrieval, digest recomputation, signature verification or signer trust |
 | verificationStatus / verificationRef | Claimed verification outcome and reference | EXP-06 independent verifier boundary | No concrete verifier is wired; positive verification must not be inferred from structural quality |
 
-### 3.4 OpenExposureSet v0.2
+### 3.4 OpenExposureSet v0.3
 
 Current per-item fields are:
 
-`recordRef, category, assetRef, unitRef, scopeRef, horizonRef, status, evidenceRef`, with optional `grossQuantity`, `obligationRef` and `principalRef`.
+`recordRef, category, assetRef, unitRef, scopeRef, horizonRef, status, observationRefs`, with optional `grossQuantity`, `obligationRef` and `principalRef`.
 
 The classifier preserves gross entries, rejects malformed/duplicate record references, keeps multi-item composition unresolved, never sums quantities or values, never nets/novates/transfers ownership, and returns INCOMPLETE for an empty item list.
 
@@ -76,14 +76,14 @@ This is useful as a **gross exposure projection**, but it is not a complete acco
 
 Concrete gaps:
 
-- `evidenceRef` is not yet normatively bound to the exact `ObservationRecord.eventId` and its EXP-06 tuple. Do not assume it means a raw digest, provider event ID or verifier reference.
+- `observationRefs` now binds each item to one or more exact `ObservationRecord.eventId` values (the Arb envelope `observationReference`), not a provider `sourceEventId`, `rawDigestRef` or `verificationRef`. The schema and S1 classifier enforce a non-empty unique list, but the classifier does not resolve the referenced records or verify their profile/version and EXP-06 tuple; that consumer-side resolution remains OPEN.
 - `category` and `status` are free strings; no canonical provider-independent taxonomy is defined.
 - `grossQuantity` is an opaque decimal quantity. It has no typed amount/price pair, direction/side, contract multiplier, fee asset, counterparty, payer/beneficiary or settlement amount semantics.
 - The item does not carry a dedicated source/provider event identity, order/fill/transfer/settlement lifecycle link, correction relation or effective timestamp; those facts must remain in ObservationRecord/event streams and be linked explicitly if/when a consumer requires it.
 - It does not model balances as a full account snapshot. Balances are asset observations and possible EEV/liquidity inputs, not automatically open exposure items.
 - It does not decide whether a position is an obligation, whether a liability is crystallized, whether collateral is encumbered, or whether settlement discharges a claim.
 
-**Decision:** do not expand OpenExposure into a universal account ledger. Preserve source-family records separately. Use OpenExposure only where a profile has a justified gross exposure projection, with an explicit evidence-to-item binding contract still to be specified.
+**Decision:** do not expand OpenExposure into a universal account ledger. Preserve source-family records separately. Use OpenExposure only where a profile has a justified gross exposure projection. Schema-level provenance binding is now explicit through `observationRefs`; referential resolution, profile/version matching and downstream EXP-06 reliance remain separate consumer checks.
 
 ## 4. IMMORTAL multi-venue / oracle reuse boundary
 
@@ -161,7 +161,7 @@ This is a broker/exchange adapter and reconciliation problem, not a second econo
 
 - Provider selection and official documentation mapping.
 - Typed family-level field mapping for account/trading records.
-- Exact binding from OpenExposure item `evidenceRef` to ObservationRecord observation/evidence identity.
+- Resolution of each OpenExposure `observationRefs` eventId to the exact ObservationRecord and its EXP-06 tuple, including profile/version consistency and the verification reference where a positive status is claimed.
 - Cross-family duplicate/reconciliation rules for balance ↔ position ↔ liability ↔ fee ↔ settlement.
 - Provider snapshot atomicity, cursor retention and correction guarantees.
 - Independent verifier and raw-byte digest recomputation.
@@ -203,4 +203,4 @@ Keep S1 synthetic/read-only. D0/D1 and independent review remain OPEN; S2/S3 rem
 - `Adapter/CARDANO/observation/EconomicAdmissionTransitionBinding.ts`
 - `docs/02-certification/EEV_ORACLE_AND_VALUATION_CONTRACT.md`
 
-**Non-regression:** documentation only. No application code, schemas, provider profile, economic rule, EEV valuation, ProtectedCapital classification, RiskBudget, authority, signature, verifier, economic admission or actuator was changed.
+**Non-regression:** a narrow OpenExposure contract hardening only: schema v0.3, synthetic fixture, pure S1 classifier, negative tests and existing readiness/audit records. No provider client, provider selection, new evidence registry, economic rule, EEV valuation, ProtectedCapital classification, RiskBudget, authority, signature verifier, economic admission or actuator was added.

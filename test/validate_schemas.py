@@ -97,6 +97,25 @@ validate("schemas/replay-result.schema.json", "examples/replay-result.synthetic.
 validate("schemas/multistream-replay-result.schema.json", "examples/multistream-replay-result.synthetic.json")
 validate("schemas/open-exposure-set.schema.json", "examples/open-exposure-set.synthetic.json")
 
+open_exposure = load(ROOT / "examples/open-exposure-set.synthetic.json")
+open_exposure_validator = validator_for("schemas/open-exposure-set.schema.json")
+
+missing_observation_refs = deepcopy(open_exposure)
+del missing_observation_refs["items"][0]["observationRefs"]
+assert_rejected(open_exposure_validator, missing_observation_refs, "OpenExposure item without ObservationRecord eventId binding")
+
+empty_observation_refs = deepcopy(open_exposure)
+empty_observation_refs["items"][0]["observationRefs"] = []
+assert_rejected(open_exposure_validator, empty_observation_refs, "OpenExposure item with empty ObservationRecord eventId binding")
+
+duplicate_observation_refs = deepcopy(open_exposure)
+duplicate_observation_refs["items"][0]["observationRefs"] = ["fixture:event:duplicate", "fixture:event:duplicate"]
+assert_rejected(open_exposure_validator, duplicate_observation_refs, "OpenExposure item with duplicate ObservationRecord eventId binding")
+
+legacy_opaque_evidence_ref = deepcopy(open_exposure)
+legacy_opaque_evidence_ref["items"][0]["evidenceRef"] = "fixture:evidence:opaque"
+assert_rejected(open_exposure_validator, legacy_opaque_evidence_ref, "legacy opaque OpenExposure evidenceRef")
+
 provider_profile = validate(
     "schemas/provider-profile.schema.json",
     "examples/provider-profile.template.json"

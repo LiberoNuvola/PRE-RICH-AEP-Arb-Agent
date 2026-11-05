@@ -605,12 +605,20 @@ export function classifyOpenExposureSet(input) {
     })
   }
 
-  const required = ['recordRef', 'category', 'assetRef', 'unitRef', 'scopeRef', 'horizonRef', 'status', 'evidenceRef']
+  const required = ['recordRef', 'category', 'assetRef', 'unitRef', 'scopeRef', 'horizonRef', 'status']
   const grossItems = []
   const invalidIndexes = []
   for (let index = 0; index < input.items.length; index += 1) {
     const item = input.items[index]
     if (!isRecord(item) || required.some((key) => typeof readOwn(item, key) !== 'string' || !readOwn(item, key))) {
+      invalidIndexes.push(index)
+      continue
+    }
+    const observationRefs = readOwn(item, 'observationRefs')
+    if (!Array.isArray(observationRefs) ||
+        observationRefs.length === 0 ||
+        observationRefs.some((ref) => typeof ref !== 'string' || !ref) ||
+        new Set(observationRefs).size !== observationRefs.length) {
       invalidIndexes.push(index)
       continue
     }
@@ -628,7 +636,7 @@ export function classifyOpenExposureSet(input) {
       scopeRef: item.scopeRef,
       horizonRef: item.horizonRef,
       status: item.status,
-      evidenceRef: item.evidenceRef,
+      observationRefs: [...observationRefs],
       grossQuantity: item.grossQuantity ?? null,
       obligationRef: item.obligationRef ?? null,
       principalRef: item.principalRef ?? null,

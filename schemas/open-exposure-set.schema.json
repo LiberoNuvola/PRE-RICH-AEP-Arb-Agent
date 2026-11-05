@@ -1,33 +1,98 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://immortal.invalid/arb/s1/open-exposure-set/0.2",
-  "title": "Arb S1 OpenExposureSet candidate",
-  "description": "Typed gross records for read-only projection. No scalar aggregation, netting, novation, valuation or admission semantics are selected.",
+  "$id": "https://immortal.invalid/arb/s1/open-exposure-set/0.3",
+  "title": "Arb S1 OpenExposureSet v0.3",
+  "description": "Typed gross records for read-only projection. Each item binds to one or more exact ObservationRecord.eventId values; no scalar aggregation, netting, novation, valuation or admission semantics are selected.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["recordType", "profileRef", "profileVersion", "items"],
+  "required": [
+    "recordType",
+    "profileRef",
+    "profileVersion",
+    "items"
+  ],
   "properties": {
-    "recordType": { "const": "OpenExposureSet" },
-    "profileRef": { "type": "string", "minLength": 1 },
-    "profileVersion": { "type": "string", "minLength": 1 },
+    "recordType": {
+      "const": "OpenExposureSet"
+    },
+    "profileRef": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profileVersion": {
+      "type": "string",
+      "minLength": 1
+    },
     "items": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["recordRef", "category", "assetRef", "unitRef", "scopeRef", "horizonRef", "status", "evidenceRef"],
+        "required": [
+          "recordRef",
+          "category",
+          "assetRef",
+          "unitRef",
+          "scopeRef",
+          "horizonRef",
+          "status",
+          "observationRefs"
+        ],
         "properties": {
-          "recordRef": { "type": "string", "minLength": 1 },
-          "category": { "type": "string", "minLength": 1 },
-          "assetRef": { "type": "string", "minLength": 1 },
-          "unitRef": { "type": "string", "minLength": 1 },
-          "scopeRef": { "type": "string", "minLength": 1 },
-          "horizonRef": { "type": "string", "minLength": 1 },
-          "status": { "type": "string", "minLength": 1 },
-          "evidenceRef": { "type": "string", "minLength": 1 },
-          "grossQuantity": { "type": "string", "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$" },
-          "obligationRef": { "type": ["string", "null"] },
-          "principalRef": { "type": ["string", "null"] }
+          "recordRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1
+          },
+          "assetRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "unitRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "scopeRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "horizonRef": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "grossQuantity": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$"
+          },
+          "obligationRef": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "principalRef": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "observationRefs": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "description": "Exact Arb ObservationRecord.eventId references (observationReference), not provider sourceEventId, rawDigestRef or verificationRef. The referenced ObservationRecord carries the EXP-06 evidence tuple.",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
         }
       }
     }

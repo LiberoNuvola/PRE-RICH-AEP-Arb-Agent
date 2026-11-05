@@ -295,10 +295,10 @@ Findings:
 - IMMORTAL multi-venue/oracle work already supplies exact asset identity, source lineage, venue-vs-indexer independence, raw observation and coverage patterns; it is not an external broker account lifecycle adapter.
 - The PRE-RICH ProtectedCapital item ledger supplies reusable item identity, snapshot binding, explicit classification, blocker and aggregate-reconciliation patterns; it is PRE-RICH-specific and explicitly does not prove source completeness or full ProtectedCapital.
 - R9/EV1–EV7 and EconomicAdmissionWitness remain IMMORTAL-owned valuation/admission boundaries. Provider balances, account equity, positions or marks do not become EEV by naming.
-- Arb OpenExposure is already a gross-only projection. It must not become a universal account ledger; a concrete unresolved binding remains between each exposure item's `evidenceRef` and its exact ObservationRecord / EXP-06 tuple.
+- Arb OpenExposure remains a gross-only projection, not a universal account ledger. Schema v0.3 now binds each item to one or more exact `ObservationRecord.eventId` values; consumer-side resolution to the full EXP-06 tuple and profile/version consistency remains OPEN.
 - The remaining candidate contribution is provider-specific read-only account/trading lifecycle collection, correction handling, per-family coverage and cross-family reconciliation, with no netting, valuation, economic admission or actuation.
 
-**Non-regression:** no schema, application code, IMMORTAL economic rule, EEV policy, ProtectedCapital partition, RiskBudget, verifier registry or authority was changed. S1 remains synthetic/read-only; D0/D1 and independent review remain OPEN; S2/S3 remain unauthorized.
+**Non-regression:** only the Arb OpenExposure v0.3 schema, S1 classifier, fixtures, tests and documentation were changed to bind gross items to source observations. No provider client or IMMORTAL economic rule, EEV policy, ProtectedCapital partition, RiskBudget, verifier registry or authority was added or changed. S1 remains synthetic/read-only; D0/D1 and independent review remain OPEN; S2/S3 remain unauthorized.
 
 
 ## 13. Official provider API candidate assessment — 2026-11-04

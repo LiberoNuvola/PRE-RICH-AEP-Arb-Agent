@@ -41,7 +41,7 @@ The implementation does not merge event histories, choose a total order, compute
 
 ## 4. OpenExposure boundary
 
-The current classifier preserves recordRef, category, assetRef, unitRef, scopeRef, horizonRef, status, evidenceRef, and optional grossQuantity separately for each entry. Quantities are opaque decimal strings and are never summed. Multiple entries remain COMPOSITION_UNRESOLVED. Missing input is INCOMPLETE, not zero. Duplicate references are CONFLICTED.
+The current classifier preserves recordRef, category, assetRef, unitRef, scopeRef, horizonRef, status, one or more observationRefs, and optional grossQuantity separately for each entry. Each observationRefs value is an exact ObservationRecord.eventId (the Arb envelope observationReference), not provider source.sourceEventId, rawDigestRef or verificationRef. Multi-source projections retain every contributing eventId. Quantities are opaque decimal strings and are never summed. Multiple entries remain COMPOSITION_UNRESOLVED. Missing input is INCOMPLETE, not zero; duplicate recordRef values are CONFLICTED. The classifier checks observationRefs shape and uniqueness only: it does not dereference the ObservationRecords or qualify their EXP-06 tuple. A consumer must resolve every eventId and check the exact profile/version scope before relying on the projection.
 
 This projection does not decide valuation, liquidity, eligibility, ProtectedCapital, solvency, budget sufficiency, netting rights, novation, settlement finality or admission.
 

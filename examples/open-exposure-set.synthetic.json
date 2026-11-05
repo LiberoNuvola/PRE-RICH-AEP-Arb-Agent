@@ -11,9 +11,12 @@
       "scopeRef": "fixture:scope:principal-1",
       "horizonRef": "fixture:horizon:current",
       "status": "OPEN",
-      "evidenceRef": "fixture:evidence:position-1",
       "grossQuantity": "2.500",
-      "principalRef": "fixture:principal:1"
+      "principalRef": "fixture:principal:1",
+      "observationRefs": [
+        "fixture:event:position:AAA:rest",
+        "fixture:event:position:AAA:stream"
+      ]
     },
     {
       "recordRef": "fixture:exposure:obligation:USDX",
@@ -23,10 +26,12 @@
       "scopeRef": "fixture:scope:principal-1",
       "horizonRef": "fixture:horizon:settlement-1",
       "status": "PENDING",
-      "evidenceRef": "fixture:evidence:obligation-1",
       "grossQuantity": "25.00",
       "obligationRef": "fixture:obligation:1",
-      "principalRef": "fixture:principal:1"
+      "principalRef": "fixture:principal:1",
+      "observationRefs": [
+        "fixture:event:obligation:USDX:1"
+      ]
     }
   ]
 }
