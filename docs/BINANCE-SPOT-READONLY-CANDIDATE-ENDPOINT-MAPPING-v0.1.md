@@ -125,7 +125,7 @@ The official Spot API exposes three distinct views:
 - `outboundAccountPosition` is pushed when an account balance changes and contains the assets that may have changed, with their `free` and `locked` quantities. It is a changed-asset update, not a complete account snapshot.
 - `balanceUpdate` is documented for deposits, withdrawals and transfers between accounts. It is a narrower delta event, not a record of every balance-changing cause.
 
-The reviewed JSON payloads and SBE event definitions expose timestamps (`E`, `T`, `u`) and subscription context, but no per-account event sequence/cursor or provider event ID for these balance events. In the SBE message header for these event types, the fields identify message length/template/schema/version; they do not supply an account sequence. `subscriptionId` identifies the User Data Stream subscription, not an individual balance event. Therefore:
+The reviewed JSON payloads and SBE event definitions expose timestamps (`E`, `T`, `u`) and subscription context, but no per-account event sequence/cursor or provider event ID for these balance events. In the SBE message header for these event types, the fields identify message length/template/schema/version; they do not supply an account sequence. `subscriptionId` identifies the User Data Stream subscription, not an individual balance event. The SBE version must be pinned per environment: as of 2026-11-05 the official lifecycle lists PROD 3:5 and SPOT TESTNET 3:6. The `ServerShutdownEvent.shutdownTime` (`T`) field is only present from SBE 3:6; the current Production lifecycle remains at 3:5, so a Production SBE observer must not assume this field is available. Therefore:
 
 1. Never reconstruct account state by summing `balanceUpdate` deltas: that family is not exhaustive for balance changes.
 2. Never treat `outboundAccountPosition` as an all-assets snapshot: it reports the assets possibly changed by the triggering event.
@@ -145,14 +145,14 @@ The safe S1 collection posture is evidence preservation, not an invented event-s
 6. After reconnect/re-subscribe, obtain a new `account.status` response as a new point-state observation. It may re-establish a current balance baseline, but it does not backfill the missing event history or resolve what happened during the gap.
 7. Keep the missed interval PARTIAL/UNKNOWN even when the new snapshot is available. Do not relabel the historical stream coverage COMPLETE or manufacture missing `balanceUpdate` records.
 
-The User Data Stream documentation identifies `eventStreamTerminated` for documented subscription-ending actions; the WebSocket API also exposes session subscription inspection. Neither operation supplies a cursor for replaying events that were not received. These observations do not prove complete transfer lifecycle, counterparty identity or settlement finality.
+The User Data Stream documentation identifies `eventStreamTerminated` for documented subscription-ending actions; the WebSocket API also exposes session subscription inspection. `serverShutdown` is an additional infrastructure-discontinuity signal. In the 2026-10-30 Spot Testnet rollout, its payload gained `T` (shutdown time); for SBE this field is present only in schema 3:6 and later. Production remains on SBE 3:5 as of 2026-11-05, so record `T` only when the negotiated environment/schema actually exposes it. None of these signals supplies a cursor for replaying events that were not received. These observations do not prove complete transfer lifecycle, counterparty identity or settlement finality.
 
 ## 7. Mapping to existing Arb envelope
 
 | Existing Arb field | Binance candidate mapping |
 |---|---|
 | Provider / product | binance / spot only |
-| Protocol / version | Spot WebSocket API v3 and User Data Stream; pin documentation revision and retrieval date |
+| Protocol / version | Spot WebSocket API v3 and User Data Stream; pin documentation revision, retrieval date, environment and SBE schema id/version. As of 2026-11-05, Binance lifecycle files report PROD SBE 3:5 (released 2026-07-07) and SPOT TESTNET SBE 3:6 (released 2026-10-30); never infer Production support from the latest schema file in the source tree. |
 | Source operation | Exact method/event name, e.g. account.status, myTrades, executionReport |
 | Data family | account_balance, collateral_lock_change (partial), order, fill, fee_schedule, order_list, prevented_match |
 | Source identity | Scoped provider identifiers above; never ticker alone |
@@ -193,6 +193,7 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 24. `account.status.updateTime` equals or differs from `outboundAccountPosition.u` — record both; do not treat either as a unique event cursor or shared watermark.
 25. `account.status` queried with `omitZeroBalances=true` — reject candidate completeness; absent asset is not a zero-balance assertion.
 26. Subscription or socket interruption followed by a new account snapshot — preserve the gap as PARTIAL; the snapshot restores a current point-state only, not missing event history.
+27. PROD SBE 3:5 versus TESTNET SBE 3:6 — pin schema by environment; do not assume `serverShutdown.shutdownTime` (`T`) exists in Production until its lifecycle announces 3:6+.
 
 ## 9. Official sources reviewed
 
@@ -202,7 +203,10 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 - Binance Spot WebSocket API connection and session contract: https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-api.md
 - Binance Spot User Data Stream events: https://developers.binance.com/en/docs/products/spot/user-data-stream
 - Binance Spot WebSocket stream event schemas (including externalLockUpdate): https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-streams/~schemas
-- Binance Spot SBE schema (spot_3_1.xml): https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/spot_3_1.xml
+- Binance SBE lifecycle — Production: https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/sbe_schema_lifecycle_prod.json
+- Binance SBE lifecycle — Spot Testnet: https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/sbe_schema_lifecycle_testnet.json
+- Spot Testnet changelog 2026-10-30 (SBE 3:6 and `serverShutdown.T`): https://github.com/binance/binance-spot-api-docs/blob/master/testnet/CHANGELOG.md
+- Spot SBE schema 3:6: https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/spot_3_6.xml
 - Binance Margin REST API — Borrow and Repay: https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/borrow-repay
 
 Margin is cited only to establish separate borrow/repay and interest-history operations. Margin is out of scope for this Spot candidate.

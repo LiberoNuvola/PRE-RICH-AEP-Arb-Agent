@@ -129,7 +129,8 @@ These identities and families are not interchangeable. `account.status` supplies
 Official provider references:
 - [Spot User Data Stream](https://developers.binance.com/en/docs/products/spot/user-data-stream)
 - [Spot WebSocket stream event schemas](https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-streams/~schemas)
-- [Spot SBE schema (`spot_3_1.xml`)](https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/spot_3_1.xml)
+- [SBE lifecycle — Production](https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/sbe_schema_lifecycle_prod.json) and [Spot Testnet](https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/sbe_schema_lifecycle_testnet.json): pin schema by environment (PROD 3:5; TESTNET 3:6 as of 2026-11-05)
+- [Spot Testnet changelog 2026-10-30](https://github.com/binance/binance-spot-api-docs/blob/master/testnet/CHANGELOG.md) and [SBE schema 3:6](https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/spot_3_6.xml): `serverShutdown.shutdownTime` is 3:6+ only
 - [Spot WebSocket Account API](https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-api/account)
 - [Spot REST API](https://developers.binance.com/en/docs/products/spot/rest-api)
 
