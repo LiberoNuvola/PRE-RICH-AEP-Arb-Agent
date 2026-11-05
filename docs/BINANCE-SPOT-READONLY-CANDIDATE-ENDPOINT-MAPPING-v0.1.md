@@ -29,9 +29,10 @@ The initial candidate uses the current Spot WebSocket API at wss://ws-api.binanc
 | Balance delta | balanceUpdate | JSON: e, E, a, d, T; SBE: freeQtyDelta maps to d, clearTime maps to T, optional subscriptionId | Preserve exact event type, raw delta, asset and times; no event sequence/cursor or transfer ID; subscriptionId is subscription context, not transaction identity | Documented for deposits/withdrawals/inter-account transfers only; not a complete balance-change ledger, lock event or settlement proof |
 | External lock change | externalLockUpdate | JSON: e, E, a, d, T; SBE: lockedQtyDelta maps to d, clearTime maps to T, optional subscriptionId | Preserve exact event type, raw locked-quantity delta, asset and times; no external-system, loan, collateral-agreement or obligation ID; subscriptionId is not a lock/event identity | Partial collateral/encumbrance observation only; do not infer debt, ownership, valuation or a new asset/liability |
 | Order lifecycle | allOrders / order.status (USER_DATA) | symbol, orderId, orderListId, clientOrderId, price, origQty, executedQty, cummulativeQuoteQty, status, timeInForce, type, side, time, updateTime | Product scope + symbol + orderId; clientOrderId is separate | Per-symbol history; documented query limits apply |
-| Order update / execution report | executionReport | s, c, S, o, f, q, p, x, X, i, l, z, L, n, N, T, t, I, Z, Y, C, r, v and conditional fields | i = order ID; I = execution ID; t = trade ID when present; c = client order ID | Event evidence, not guaranteed complete replay |
-| Fills / trades | myTrades (USER_DATA) | symbol, id (trade ID), orderId, orderListId, price, qty, quoteQty, time, isBuyer, isMaker, isBestMatch where returned | Product scope + account scope + symbol + trade ID; link to order ID | Per-symbol; max 1000; time interval max 24 hours; fromId cannot combine with time filters |
-| Actual per-trade commission | myTrades + executionReport (`x=TRADE`) | myTrades: `commission`, `commissionAsset`; executionReport: `n`, `N` alongside `t` trade ID, `i` order ID, `I` execution ID | Same scoped trade identity; commission is an attribute of that trade, not a separate fill | Preserve exact amount and charged asset; REST/stream copies are evidence of one charge, not two |
+| Order update / execution report | executionReport | s, c, S, o, f, q, p, x, X, i, l, z, L, n, N, T, t, I, Z, Y, C, r, v; SOR fields `a` (allocId), `b` (matchType), `k` (workingFloor), `uS` (usedSor) where present | i = order ID; I = execution ID; t = direct trade ID when non-negative; `a` links an allocation item; c = client order ID | Event evidence, not guaranteed complete replay; `t=-1` plus SOR allocation fields is not a direct trade |
+| Fills / trades | myTrades (USER_DATA) | symbol, id (trade ID), orderId, orderListId, price, qty, quoteQty, time, isBuyer, isMaker, isBestMatch where returned | Product scope + account scope + symbol + non-negative trade ID; link to parent order ID | Per-symbol; max 1000; time interval max 24 hours; fromId cannot combine with time filters; direct trades only |
+| SOR allocations | myAllocations (USER_DATA) | symbol, allocationId, allocationType, orderId, orderListId, price, qty, quoteQty, commission, commissionAsset, time, isBuyer, isMaker, isAllocator | Account scope + symbol + allocationId; executionReport.allocId is the stream-side reference; orderId is the parent order link | SOR-only; max 1000; time interval max 24 hours; supports orderId or fromAllocationId query; an order may include both allocations and direct trades |
+| Actual per-item commission | myTrades + myAllocations + executionReport | Direct trade: `commission`, `commissionAsset`; SOR allocation: same fields; stream: `n`, `N` plus `t` or `a` allocation ID | Bind direct fee by scoped trade ID; bind SOR fee by scoped allocation ID; commission is an attribute of that item | Preserve exact amount/asset; REST/stream copies are evidence of one charge, not two |
 | Current commission schedule | `account.commission` / `GET /api/v3/account/commission` | `symbol`, `standardCommission`, `specialCommission`, `taxCommission`, `discount` (account/symbol enablement, discount asset and multiplier) | Current per-symbol tariff observation; request/receipt time only, no effective-from/version field in response | Context only; does not prove which rates applied to a historical trade |
 | Order-list lifecycle | allOrderLists / listStatus | orderListId, contingencyType, listStatusType, listOrderStatus, listClientOrderId, transactionTime, member order IDs | Parent order-list identity separate from member order IDs | Preserve OCO/OTO parent-child lineage |
 | Prevented / self-trade match | conditional execution-report fields and prevented-matches query | prevented match ID/quantity/price/quote quantity where exposed | Distinct from executed trade identity | Not an execution/fill |
@@ -70,7 +71,29 @@ The historical myTrades result separately carries trade ID, order ID, quantity, 
 
 Do not treat executionReport as a second independent fill if the corresponding myTrades row is already present. Preserve both raw observations and bind them to one trade identity. Any conflict is a blocker/conflict, not a reason to pick the convenient value.
 
-### 3.4 Actual commission versus tariff context
+### 3.4 SOR allocations are a separate execution family
+
+Binance documents `GET /api/v3/myAllocations` (and WebSocket `myAllocations`) as the query for allocations resulting from SOR order placement. Each record includes `symbol`, `allocationId`, `allocationType`, `orderId`, `orderListId`, `price`, `qty`, `quoteQty`, `commission`, `commissionAsset`, `time`, `isBuyer`, `isMaker` and `isAllocator`. Query scope is per symbol; `orderId` can retrieve an order's allocations, while `fromAllocationId` continues the allocation history. The limit is 1000 and a start/end time interval cannot exceed 24 hours. Preserve exact request parameters, pagination and coverage; a full page is not exhaustion evidence.
+
+SOR is not a synonym for an ordinary exchange trade. Binance's SOR FAQ states that a fill routed through SOR is represented as `matchType=ONE_PARTY_TRADE_REPORT`, with `tradeId=-1`, and an `allocId` that identifies the allocation. The SOR allocation query returns the corresponding `allocationId`. In a User Data Stream `executionReport`, preserve `a` (allocation ID), `b` (match type), `k` (working floor) and `uS` (used SOR) when present. The exact allocation link is scoped by provider profile/account, submitted symbol and `allocId == allocationId`; retain `orderId` as the parent-order relation and compare the available quantity, price, quote quantity and commission fields. Do not use `orderId` alone as the allocation identity.
+
+A SOR order can contain **both** direct trades and SOR allocations. Direct trades are retrieved from `myTrades` with a non-negative trade ID; SOR allocations are retrieved from `myAllocations` by allocation ID. Keep these as different typed execution items under the same parent order. Do not force `tradeId=-1` into the direct-trade reconciler, and do not classify it as "no inventory movement": the SOR allocation is a separate provider-reported movement family. Conversely, do not count both the SOR allocation and its `executionReport` as two movements; they are two observations of one allocation identified by `allocId`.
+
+The order-level `executedQty` and `cummulativeQuoteQty` are aggregate controls across the order's fills. The SOR FAQ examples show those totals alongside allocation items. When direct trades and allocations are both present, compare complete item coverage against these order totals only after both item families have independently demonstrated query exhaustion. Never add the order aggregate as an additional fill or inventory movement.
+
+#### Per-item Spot inventory effect (derived, not a position)
+
+For a directly traded fill or SOR allocation, the account-side gross asset movement can be represented as separate components, using the exact `baseAsset` and `quoteAsset` for the **submitted order symbol** from Exchange Information (do not parse asset codes from the symbol string):
+
+- Account BUY: `+qty` in the base asset and `-quoteQty` in the submitted symbol's quote asset.
+- Account SELL: `-qty` in the base asset and `+quoteQty` in the submitted symbol's quote asset.
+- Commission: a separate `-commission` component in the exact `commissionAsset`.
+
+Keep the commission component distinct even when its asset is the base or quote asset; only a later explicitly typed per-asset movement projection may combine components with exact decimal arithmetic. For SOR, the submitted symbol's quote asset remains the asset the account spends/receives even when the router consumes liquidity from another eligible symbol/quote book.
+
+This projection is an explained effect of one execution item; it is not the current Spot balance, a native exchange position, valuation, PnL, or a complete inventory ledger. `account.status` remains the account-state observation. Its `free` quantity is available to trade/withdraw; `locked` is an amount of the same asset held by open orders or other platform services. Treat `free` and `locked` as a decomposition of one asset balance, not two additional holdings. A balance snapshot cannot be reconstructed from direct trades and SOR allocations alone because deposits, withdrawals, internal transfers, locks and other services also affect balances, and the Spot balance event stream is not exhaustive.
+
+### 3.5 Actual commission versus tariff context
 
 For a real fill, the reviewed Spot representations carry one actual commission amount and one charged asset: `myTrades.commission` / `commissionAsset`, and on `executionReport` with `x=TRADE`, `n` / `N` with the provider trade ID `t`. Keep that pair bound to the scoped trade identity. It is a trade attribute (`ATTRIBUTE_OF`), not a second fill or a separate balance movement to add to the fill. The REST and stream copies of the same trade commission are one charge with two evidence records.
 
@@ -80,13 +103,13 @@ Preserve the commission amount as a decimal string, including an explicit zero, 
 
 The Commission FAQ describes standard, tax and special rate components, side/liquidity-role dependence, and a BNB discount that applies to standard commission but not tax or special commission; BNB payment also depends on account/symbol discount enablement and sufficient BNB balance. If BNB is insufficient, the commission may instead be deducted in the received asset. The trade records expose the actual total `commission` and `commissionAsset`, not a per-trade breakdown of those rate components. Therefore do not recompute, decompose, convert, aggregate by order ID, or substitute a tariff-derived amount for the provider-reported actual fee. If REST and stream disagree on amount or asset for the same scoped trade, classify the trade as conflicted.
 
-### 3.5 Corrections, cancellations and prevented matches
+### 3.6 Corrections, cancellations and prevented matches
 
 The reviewed Spot documentation exposes order execution type/status, cancel/replace lineage fields, reject/expiry reasons and prevented-match identifiers. That does not establish a general trade-bust/correction endpoint or universal correction model. Until a documented operation is identified, correction/bust completeness is UNKNOWN.
 
 A prevented match / STP event is not an executed fill. Preserve its distinct identifiers and quantities without adding it to trade quantity or gross executed exposure.
 
-### 3.6 External lock/unlock observations
+### 3.7 External lock/unlock observations
 
 The JSON User Data Stream variant exposes `e`, `E`, `a`, `d` and `T`. The official SBE schema makes the field semantics more precise:
 - `BalanceUpdateEvent`: `freeQtyDelta` maps to JSON `d`; `clearTime` maps to `T`.
@@ -115,7 +138,7 @@ An external lock can change the distinction between total, free and locked amoun
 
 Permitted candidate operations:
 - account.status — signed USER_DATA;
-- allOrders, order.status, myTrades, account.commission, allOrderLists — signed USER_DATA;
+- allOrders, order.status, myTrades, myAllocations, account.commission, allOrderLists — signed USER_DATA;
 - subscribe/list/unsubscribe to authenticated User Data Stream — USER_STREAM;
 - local receipt, hashing, normalization and replay of received payloads.
 
@@ -165,7 +188,7 @@ The User Data Stream documentation identifies `eventStreamTerminated` for docume
 | Provider / product | binance / spot only |
 | Protocol / version | Spot WebSocket API v3 and User Data Stream; pin documentation revision, retrieval date, environment and SBE schema id/version. As of 2026-11-05, Binance lifecycle files report PROD SBE 3:5 (released 2026-07-07) and SPOT TESTNET SBE 3:6 (released 2026-10-30); never infer Production support from the latest schema file in the source tree. |
 | Source operation | Exact method/event name, e.g. account.status, myTrades, executionReport |
-| Data family | account_balance, collateral_lock_change (partial), order, fill, fee_schedule, order_list, prevented_match |
+| Data family | account_balance, collateral_lock_change (partial), order, direct_trade, sor_allocation, fee_schedule, order_list, prevented_match |
 | Source identity | Scoped provider identifiers above; never ticker alone |
 | Snapshot identity | Local collection-run identity; no provider-wide atomic snapshot assumed |
 | Event identity | Local eventId distinct from provider sourceEventId; use documented provider execution/trade/order identity where appropriate |
@@ -196,6 +219,10 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 16. Balance delta without unique transaction reference — do not invent transfer identity.
 17. externalLockUpdate lock/unlock change — preserve as a separate encumbrance observation; do not manufacture a debt, collateral agreement or settlement reference.
 18. externalLockUpdate and a fill with the same asset/amount/time but no shared provider identity — do not join them.
+33. A SOR `executionReport` has `tradeId=-1`, `matchType=ONE_PARTY_TRADE_REPORT` and `allocId`; preserve it as a SOR allocation candidate, not a direct trade or an empty event.
+34. `executionReport.allocId` equals `myAllocations.allocationId` in the same scoped account/symbol — bind those two observations to one allocation; changed quantity/price/quoteQty/commission/asset is CONFLICTED.
+35. One SOR order contains both direct trade IDs and allocation IDs — preserve separate execution items under one parent order; do not deduplicate by orderId or add order-level executedQty/cummulativeQuoteQty again.
+36. SOR route uses another eligible quote book — apply the submitted order symbol's quote asset to the user's account movement; do not use the underlying book's quote asset.
 19. account.commission schedule and a trade's actual commission — preserve schedule and charged amount as distinct fact types.
 20. balanceUpdate and outboundAccountPosition reflecting a similar asset movement without a shared event/transaction ID — preserve both observations and do not claim independent corroboration or a single merged event.
 21. JSON/SBE balanceUpdate, externalLockUpdate and outboundAccountPosition share one stream subscription context; equal subscriptionId plus asset/time/amount does not create a cross-family event or transaction identity.
@@ -216,6 +243,8 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 - Binance Spot REST API — security, timestamp and error semantics: https://developers.binance.com/en/docs/products/spot/rest-api
 - Binance Spot WebSocket API — Account: https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-api/account
 - Binance Spot Commission Rates FAQ: https://developers.binance.com/en/docs/products/spot/faqs/commission_faq
+- Binance Spot Smart Order Routing FAQ: https://developers.binance.com/en/docs/products/spot/faqs/sor_faq
+- Binance Spot API Glossary: https://developers.binance.com/en/docs/products/spot/faqs/spot_glossary
 - Binance Spot WebSocket API — session and subscription methods: https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-api/user-data-stream
 - Binance Spot WebSocket API connection and session contract: https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-api.md
 - Binance Spot User Data Stream events: https://developers.binance.com/en/docs/products/spot/user-data-stream

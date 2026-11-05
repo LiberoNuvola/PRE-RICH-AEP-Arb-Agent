@@ -253,6 +253,9 @@ test('balance, collateral-lock and tariff observations are not inferred to be tr
     ['ACCOUNT_POSITION_UPDATE', 'fixture:binance:outboundAccountPosition'],
     ['BALANCE_DELTA', 'fixture:binance:balanceUpdate'],
     ['COLLATERAL_LOCK_CHANGE', 'fixture:binance:externalLockUpdate'],
+    ['SOR_ALLOCATION', 'fixture:binance:myAllocations'],
+    ['SPOT_INVENTORY_STATE', 'fixture:binance:account.status'],
+    ['DERIVATIVE_POSITION_STATE', 'fixture:binance:futures.positionRisk'],
     ['FEE_SCHEDULE', 'fixture:binance:account.commission'],
     ['COMMISSION_RATE_SNAPSHOT', 'fixture:binance:account.commission'],
     ['TEST_ORDER_COMMISSION_RATES', 'fixture:binance:order.test.computeCommissionRates'],
@@ -270,6 +273,43 @@ test('balance, collateral-lock and tariff observations are not inferred to be tr
     assert.equal(result.groups.length, 0, sourceFactType)
     assert.equal(result.unclassified[0].status, 'UNMAPPED', sourceFactType)
   }
+})
+
+test('SOR allocation with tradeId sentinel is preserved as a separate non-trade item', () => {
+  const allocation = candidate('STREAM', 'fixture:obs:sor:allocation:stream', {
+    sourceFactType: 'SOR_ALLOCATION',
+    sourceOperationRef: 'fixture:binance:executionReport:SOR',
+    sourceEventId: 'fixture:execution-id:sor:allocation:1',
+    tradeId: '-1',
+    orderId: '9001',
+  })
+  const result = reconcileTradeObservationCandidates([allocation])
+  assert.equal(result.reconciliationStatus, 'NOT_A_TRADE')
+  assert.equal(result.groups.length, 0)
+  assert.equal(result.unclassified[0].status, 'NOT_A_TRADE')
+})
+
+test('SOR allocation sharing an orderId is not folded into its direct trade', () => {
+  const [restTrade, streamTrade] = pair()
+  const allocation = candidate('STREAM', 'fixture:obs:sor:allocation:stream', {
+    sourceFactType: 'SOR_ALLOCATION',
+    sourceOperationRef: 'fixture:binance:executionReport:SOR',
+    sourceEventId: 'fixture:execution-id:sor:allocation:1',
+    tradeId: '-1',
+    orderId: '9001',
+    quantity: restTrade.quantity,
+    price: restTrade.price,
+    quoteQuantity: restTrade.quoteQuantity,
+    commissionAmount: restTrade.commissionAmount,
+    commissionAsset: restTrade.commissionAsset,
+    allocationId: '0',
+  })
+  const result = reconcileTradeObservationCandidates([restTrade, streamTrade, allocation])
+  assert.equal(result.groups.length, 1)
+  assert.equal(result.groups[0].status, 'MATCHED')
+  assert.equal(result.groups[0].projection.tradeId, '7001')
+  assert.equal(result.unclassified.length, 1)
+  assert.equal(result.unclassified[0].status, 'NOT_A_TRADE')
 })
 
 test('matching amount and asset do not join a trade to an external lock event', () => {
