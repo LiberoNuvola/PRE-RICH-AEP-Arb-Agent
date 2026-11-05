@@ -361,6 +361,13 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 39. A withdrawal includes `transactionFee` and `withdrawOrderId` — preserve network fee and caller-supplied lookup ID separately from trade commission, internal row `id` and chain `txId`.
 40. Deposit status is pending/restricted/rejected or waiting confirmation — preserve raw status; do not classify as a completed usable balance transfer.
 41. Universal-transfer history is queried beyond the six-month retention window or pages are not exhausted — classify coverage PARTIAL/UNKNOWN; absence of rows is not proof of zero transfers.
+42. A Spot → Margin `tranId` matches a borrow/repay asset and amount — do not classify as borrowing, collateralization or repayment without the separate Margin obligation record.
+43. A withdrawal row matches an existing obligation by asset and amount but lacks its canonical obligation/payment reference and qualified beneficiary binding — no `DISCHARGES` relation and no R7 L1/L2 → L4 transition.
+44. A withdrawal status or chain `txId` exists without destination receipt/finality or profile settlement evidence — preserve the withdrawal observation; do not infer legal/economic discharge.
+45. A Wallet transfer or local owner reassignment changes the operational account/scope but lacks EXP-09 profile rule, source/destination party identity, consent and authorization — no novation and no erasure of the original obligation.
+46. Opposite-signed transfers or payments concern separate obligations — retain gross facts; no implicit EXP-08 netting from sign, amount or asset.
+47. A coupled cross-system obligation is observed on one side only — retain unresolved exposure on both sides under C-COMP X4 and avoid double-counting the shared resource under X2.
+48. A `withdrawOrderId` resembles a local obligation ID but the signed/authenticated intent-to-ID binding is absent — treat as unqualified correlation metadata, not obligation identity.
 49. Margin borrow history returns FAILED/PENDING — do not create or discharge a completed liability until status is CONFIRMED.
 50. Margin REPAY record exposes amount, principal and interest — preserve all three; do not treat the amount as principal-only or duplicate interest-history rows without an exact link.
 51. Cross Margin and Isolated Margin share an asset code but differ by account/symbol scope — do not merge their balances or liabilities.
@@ -370,20 +377,6 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 55. Margin account snapshot `borrowed`/`interest` and aggregate `totalLiabilityOfBtc` coexist — do not sum or count aggregates as additional liabilities.
 56. Margin small-liability exchange changes asset denomination — preserve source/target asset and quantities; do not classify as repayment, debt cancellation or netting.
 57. Force-liquidation record shares orderId with a Margin order — link only by exact account/product/symbol/order identity; do not infer liability discharge amount from liquidation execution alone.
-42. A Spot → Margin `tranId` matches a borrow/repay asset and amount — do not classify as borrowing, collateralization or repayment without the separate Margin obligation record.
-43. A withdrawal row matches an existing obligation by asset and amount but lacks its canonical obligation/payment reference and qualified beneficiary binding — no `DISCHARGES` relation and no R7 L1/L2 → L4 transition.
-44. A withdrawal status or chain `txId` exists without destination receipt/finality or profile settlement evidence — preserve the withdrawal observation; do not infer legal/economic discharge.
-45. A Wallet transfer or local owner reassignment changes the operational account/scope but lacks EXP-09 profile rule, source/destination party identity, consent and authorization — no novation and no erasure of the original obligation.
-46. Opposite-signed transfers or payments concern separate obligations — retain gross facts; no implicit EXP-08 netting from sign, amount or asset.
-47. A coupled cross-system obligation is observed on one side only — retain unresolved exposure on both sides under C-COMP X4 and avoid double-counting the shared resource under X2.
-48. A `withdrawOrderId` resembles a local obligation ID but the signed/authenticated intent-to-ID binding is absent — treat as unqualified correlation metadata, not obligation identity.
-
-- Binance Margin REST API — Account: https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/account
-- Binance Margin REST API — Borrow and Repay: https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/borrow-repay
-- Binance Margin REST API — Transfer: https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/transfer
-- Binance Margin REST API — Trade / force liquidation / small-liability history: https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/trade
-- Binance Margin WebSocket event schemas: https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/ws-streams/~schemas
-- Binance Margin Trading change log (listen-token migration): https://developers.binance.com/en/docs/products/margin-trading/change-log
 
 ## 9. Official sources reviewed
 
@@ -402,7 +395,12 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 - Binance SBE lifecycle — Spot Testnet: https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/sbe_schema_lifecycle_testnet.json
 - Spot Testnet changelog 2026-10-30 (SBE 3:6 and `serverShutdown.T`): https://github.com/binance/binance-spot-api-docs/blob/master/testnet/CHANGELOG.md
 - Spot SBE schema 3:6: https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/spot_3_6.xml
+- Binance Margin REST API — Account: https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/account
 - Binance Margin REST API — Borrow and Repay: https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/borrow-repay
+- Binance Margin REST API — Transfer: https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/transfer
+- Binance Margin REST API — Trade / force liquidation / small-liability history: https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/trade
+- Binance Margin WebSocket event schemas: https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/ws-streams/~schemas
+- Binance Margin Trading change log (listen-token migration): https://developers.binance.com/en/docs/products/margin-trading/change-log
 
 Margin is cited only to establish separate borrow/repay and interest-history operations. Margin is out of scope for this Spot candidate.
 
