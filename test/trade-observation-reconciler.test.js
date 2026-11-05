@@ -68,10 +68,50 @@ test('same key with a quantity mismatch is conflicted and emits no projection', 
   assert.deepEqual(result.groups[0].issues[0].fields, ['quantity'])
 })
 
+test('same key with a commission amount mismatch is conflicted and emits no projection', () => {
+  const result = reconcileTradeObservationCandidates(pair({stream: {commissionAmount: '0.026'}}))
+  assert.equal(result.groups[0].status, 'CONFLICTED')
+  assert.equal(result.groups[0].projection, null)
+  assert.deepEqual(result.groups[0].issues[0].fields, ['commissionAmount'])
+})
+
 test('same key with a commission asset mismatch is conflicted', () => {
   const result = reconcileTradeObservationCandidates(pair({stream: {commissionAsset: 'USDX'}}))
   assert.equal(result.groups[0].status, 'CONFLICTED')
   assert.deepEqual(result.groups[0].issues[0].fields, ['commissionAsset'])
+})
+
+test('explicit zero commission and its asset are preserved as a valid trade attribute', () => {
+  const result = reconcileTradeObservationCandidates(pair({
+    rest: {commissionAmount: '0.00000000', commissionAsset: 'BNB'},
+    stream: {commissionAmount: '0', commissionAsset: 'BNB'},
+  }))
+  assert.equal(result.reconciliationStatus, 'MATCHED')
+  assert.equal(result.groups[0].projection.comparableValues.commissionAmount, '0')
+  assert.equal(result.groups[0].projection.comparableValues.commissionAsset, 'BNB')
+  assert.deepEqual(result.groups[0].projection.sourceValues.commissionAmount, [
+    {observationRef: 'fixture:obs:rest:1', value: '0.00000000'},
+    {observationRef: 'fixture:obs:stream:1', value: '0'},
+  ])
+})
+
+test('multiple fills from one order retain separate fee attributes by trade ID', () => {
+  const firstRest = candidate('REST', 'fixture:obs:rest:trade:7001')
+  const firstStream = candidate('STREAM', 'fixture:obs:stream:trade:7001')
+  const secondRest = candidate('REST', 'fixture:obs:rest:trade:7002', {
+    tradeId: '7002', quantity: '1.0', price: '20', quoteQuantity: '20',
+    commissionAmount: '0.003', commissionAsset: 'BNB',
+  })
+  const secondStream = candidate('STREAM', 'fixture:obs:stream:trade:7002', {
+    tradeId: '7002', sourceEventId: 'fixture:execution-id:7002', quantity: '1.0',
+    price: '20', quoteQuantity: '20', commissionAmount: '0.003', commissionAsset: 'BNB',
+  })
+  const result = reconcileTradeObservationCandidates([firstRest, firstStream, secondRest, secondStream])
+  assert.equal(result.reconciliationStatus, 'MATCHED')
+  assert.equal(result.groups.length, 2)
+  assert.deepEqual(result.groups.map((group) => group.projection.tradeId), ['7001', '7002'])
+  assert.deepEqual(result.groups.map((group) => group.projection.comparableValues.commissionAmount), ['0.025', '0.003'])
+  assert.deepEqual(result.groups.map((group) => group.projection.comparableValues.commissionAsset), ['AAA', 'BNB'])
 })
 
 test('decimal scale differences compare numerically while exact source strings remain preserved', () => {
@@ -206,7 +246,7 @@ test('empty and malformed candidate collections fail closed without implying zer
 })
 
 
-test('balance, collateral-lock and fee-schedule observations are not inferred to be trades', () => {
+test('balance, collateral-lock and tariff observations are not inferred to be trades', () => {
   const nonTradeCases = [
     ['BALANCE_CHANGE', 'fixture:binance:balanceUpdate'],
     ['BALANCE_SNAPSHOT', 'fixture:binance:account.status'],
@@ -214,6 +254,8 @@ test('balance, collateral-lock and fee-schedule observations are not inferred to
     ['BALANCE_DELTA', 'fixture:binance:balanceUpdate'],
     ['COLLATERAL_LOCK_CHANGE', 'fixture:binance:externalLockUpdate'],
     ['FEE_SCHEDULE', 'fixture:binance:account.commission'],
+    ['COMMISSION_RATE_SNAPSHOT', 'fixture:binance:account.commission'],
+    ['TEST_ORDER_COMMISSION_RATES', 'fixture:binance:order.test.computeCommissionRates'],
     ['SETTLEMENT', 'fixture:binance:unmapped-settlement'],
   ]
 

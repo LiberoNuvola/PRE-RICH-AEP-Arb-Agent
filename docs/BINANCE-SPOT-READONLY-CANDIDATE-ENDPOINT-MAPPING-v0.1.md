@@ -30,8 +30,9 @@ The initial candidate uses the current Spot WebSocket API at wss://ws-api.binanc
 | External lock change | externalLockUpdate | JSON: e, E, a, d, T; SBE: lockedQtyDelta maps to d, clearTime maps to T, optional subscriptionId | Preserve exact event type, raw locked-quantity delta, asset and times; no external-system, loan, collateral-agreement or obligation ID; subscriptionId is not a lock/event identity | Partial collateral/encumbrance observation only; do not infer debt, ownership, valuation or a new asset/liability |
 | Order lifecycle | allOrders / order.status (USER_DATA) | symbol, orderId, orderListId, clientOrderId, price, origQty, executedQty, cummulativeQuoteQty, status, timeInForce, type, side, time, updateTime | Product scope + symbol + orderId; clientOrderId is separate | Per-symbol history; documented query limits apply |
 | Order update / execution report | executionReport | s, c, S, o, f, q, p, x, X, i, l, z, L, n, N, T, t, I, Z, Y, C, r, v and conditional fields | i = order ID; I = execution ID; t = trade ID when present; c = client order ID | Event evidence, not guaranteed complete replay |
-| Fills / trades | myTrades (USER_DATA) | symbol, id (trade ID), orderId, orderListId, price, qty, quoteQty, commission, commissionAsset, time, isBuyer, isMaker, isBestMatch where returned | Product scope + symbol + trade ID; link to order ID | Per-symbol; max 1000; time interval max 24 hours; fromId cannot combine with time filters |
-| Fees / commission schedule | account.commission and trade fee fields | standard/special/tax maker/taker/buyer/seller rates; discount flags, asset/rate; actual commission and commissionAsset | Rate schedule is not actual fee; preserve separately | Current rates do not prove historical applied rate |
+| Fills / trades | myTrades (USER_DATA) | symbol, id (trade ID), orderId, orderListId, price, qty, quoteQty, time, isBuyer, isMaker, isBestMatch where returned | Product scope + account scope + symbol + trade ID; link to order ID | Per-symbol; max 1000; time interval max 24 hours; fromId cannot combine with time filters |
+| Actual per-trade commission | myTrades + executionReport (`x=TRADE`) | myTrades: `commission`, `commissionAsset`; executionReport: `n`, `N` alongside `t` trade ID, `i` order ID, `I` execution ID | Same scoped trade identity; commission is an attribute of that trade, not a separate fill | Preserve exact amount and charged asset; REST/stream copies are evidence of one charge, not two |
+| Current commission schedule | `account.commission` / `GET /api/v3/account/commission` | `symbol`, `standardCommission`, `specialCommission`, `taxCommission`, `discount` (account/symbol enablement, discount asset and multiplier) | Current per-symbol tariff observation; request/receipt time only, no effective-from/version field in response | Context only; does not prove which rates applied to a historical trade |
 | Order-list lifecycle | allOrderLists / listStatus | orderListId, contingencyType, listStatusType, listOrderStatus, listClientOrderId, transactionTime, member order IDs | Parent order-list identity separate from member order IDs | Preserve OCO/OTO parent-child lineage |
 | Prevented / self-trade match | conditional execution-report fields and prevented-matches query | prevented match ID/quantity/price/quote quantity where exposed | Distinct from executed trade identity | Not an execution/fill |
 
@@ -69,13 +70,23 @@ The historical myTrades result separately carries trade ID, order ID, quantity, 
 
 Do not treat executionReport as a second independent fill if the corresponding myTrades row is already present. Preserve both raw observations and bind them to one trade identity. Any conflict is a blocker/conflict, not a reason to pick the convenient value.
 
-### 3.4 Corrections, cancellations and prevented matches
+### 3.4 Actual commission versus tariff context
+
+For a real fill, the reviewed Spot representations carry one actual commission amount and one charged asset: `myTrades.commission` / `commissionAsset`, and on `executionReport` with `x=TRADE`, `n` / `N` with the provider trade ID `t`. Keep that pair bound to the scoped trade identity. It is a trade attribute (`ATTRIBUTE_OF`), not a second fill or a separate balance movement to add to the fill. The REST and stream copies of the same trade commission are one charge with two evidence records.
+
+Preserve the commission amount as a decimal string, including an explicit zero, and preserve `commissionAsset` exactly. Do not infer the charged asset from the market's base/quote assets, the configured discount asset, or the current account balance. A zero commission amount does not erase the fill. A non-trade `executionReport` (for example `x=NEW`, or the `t=-1` sentinel) is not a fee-bearing trade and must not create a commission fact.
+
+`account.commission` / `GET /api/v3/account/commission` returns the account's **current** per-symbol standard, special and tax rates plus a discount configuration. Its response does not provide a tariff version or effective-from time. Capture the query and receipt times as observation times; do not present them as the tariff's historical effective interval. `order.test` / `POST /api/v3/order/test` with `computeCommissionRates=true` returns rates for a hypothetical test order; the endpoint validates the test order without sending it to the matching engine. Neither response is proof of the actual charge on a past fill.
+
+The Commission FAQ describes standard, tax and special rate components, side/liquidity-role dependence, and a BNB discount that applies to standard commission but not tax or special commission; BNB payment also depends on account/symbol discount enablement and sufficient BNB balance. If BNB is insufficient, the commission may instead be deducted in the received asset. The trade records expose the actual total `commission` and `commissionAsset`, not a per-trade breakdown of those rate components. Therefore do not recompute, decompose, convert, aggregate by order ID, or substitute a tariff-derived amount for the provider-reported actual fee. If REST and stream disagree on amount or asset for the same scoped trade, classify the trade as conflicted.
+
+### 3.5 Corrections, cancellations and prevented matches
 
 The reviewed Spot documentation exposes order execution type/status, cancel/replace lineage fields, reject/expiry reasons and prevented-match identifiers. That does not establish a general trade-bust/correction endpoint or universal correction model. Until a documented operation is identified, correction/bust completeness is UNKNOWN.
 
 A prevented match / STP event is not an executed fill. Preserve its distinct identifiers and quantities without adding it to trade quantity or gross executed exposure.
 
-### 3.5 External lock/unlock observations
+### 3.6 External lock/unlock observations
 
 The JSON User Data Stream variant exposes `e`, `E`, `a`, `d` and `T`. The official SBE schema makes the field semantics more precise:
 - `BalanceUpdateEvent`: `freeQtyDelta` maps to JSON `d`; `clearTime` maps to `T`.
@@ -186,6 +197,11 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 17. externalLockUpdate lock/unlock change — preserve as a separate encumbrance observation; do not manufacture a debt, collateral agreement or settlement reference.
 18. externalLockUpdate and a fill with the same asset/amount/time but no shared provider identity — do not join them.
 19. account.commission schedule and a trade's actual commission — preserve schedule and charged amount as distinct fact types.
+28. `myTrades.commission` and `executionReport.n` disagree for the same scoped trade ID — classify CONFLICTED; do not select one source.
+29. Explicit zero `commission` with a reported `commissionAsset` — preserve zero and asset; do not drop the trade or synthesize a different fee.
+30. `account.commission` or `computeCommissionRates` observed near a trade — do not infer the historical applied rate or recalculate its actual commission.
+31. Multiple fills with one order ID but different trade IDs and commission assets — preserve one commission attribute per trade; do not aggregate/deduplicate by order ID.
+32. BNB discount enabled but actual `commissionAsset` reports another asset — preserve the actual asset; do not infer BNB payment from the tariff flags.
 20. balanceUpdate and outboundAccountPosition reflecting a similar asset movement without a shared event/transaction ID — preserve both observations and do not claim independent corroboration or a single merged event.
 21. JSON/SBE balanceUpdate, externalLockUpdate and outboundAccountPosition share one stream subscription context; equal subscriptionId plus asset/time/amount does not create a cross-family event or transaction identity.
 22. A `balanceUpdate` (deposit/withdrawal/inter-account transfer) and a same-asset `outboundAccountPosition` event have no shared ID — preserve both; no one-to-one event pairing.
@@ -199,6 +215,7 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 
 - Binance Spot REST API — security, timestamp and error semantics: https://developers.binance.com/en/docs/products/spot/rest-api
 - Binance Spot WebSocket API — Account: https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-api/account
+- Binance Spot Commission Rates FAQ: https://developers.binance.com/en/docs/products/spot/faqs/commission_faq
 - Binance Spot WebSocket API — session and subscription methods: https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-api/user-data-stream
 - Binance Spot WebSocket API connection and session contract: https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-api.md
 - Binance Spot User Data Stream events: https://developers.binance.com/en/docs/products/spot/user-data-stream
