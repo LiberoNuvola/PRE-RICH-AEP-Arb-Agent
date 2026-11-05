@@ -256,6 +256,9 @@ test('balance, collateral-lock and tariff observations are not inferred to be tr
     ['SOR_ALLOCATION', 'fixture:binance:myAllocations'],
     ['SPOT_INVENTORY_STATE', 'fixture:binance:account.status'],
     ['DERIVATIVE_POSITION_STATE', 'fixture:binance:futures.positionRisk'],
+    ['UNIVERSAL_TRANSFER', 'fixture:binance:asset.transfer.history'],
+    ['DEPOSIT_HISTORY', 'fixture:binance:capital.deposit.hisrec'],
+    ['WITHDRAWAL_HISTORY', 'fixture:binance:capital.withdraw.history'],
     ['FEE_SCHEDULE', 'fixture:binance:account.commission'],
     ['COMMISSION_RATE_SNAPSHOT', 'fixture:binance:account.commission'],
     ['TEST_ORDER_COMMISSION_RATES', 'fixture:binance:order.test.computeCommissionRates'],
@@ -310,6 +313,44 @@ test('SOR allocation sharing an orderId is not folded into its direct trade', ()
   assert.equal(result.groups[0].projection.tradeId, '7001')
   assert.equal(result.unclassified.length, 1)
   assert.equal(result.unclassified[0].status, 'NOT_A_TRADE')
+})
+
+test('Wallet transfer, deposit and withdrawal history are not trades', () => {
+  const walletRecords = [
+    ['UNIVERSAL_TRANSFER', 'fixture:binance:asset.transfer.history'],
+    ['DEPOSIT_HISTORY', 'fixture:binance:capital.deposit.hisrec'],
+    ['WITHDRAWAL_HISTORY', 'fixture:binance:capital.withdraw.history'],
+  ]
+  for (const [sourceFactType, sourceOperationRef] of walletRecords) {
+    const result = reconcileTradeObservationCandidates([
+      candidate('REST', 'fixture:obs:wallet:' + sourceFactType, {
+        sourceFactType,
+        sourceOperationRef,
+      }),
+    ])
+    assert.equal(result.reconciliationStatus, 'UNMAPPED', sourceFactType)
+    assert.equal(result.groups.length, 0, sourceFactType)
+    assert.equal(result.unclassified[0].status, 'UNMAPPED', sourceFactType)
+  }
+})
+
+test('a wallet transfer matching trade amount and asset is not folded into the trade', () => {
+  const trade = candidate('REST', 'fixture:obs:trade:wallet-transfer:1')
+  const transfer = candidate('STREAM', 'fixture:obs:wallet-transfer:1', {
+    sourceFactType: 'UNIVERSAL_TRANSFER',
+    sourceOperationRef: 'fixture:binance:asset.transfer.history',
+    sourceEventId: null,
+    quantity: trade.quantity,
+    commissionAsset: trade.commissionAsset,
+    tradeId: null,
+    orderId: null,
+  })
+  const result = reconcileTradeObservationCandidates([trade, transfer])
+  assert.equal(result.groups.length, 1)
+  assert.equal(result.groups[0].status, 'INCOMPLETE')
+  assert.equal(result.groups[0].projection, null)
+  assert.equal(result.unclassified.length, 1)
+  assert.equal(result.unclassified[0].status, 'UNMAPPED')
 })
 
 test('matching amount and asset do not join a trade to an external lock event', () => {

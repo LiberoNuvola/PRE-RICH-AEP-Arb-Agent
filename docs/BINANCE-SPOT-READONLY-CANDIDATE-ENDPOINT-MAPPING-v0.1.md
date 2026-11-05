@@ -37,6 +37,22 @@ The initial candidate uses the current Spot WebSocket API at wss://ws-api.binanc
 | Order-list lifecycle | allOrderLists / listStatus | orderListId, contingencyType, listStatusType, listOrderStatus, listClientOrderId, transactionTime, member order IDs | Parent order-list identity separate from member order IDs | Preserve OCO/OTO parent-child lineage |
 | Prevented / self-trade match | conditional execution-report fields and prevented-matches query | prevented match ID/quantity/price/quote quantity where exposed | Distinct from executed trade identity | Not an execution/fill |
 
+## 2.1 Companion Wallet history sources — documented, not enabled
+
+The following official Wallet REST history operations are relevant to cross-family transfer evidence, but they are **not part of the current Spot-only collection allowlist**. This is a documentation crosswalk only. Do not call them, create transfer/withdrawal operations, enable extra API permissions or expand the selected provider profile in S1 without a separate scope decision. In particular, only the read-only `GET` history endpoints are described below; the corresponding transfer/withdraw `POST` methods remain prohibited.
+
+| Family | Read-only Wallet operation | Fields to preserve | Identity and limits | Scope note |
+|---|---|---|---|---|
+| Internal Binance wallet transfer | `GET /sapi/v1/asset/transfer` — Query User Universal Transfer History | `asset`, `amount`, `type`, `status`, `tranId`, `timestamp`; also preserve request `type`, `fromSymbol`, `toSymbol`, page `current` and `size` | `tranId` scoped to the Binance user account and universal-transfer operation; query requires `type`; `size` max 100; history limited to last 6 months, default 7 days | `type` declares product direction (for example Spot → Funding, Spot → USDⓈ-M Futures, Spot → Margin). Isolated-Margin transfer queries may require `fromSymbol` / `toSymbol`. It is a cross-wallet record, not an external blockchain transfer or a Spot trade. |
+| External deposit | `GET /sapi/v1/capital/deposit/hisrec` — Deposit History (supporting network) | `id`, `amount`, `coin`, `network`, `status`, `address`, `addressTag`, `txId`, `insertTime`, `completeTime`, `transferType`, `confirmTimes`, `unlockConfirm`, `walletType`, `travelRuleStatus`; `sourceAddress` only when `includeSource=true` | Keep Binance deposit-row `id` separate from chain `txId`; query windows max 90 days, `limit` max 1000 with `offset` | A Binance credit record is not itself proof of the source wallet's ownership or a unique chain transfer sub-event. Preserve raw status (including pending/rejected/credited-but-restricted states). |
+| External withdrawal | `GET /sapi/v1/capital/withdraw/history` — Withdraw History (supporting network) | `id`, `amount`, `transactionFee`, `coin`, `status`, `address`, `txId`, `applyTime`, `network`, `transferType`, `withdrawOrderId`, `confirmNo`, `walletType`, `txKey`, `completeTime` | Keep Binance withdrawal-row `id`, optional client-supplied `withdrawOrderId`, and chain `txId` distinct; query windows max 90 days, `limit` max 1000; `withdrawOrderId` filter has a 7-day window | Older records may omit `network`; preserve missing as missing. `transactionFee` is a withdrawal/network fee, not trade commission. Do not infer net amount by subtracting it without a source-defined amount convention. |
+
+The universal-transfer history row gives one `tranId`, one direction-coded `type`, asset, amount, status and timestamp. It does not create two independent transfer records for source and destination. Its `type` identifies the product-direction category (e.g. `MAIN_FUNDING` / `FUNDING_MAIN`); isolated-margin symbol fields refine the isolated account scope. The history API supports only a rolling six-month query window. Preserve exact pagination and query coverage; a `total` value or a partial page is not proof that the requested period has been fully exhausted.
+
+For on-chain deposit/withdrawal records, `id` is Binance's internal history-row identity; `txId` is the chain transaction identifier. A withdrawal can additionally carry a caller-supplied `withdrawOrderId`. These values are not interchangeable. A shared `txId` by itself does not prove that two records describe the same asset movement: one chain transaction may contain more than one output or token event. A cross-platform match must pin network/chain and exact asset identity (including token contract where applicable), destination/source address and tag/memo where applicable, and the chain-specific transaction sub-event/output locator where needed. Binance's cited history responses do not supply a universal sub-event locator for every network. Without it, keep the candidate link UNLINKED or PARTIAL rather than joining by hash, amount and nearby time alone.
+
+Neither the Spot `balanceUpdate` nor `outboundAccountPosition` payload carries the Wallet `tranId`, deposit-row `id`, withdrawal-row `id` or `withdrawOrderId`. Thus Wallet history can identify a transfer/deposit/withdrawal record, but it cannot be deterministically paired with one particular Spot balance event using the fields currently mapped. It can be related at family level to the resulting balance state; preserve both source observations and do not count the history record plus balance event as two independent asset movements.
+
 ## 3. Important field semantics
 
 ### 3.1 Account and balances
@@ -126,6 +142,25 @@ Therefore this event is evidence of a reported encumbrance/availability change, 
 
 An external lock can change the distinction between total, free and locked amounts. Do not count the same units once as freely executable balance and again as a separately created collateral asset. Whether and how the underlying value enters the IMMORTAL asset-side partition is a profile qualification question, not an adapter inference.
 
+### 3.8 Transfers, deposits and withdrawals — identity layers
+
+The Spot User Data Stream documentation says `balanceUpdate` can occur on deposits, withdrawals and transfers between accounts (for example Spot to Margin), but its payload is only a balance delta: asset, delta and event/clear time. It has no documented `tranId`, deposit-row ID, withdrawal-row ID, blockchain `txId` or counterparty account ID. `outboundAccountPosition` is a changed-asset balance update and likewise has no common Wallet-record key. Same asset, amount and nearby `E`/`T`/receipt time may create a search candidate, not a proven event link.
+
+Keep these identity layers separate:
+
+- **Internal Binance product-wallet movement:** `tranId` from `GET /sapi/v1/asset/transfer`, with `type` declaring direction between product wallets, `asset`, `amount`, `status` and `timestamp`. It is not a blockchain transaction hash.
+- **Binance inbound deposit record:** Wallet row `id` plus `txId`, `network`, `coin`, `address`, optional `addressTag`, amount, source/status/times. `sourceAddress` is only returned when `includeSource=true`.
+- **Binance outbound withdrawal record:** Wallet row `id`, chain `txId`, `network`, `coin`, destination `address`, `amount`, `transactionFee`, status and times; `withdrawOrderId` is an optional caller-supplied lookup key, not the chain ID.
+- **Spot balance effect:** a separate `balanceUpdate` / `outboundAccountPosition` observation. No common provider key currently links it one-to-one to any of the above history rows.
+
+Use only `GET` Wallet history methods as documentation candidates. The transfer-creation `POST /sapi/v1/asset/transfer`, withdrawal-creation `POST /sapi/v1/capital/withdraw/apply` and all permission-changing or other mutating methods are outside this read-only work. The universal-transfer type vocabulary includes Spot ↔ Funding, Spot ↔ Futures, Spot ↔ Margin, Options and Portfolio Margin. Do not infer that all those scopes are included in the current Spot candidate; every source/destination product is a separate scope that would need its own profile and coverage.
+
+The universal-transfer history endpoint is limited to six months and returns pages (`current`, `size` up to 100); deposit and withdrawal history queries are limited to 90-day windows with up to 1000 records per page. For withdrawal history, a `withdrawOrderId` filter constrains the time window to 7 days. Query coverage must preserve exact filters, pages, count/terminal evidence, and retrieval times. If the supported history horizon does not cover the required accounting period, coverage is PARTIAL/UNKNOWN; do not interpret no returned rows as zero historical transfers.
+
+Deposit status codes include pending, success, rejected, credited-but-not-withdrawable, wrong-deposit and waiting-user-confirmation states. Preserve the provider's raw code and its documented status definition; do not collapse all credited/pending/restricted statuses to a single settled state. Withdrawal status remains a raw provider lifecycle field; do not invent a success/finality meaning from an undocumented enum. A `txId` is a chain transaction identity, not necessarily a unique asset-transfer event: chain-specific evidence may be required to distinguish outputs or token-transfer logs. The Binance internal row ID and chain ID must both be retained.
+
+A transfer record proves only the movement stated within its documented product/account scope. It does not by itself prove beneficial ownership of an external address, the counterparty's identity, novation of a liability, discharge of a commitment, or finality of a related obligation. In particular, a transfer to Margin is not a borrowing record, and a transfer from Margin is not a repayment record; require the separate Margin borrow/repay history and obligation identity before classifying either.
+
 ## 4. Timestamp and units contract
 
 - Binance JSON time fields are milliseconds by default. The general REST documentation also supports requesting microseconds using X-MBX-TIME-UNIT. The candidate profile must pin one unit and reject mixed-unit ambiguity.
@@ -141,6 +176,8 @@ Permitted candidate operations:
 - allOrders, order.status, myTrades, myAllocations, account.commission, allOrderLists — signed USER_DATA;
 - subscribe/list/unsubscribe to authenticated User Data Stream — USER_STREAM;
 - local receipt, hashing, normalization and replay of received payloads.
+
+The three Wallet `GET` histories in §2.1 are documentation crosswalks only and are not included in the current S1 collection allowlist; they require separate scope/profile approval before collection.
 
 Explicitly prohibited:
 - order.place, order.cancel, order.cancelReplace, amend, OCO/OTO creation;
@@ -237,6 +274,11 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 34. `executionReport.allocId` equals `myAllocations.allocationId` in the same scoped account/symbol — bind those two observations to one allocation; changed quantity/price/quoteQty/commission/asset is CONFLICTED.
 35. One SOR order contains both direct trade IDs and allocation IDs — preserve separate execution items under one parent order; do not deduplicate by orderId or add order-level executedQty/cummulativeQuoteQty again.
 36. SOR route uses another eligible quote book — apply the submitted order symbol's quote asset to the user's account movement; do not use the underlying book's quote asset.
+37. Universal-transfer history `tranId` plus direction-coded `type` identifies one cross-wallet operation, but `balanceUpdate` has no `tranId` — retain the records separately; do not pair by amount/asset/time alone.
+38. Deposit and withdrawal rows share a chain `txId` but have distinct internal IDs/network/asset/address/status fields — do not merge without chain-specific asset and sub-event evidence.
+39. A withdrawal includes `transactionFee` and `withdrawOrderId` — preserve network fee and caller-supplied lookup ID separately from trade commission, internal row `id` and chain `txId`.
+40. Deposit status is pending/restricted/rejected or waiting confirmation — preserve raw status; do not classify as a completed usable balance transfer.
+41. Universal-transfer history is queried beyond the six-month retention window or pages are not exhausted — classify coverage PARTIAL/UNKNOWN; absence of rows is not proof of zero transfers.
 
 ## 9. Official sources reviewed
 
@@ -245,6 +287,8 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 - Binance Spot Commission Rates FAQ: https://developers.binance.com/en/docs/products/spot/faqs/commission_faq
 - Binance Spot Smart Order Routing FAQ: https://developers.binance.com/en/docs/products/spot/faqs/sor_faq
 - Binance Spot API Glossary: https://developers.binance.com/en/docs/products/spot/faqs/spot_glossary
+- Binance Wallet REST API — Asset (universal transfer history): https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/asset
+- Binance Wallet REST API — Capital (deposit / withdrawal history): https://developers.binance.com/en/docs/catalog/core-trading-wallet/api/rest-api/capital
 - Binance Spot WebSocket API — session and subscription methods: https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-api/user-data-stream
 - Binance Spot WebSocket API connection and session contract: https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-api.md
 - Binance Spot User Data Stream events: https://developers.binance.com/en/docs/products/spot/user-data-stream
