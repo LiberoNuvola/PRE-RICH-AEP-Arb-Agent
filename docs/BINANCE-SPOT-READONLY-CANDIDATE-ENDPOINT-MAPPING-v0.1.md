@@ -197,11 +197,6 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 17. externalLockUpdate lock/unlock change — preserve as a separate encumbrance observation; do not manufacture a debt, collateral agreement or settlement reference.
 18. externalLockUpdate and a fill with the same asset/amount/time but no shared provider identity — do not join them.
 19. account.commission schedule and a trade's actual commission — preserve schedule and charged amount as distinct fact types.
-28. `myTrades.commission` and `executionReport.n` disagree for the same scoped trade ID — classify CONFLICTED; do not select one source.
-29. Explicit zero `commission` with a reported `commissionAsset` — preserve zero and asset; do not drop the trade or synthesize a different fee.
-30. `account.commission` or `computeCommissionRates` observed near a trade — do not infer the historical applied rate or recalculate its actual commission.
-31. Multiple fills with one order ID but different trade IDs and commission assets — preserve one commission attribute per trade; do not aggregate/deduplicate by order ID.
-32. BNB discount enabled but actual `commissionAsset` reports another asset — preserve the actual asset; do not infer BNB payment from the tariff flags.
 20. balanceUpdate and outboundAccountPosition reflecting a similar asset movement without a shared event/transaction ID — preserve both observations and do not claim independent corroboration or a single merged event.
 21. JSON/SBE balanceUpdate, externalLockUpdate and outboundAccountPosition share one stream subscription context; equal subscriptionId plus asset/time/amount does not create a cross-family event or transaction identity.
 22. A `balanceUpdate` (deposit/withdrawal/inter-account transfer) and a same-asset `outboundAccountPosition` event have no shared ID — preserve both; no one-to-one event pairing.
@@ -210,6 +205,11 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 25. `account.status` queried with `omitZeroBalances=true` — reject candidate completeness; absent asset is not a zero-balance assertion.
 26. Subscription or socket interruption followed by a new account snapshot — preserve the gap as PARTIAL; the snapshot restores a current point-state only, not missing event history.
 27. PROD SBE 3:5 versus TESTNET SBE 3:6 — pin schema by environment; do not assume `serverShutdown.shutdownTime` (`T`) exists in Production until its lifecycle announces 3:6+.
+28. `myTrades.commission` and `executionReport.n` disagree for the same scoped trade ID — classify CONFLICTED; do not select one source.
+29. Explicit zero `commission` with a reported `commissionAsset` — preserve zero and asset; do not drop the trade or synthesize a different fee.
+30. `account.commission` or `computeCommissionRates` observed near a trade — do not infer the historical applied rate or recalculate its actual commission.
+31. Multiple fills with one order ID but different trade IDs and commission assets — preserve one commission attribute per trade; do not aggregate/deduplicate by order ID.
+32. BNB discount enabled but actual `commissionAsset` reports another asset — preserve the actual asset; do not infer BNB payment from the tariff flags.
 
 ## 9. Official sources reviewed
 
