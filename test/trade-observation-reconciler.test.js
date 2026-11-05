@@ -209,6 +209,9 @@ test('empty and malformed candidate collections fail closed without implying zer
 test('balance, collateral-lock and fee-schedule observations are not inferred to be trades', () => {
   const nonTradeCases = [
     ['BALANCE_CHANGE', 'fixture:binance:balanceUpdate'],
+    ['BALANCE_SNAPSHOT', 'fixture:binance:account.status'],
+    ['ACCOUNT_POSITION_UPDATE', 'fixture:binance:outboundAccountPosition'],
+    ['BALANCE_DELTA', 'fixture:binance:balanceUpdate'],
     ['COLLATERAL_LOCK_CHANGE', 'fixture:binance:externalLockUpdate'],
     ['FEE_SCHEDULE', 'fixture:binance:account.commission'],
     ['SETTLEMENT', 'fixture:binance:unmapped-settlement'],

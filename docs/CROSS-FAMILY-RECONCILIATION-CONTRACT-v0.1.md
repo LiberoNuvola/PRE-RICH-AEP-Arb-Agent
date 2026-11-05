@@ -98,6 +98,7 @@ A relation status never upgrades ObservationRecord quality, verifies raw bytes, 
 | Order | Fill/execution | A fill may reference its parent order via the provider order ID; order lifecycle remains distinct | Do not add cumulative order executed quantity to per-trade fill quantities; preserve cancel/replace lineage |
 | Fill | Fee/commission | Commission fields carried by REST/stream trade representations are attributes of the same trade fact; a distinct fee record needs its own documented identity | Reconcile the REST/stream trade first; do not count the same commission twice; current fee schedule is not an actual charge |
 | Fill | Balance delta/snapshot | A fill may cause a later balance change or be reflected in a snapshot | No join by asset + amount + nearby time; a balance delta/snapshot is not a second fill and does not by itself prove settlement |
+| Balance delta | Account position update | A deposit/withdrawal/inter-account transfer may later be reflected in a changed-asset position event | `balanceUpdate` is not exhaustive for balance changes and has no shared event key with `outboundAccountPosition`; no one-to-one pairing or delta-based reconstruction |
 | Balance | External collateral lock | The event semantics permit an `ENCUMBERS_OR_RELEASES` relation in principle; record-level relation to a specific balance update/snapshot remains unlinked without a documented shared identity | Do not link on asset/amount/time/subscriptionId; do not count the same units as both free executable balance and an additional collateral asset; lock event alone does not establish a debt or its creditor |
 | Fill | Position/inventory | A fill may contribute to a later position or inventory state | A position is state, not another execution; do not sum positions and their constituent fills as independent exposures. The current Binance Spot candidate has no position source operation mapped |
 | Balance | Borrow/liability | A loan disbursement could affect an asset balance while also establishing a liability | Require explicit loan/borrow identity and product-specific source semantics; never infer a loan from a balance increase. Margin remains outside the current Spot candidate |
@@ -123,7 +124,7 @@ The current Spot mapping also distinguishes:
 - trade IDs, order IDs and execution IDs;
 - balance deltas and account snapshots.
 
-These identities and families are not interchangeable. The current candidate does not map a positions, borrow/liabilities, transfer lifecycle or settlement-finality family. Margin borrow/repay is a different product perimeter and remains deferred.
+These identities and families are not interchangeable. `account.status` supplies a current account-state response with `updateTime` and `balances[]`; `outboundAccountPosition` supplies the assets possibly changed by one account update; `balanceUpdate` is limited in the docs to deposits, withdrawals and transfers between accounts. The last two have no documented record-level join key or account sequence/cursor. Their timestamps are not a proven replay watermark. A post-gap account snapshot can restore a current point-state baseline but cannot reconstruct missing event history. The current candidate does not map positions, borrow/liabilities, transfer lifecycle or settlement-finality families. Margin borrow/repay is a different product perimeter and remains deferred.
 
 Official provider references:
 - [Spot User Data Stream](https://developers.binance.com/en/docs/products/spot/user-data-stream)
@@ -158,6 +159,7 @@ Implemented in Arb:
 
 Not implemented:
 - cross-family join/relation resolver;
+- balance delta-to-position/snapshot reconstruction or replay-watermark algorithm (the current Binance contract exposes no adequate cursor/atomic boundary);
 - typed ProviderProfile mappings for all balance, collateral, position, liability, transfer and settlement fields;
 - provider parser/client or selected provider profile;
 - source-population exhaustiveness and cross-family atomic snapshot proof;

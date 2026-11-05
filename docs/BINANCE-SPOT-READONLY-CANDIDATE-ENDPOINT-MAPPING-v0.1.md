@@ -24,9 +24,9 @@ The initial candidate uses the current Spot WebSocket API at wss://ws-api.binanc
 
 | Arb family | Official operation/event | Documented fields to preserve | Identity / ordering | Coverage status |
 |---|---|---|---|---|
-| Account snapshot / balances | account.status (USER_DATA) | accountType, updateTime, balances[].asset, free, locked; permission flags as metadata only | Response ID is request correlation, not account event identity; preserve receipt time and updateTime | Snapshot is not atomic with other families |
-| Balance change | outboundAccountPosition | e, E, u, B[].a, B[].f, B[].l; SBE also exposes optional subscriptionId | Event type + event time + account update time + exact asset; u is an update time, and subscriptionId is subscription context, not a transaction key | Push event; stream gaps require REST reconciliation |
-| Balance delta | balanceUpdate | JSON: e, E, a, d, T; SBE: freeQtyDelta maps to d, clearTime maps to T, optional subscriptionId | Preserve exact event type, raw delta, asset and times; no transfer/transaction ID; subscriptionId is subscription context, not transaction identity | Deposit/withdrawal/transfer delta; not a lock event or settlement proof |
+| Account snapshot / balances | account.status (USER_DATA) | accountType, result.updateTime, balances[].asset, free, locked; pin omitZeroBalances=false; permission flags as metadata only | Request id is correlation only, not snapshot/event identity; preserve request/receipt times and updateTime | Current account-state response; source is Memory => Database; no shared stream cursor/snapshot token documented |
+| Balance change | outboundAccountPosition | e, E, u, B[].a, B[].f, B[].l; SBE also exposes optional subscriptionId | Event type + event time + last account update time + exact asset; no per-account sequence/cursor; subscriptionId is subscription context, not a transaction key | Push event contains assets possibly changed by the event, not a whole-account snapshot; stream gaps remain gaps |
+| Balance delta | balanceUpdate | JSON: e, E, a, d, T; SBE: freeQtyDelta maps to d, clearTime maps to T, optional subscriptionId | Preserve exact event type, raw delta, asset and times; no event sequence/cursor or transfer ID; subscriptionId is subscription context, not transaction identity | Documented for deposits/withdrawals/inter-account transfers only; not a complete balance-change ledger, lock event or settlement proof |
 | External lock change | externalLockUpdate | JSON: e, E, a, d, T; SBE: lockedQtyDelta maps to d, clearTime maps to T, optional subscriptionId | Preserve exact event type, raw locked-quantity delta, asset and times; no external-system, loan, collateral-agreement or obligation ID; subscriptionId is not a lock/event identity | Partial collateral/encumbrance observation only; do not infer debt, ownership, valuation or a new asset/liability |
 | Order lifecycle | allOrders / order.status (USER_DATA) | symbol, orderId, orderListId, clientOrderId, price, origQty, executedQty, cummulativeQuoteQty, status, timeInForce, type, side, time, updateTime | Product scope + symbol + orderId; clientOrderId is separate | Per-symbol history; documented query limits apply |
 | Order update / execution report | executionReport | s, c, S, o, f, q, p, x, X, i, l, z, L, n, N, T, t, I, Z, Y, C, r, v and conditional fields | i = order ID; I = execution ID; t = trade ID when present; c = client order ID | Event evidence, not guaranteed complete replay |
@@ -117,19 +117,35 @@ Explicitly prohibited:
 
 No key is needed for the current synthetic-only work.
 
-## 6. Snapshot and stream reconciliation — no atomicity claim
+## 6. Balance snapshot, delta and stream reconciliation — no exact reconstruction claim
 
-The official documentation describes separate account, order, trade and commission queries, plus asynchronous user-data events. This review found no documented atomic snapshot token spanning all these families. The stream also has separate balance-delta and external-lock events, but the published payloads do not supply a common transaction/obligation identifier that links them to a trade, loan, or order.
+The official Spot API exposes three distinct views:
 
-1. Record each query's request parameters, response, source time fields, receipt time, profile version and evidence digest.
-2. Persist raw stream events before deriving projections.
-3. Record subscription start, termination events, disconnects, reconnects and unobserved intervals as explicit coverage gaps.
-4. Query account/order/trade state around handoff and reconcile overlaps by exact provider identities.
-5. Never infer a globally coherent account instant from separate family responses.
-6. Never use stream receipt order as global causal order across unrelated families.
-7. If REST/stream facts disagree or a gap cannot be repaired, preserve CONFLICTED/PARTIAL/UNKNOWN coverage.
+- `account.status` returns an account-state response with `updateTime` and a `balances[]` collection (`asset`, `free`, `locked`). `omitZeroBalances` defaults to `false`; the candidate must pin it to `false`. Its documented data source is `Memory => Database`.
+- `outboundAccountPosition` is pushed when an account balance changes and contains the assets that may have changed, with their `free` and `locked` quantities. It is a changed-asset update, not a complete account snapshot.
+- `balanceUpdate` is documented for deposits, withdrawals and transfers between accounts. It is a narrower delta event, not a record of every balance-changing cause.
 
-The User Data Stream documentation states outboundAccountPosition is sent when balances change, and balanceUpdate is used for deposits/withdrawals and transfers between accounts. These events do not alone prove complete transfer lifecycle, counterparty identity or settlement finality.
+The reviewed JSON payloads and SBE event definitions expose timestamps (`E`, `T`, `u`) and subscription context, but no per-account event sequence/cursor or provider event ID for these balance events. In the SBE message header for these event types, the fields identify message length/template/schema/version; they do not supply an account sequence. `subscriptionId` identifies the User Data Stream subscription, not an individual balance event. Therefore:
+
+1. Never reconstruct account state by summing `balanceUpdate` deltas: that family is not exhaustive for balance changes.
+2. Never treat `outboundAccountPosition` as an all-assets snapshot: it reports the assets possibly changed by the triggering event.
+3. Do not create a one-to-one link between a `balanceUpdate` and an `outboundAccountPosition` from same asset, amount, `E`/`T`/`u`, receipt order or `subscriptionId`.
+4. Retain `account.status.updateTime`, `outboundAccountPosition.u`, `balanceUpdate.E/T`, request times and local receipt times as distinct temporal evidence. Timestamp comparison may flag an inconsistency; without a documented shared sequence/watermark it cannot prove event inclusion, event uniqueness or exact ordering.
+5. Preserve snapshot rows and delta/position events as separate ObservationRecords. A delta may affect account state later visible in a position update or snapshot, but this is a family-level relationship, not a proved record-level pairing.
+
+### 6.1 Capture and recovery boundary
+
+The safe S1 collection posture is evidence preservation, not an invented event-sourcing algorithm:
+
+1. Record the successful User Data Stream subscription response and exact `subscriptionId`; use `session.subscriptions` to inspect active subscriptions. The aggregate `session.status.userDataStream` flag only reports whether at least one subscription is active in the session.
+2. Persist every raw event with source representation (JSON/SBE), subscription ID, source fields, local receipt time and digest. Do not use the subscription ID as an event key.
+3. Query `account.status` with `omitZeroBalances=false`; retain request correlation ID, `updateTime`, request interval, receipt interval, raw response and profile version.
+4. Do not apply all buffered stream deltas on top of the snapshot as if a shared snapshot watermark existed. No reviewed API contract establishes that boundary.
+5. Treat explicit `eventStreamTerminated`, `serverShutdown`, socket close, subscription disappearance or a local receive gap as a coverage discontinuity. Preserve the exact known reason where available; do not require a termination event to declare a locally observed disconnect.
+6. After reconnect/re-subscribe, obtain a new `account.status` response as a new point-state observation. It may re-establish a current balance baseline, but it does not backfill the missing event history or resolve what happened during the gap.
+7. Keep the missed interval PARTIAL/UNKNOWN even when the new snapshot is available. Do not relabel the historical stream coverage COMPLETE or manufacture missing `balanceUpdate` records.
+
+The User Data Stream documentation identifies `eventStreamTerminated` for documented subscription-ending actions; the WebSocket API also exposes session subscription inspection. Neither operation supplies a cursor for replaying events that were not received. These observations do not prove complete transfer lifecycle, counterparty identity or settlement finality.
 
 ## 7. Mapping to existing Arb envelope
 
@@ -172,11 +188,18 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 19. account.commission schedule and a trade's actual commission — preserve schedule and charged amount as distinct fact types.
 20. balanceUpdate and outboundAccountPosition reflecting a similar asset movement without a shared event/transaction ID — preserve both observations and do not claim independent corroboration or a single merged event.
 21. JSON/SBE balanceUpdate, externalLockUpdate and outboundAccountPosition share one stream subscription context; equal subscriptionId plus asset/time/amount does not create a cross-family event or transaction identity.
+22. A `balanceUpdate` (deposit/withdrawal/inter-account transfer) and a same-asset `outboundAccountPosition` event have no shared ID — preserve both; no one-to-one event pairing.
+23. A trade or lock changes free/locked state but has no `balanceUpdate` event — do not label delta-stream coverage complete or state unchanged.
+24. `account.status.updateTime` equals or differs from `outboundAccountPosition.u` — record both; do not treat either as a unique event cursor or shared watermark.
+25. `account.status` queried with `omitZeroBalances=true` — reject candidate completeness; absent asset is not a zero-balance assertion.
+26. Subscription or socket interruption followed by a new account snapshot — preserve the gap as PARTIAL; the snapshot restores a current point-state only, not missing event history.
 
 ## 9. Official sources reviewed
 
 - Binance Spot REST API — security, timestamp and error semantics: https://developers.binance.com/en/docs/products/spot/rest-api
 - Binance Spot WebSocket API — Account: https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-api/account
+- Binance Spot WebSocket API — session and subscription methods: https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-api/user-data-stream
+- Binance Spot WebSocket API connection and session contract: https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-api.md
 - Binance Spot User Data Stream events: https://developers.binance.com/en/docs/products/spot/user-data-stream
 - Binance Spot WebSocket stream event schemas (including externalLockUpdate): https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-streams/~schemas
 - Binance Spot SBE schema (spot_3_1.xml): https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/spot_3_1.xml
@@ -186,7 +209,7 @@ Margin is cited only to establish separate borrow/repay and interest-history ope
 
 ## 10. Non-regression
 
-Documentation only. No schema, reducer, application code, client, signature code, credentials, account connection, verifier, evidence registry, economic state, valuation, EEV, ProtectedCapital, RiskBudget, netting, authority or actuator changed.
+Documentation and negative family-classification tests only. No schema, runtime reducer, application code, client, signature code, credentials, account connection, verifier, evidence registry, economic state, valuation, EEV, ProtectedCapital, RiskBudget, netting, authority or actuator changed.
 
 S1 remains synthetic/read-only. Provider selection, provider conformance, D0/D1 and independent review remain OPEN. S2/S3 remain unauthorized.
 
