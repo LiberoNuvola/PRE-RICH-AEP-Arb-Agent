@@ -128,6 +128,7 @@ These identities and families are not interchangeable. The current candidate doe
 Official provider references:
 - [Spot User Data Stream](https://developers.binance.com/en/docs/products/spot/user-data-stream)
 - [Spot WebSocket stream event schemas](https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-streams/~schemas)
+- [Spot SBE schema (`spot_3_1.xml`)](https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/spot_3_1.xml)
 - [Spot WebSocket Account API](https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-api/account)
 - [Spot REST API](https://developers.binance.com/en/docs/products/spot/rest-api)
 
