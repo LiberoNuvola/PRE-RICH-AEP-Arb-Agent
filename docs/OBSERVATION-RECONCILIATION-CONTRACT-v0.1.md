@@ -84,9 +84,17 @@ The projection must not sum quantities, convert assets, infer missing commission
 
 ## 7. Boundary with the existing reducer
 
-The current `projectOrderLifecycle` exact-fill replay rule requires matching fill identity, quantity and raw digest for duplicate no-op. Preserve that rule.
+The legacy `projectOrderLifecycle` fill form remains unchanged: it requires one `rawDigestRef`, and a repeated fill is a no-op only when fill identity, quantity and that digest all match. A changed digest remains CONFLICTED.
 
-The provider adapter must reconcile the REST and stream observations first, then pass at most one derived fill event for the provider trade key into `projectOrderLifecycle`. It must not pass both raw observations as two fills, and must not weaken the reducer's digest conflict rule to accommodate provider-specific cross-family matching.
+A provider-specific reconciliation must not select one raw digest or synthesize a replacement digest. Instead, the adapter emits one FILL event carrying a `ReconciledTradeEvidenceBinding`:
+- exact scoped reconciliation key and trade/order identity;
+- profile/version and account scope;
+- every contributing ObservationRecord event reference;
+- for each observation, its source, stream, source operation and original raw digest reference.
+
+The reducer recognizes this as a separate, explicit evidence mode. It validates the structure, requires at least two distinct observation references from distinct source identities/channels, and considers a replay duplicate only when fill ID, quantity and the complete normalized evidence-binding set match. Any changed reference, source, operation or raw digest for the same fill ID is CONFLICTED. A reconciled binding cannot be combined with a top-level `rawDigestRef`.
+
+This is a structural evidence-binding contract, not raw-byte integrity verification or source-operation qualification. It does not prove that the caller's MATCHED status is trustworthy. The adapter preserves the exact source evidence so IMMORTAL's existing EXP-06 qualification can be applied separately.
 
 ## 8. Synthetic conformance cases
 
@@ -124,3 +132,14 @@ Raw digest inequality across the two channels is allowed. Within one channel, an
 **Implementation boundary:** this is a comparison core over synthetic normalized candidates, not a Binance parser, ProviderProfile verifier, account client or provider conformance result. `sourceOperationMappingStatus` remains NOT_VERIFIED; raw bytes/digests are not retrieved or recomputed; verifier trust is not assessed. The matched projection does not assert settlement, position state, netting, authority or economic admission.
 
 **Downstream integration remains OPEN:** `projectOrderLifecycle` currently consumes a fill's `rawDigestRef` and treats changed digests for the same fill identity as a conflict. A cross-channel reconciled projection intentionally has two different raw digests. Do not select one source digest or substitute a locally invented digest. The adapter-to-lifecycle evidence interface must be specified so the generic reducer can bind a reconciliation artifact and all source ObservationRecord references without weakening the existing replay rule.
+
+
+## 11. Lifecycle binding implementation — 2026-11-05
+
+`src/trade-lifecycle-adapter.js` converts only a MATCHED reconciliation group into one lifecycle FILL. The resulting event carries the `ReconciledTradeEvidenceBinding` and every original ObservationRecord/source/digest binding; it has no singular or synthetic `rawDigestRef`.
+
+`projectOrderLifecycle` now supports two explicit evidence modes:
+1. Legacy `rawDigestRef`, preserving the existing exact-digest replay and conflict behavior.
+2. `ReconciledTradeEvidenceBinding`, where replay equality covers the full normalized set of observation references, source identities, operation references and per-observation raw digests.
+
+The modes cannot be mixed on one event. Incomplete, repeated or ambiguous source bindings fail closed. The adapter and reducer still do not verify raw bytes, digest integrity, provider mapping, verifier trust, settlement, ownership, position state, netting, authority or economic admission.

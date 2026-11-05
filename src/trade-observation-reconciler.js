@@ -283,10 +283,24 @@ function reconcileGroup(candidates, key) {
       .sort((a, b) => a.observationRef < b.observationRef ? -1 : a.observationRef > b.observationRef ? 1 : 0)
   }
 
+  const sourceEvidenceBindings = [rest, stream].map((entry) => ({
+    observationRef: entry.observationRef,
+    sourceReference: entry.sourceId,
+    streamReference: entry.streamId,
+    sourceEventReference: entry.sourceEventId,
+    sourceOperationReference: entry.sourceOperationRef,
+    sourceChannel: entry.sourceChannel,
+    rawDigestRef: entry.rawDigestRef,
+  })).sort((left, right) =>
+    left.observationRef < right.observationRef ? -1 : left.observationRef > right.observationRef ? 1 : 0)
+
   const projection = Object.freeze({
     recordType: 'ReconciledTradeFactProjection',
     evidenceClass: 'DERIVED',
     factType: 'TRADE_EXECUTION',
+    reconciliationKey: key,
+    reconciliationContractVersion: '0.1',
+    sourceEvidenceBindings: Object.freeze(sourceEvidenceBindings.map((entry) => Object.freeze(entry))),
     profileRef: rest.profileRef,
     profileVersion: rest.profileVersion,
     accountScopeRef: rest.accountScopeRef,

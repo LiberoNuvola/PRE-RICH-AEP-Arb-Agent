@@ -231,12 +231,109 @@ function subtractDecimalStrings(left, right) {
   return `${digits.slice(0, -scale)}.${digits.slice(-scale)}`
 }
 
+function inspectFillEvidence(event) {
+  const hasRawDigest = hasOwnData(event, 'rawDigestRef')
+  const hasReconciledBinding = hasOwnData(event, 'evidenceBinding')
+  if (hasRawDigest && hasReconciledBinding) {
+    return { status: 'INVALID', reason: 'AMBIGUOUS_FILL_EVIDENCE_MODE' }
+  }
+
+  if (hasReconciledBinding) {
+    const binding = readOwn(event, 'evidenceBinding')
+    if (!isRecord(binding) ||
+        readOwn(binding, 'recordType') !== 'ReconciledTradeEvidenceBinding' ||
+        readOwn(binding, 'bindingVersion') !== '0.1' ||
+        readOwn(binding, 'reconciliationStatus') !== 'MATCHED' ||
+        !['reconciliationKey', 'profileRef', 'profileVersion', 'accountScopeRef', 'symbol', 'tradeId', 'orderId', 'quantity']
+          .every((key) => typeof readOwn(binding, key) === 'string' && readOwn(binding, key).length > 0) ||
+        !Array.isArray(readOwn(binding, 'sourceEvidenceBindings')) ||
+        readOwn(binding, 'sourceEvidenceBindings').length < 2 ||
+        readOwn(binding, 'sourceOperationMappingStatus') !== 'CALLER_SUPPLIED_NOT_VERIFIED' ||
+        readOwn(binding, 'tradeId') !== readOwn(event, 'fillId') ||
+        readOwn(binding, 'orderId') !== readOwn(event, 'orderId') ||
+        readOwn(binding, 'quantity') !== readOwn(event, 'quantity')) {
+      return { status: 'INVALID', reason: 'RECONCILED_FILL_BINDING_MALFORMED' }
+    }
+
+    const refs = new Set()
+    const channels = new Set()
+    const sources = new Set()
+    const normalizedEvidence = []
+    for (const entry of readOwn(binding, 'sourceEvidenceBindings')) {
+      if (!isRecord(entry)) return { status: 'INVALID', reason: 'RECONCILED_FILL_SOURCE_BINDING_MALFORMED' }
+      const required = ['observationRef', 'sourceReference', 'streamReference', 'sourceOperationReference', 'sourceChannel', 'rawDigestRef']
+      if (!required.every((key) => typeof readOwn(entry, key) === 'string' && readOwn(entry, key).length > 0)) {
+        return { status: 'INVALID', reason: 'RECONCILED_FILL_SOURCE_BINDING_INCOMPLETE' }
+      }
+      const sourceEventReference = readOwn(entry, 'sourceEventReference')
+      if (sourceEventReference !== null &&
+          !(typeof sourceEventReference === 'string' && sourceEventReference.length > 0)) {
+        return { status: 'INVALID', reason: 'RECONCILED_FILL_SOURCE_EVENT_REFERENCE_INVALID' }
+      }
+      const observationRef = readOwn(entry, 'observationRef')
+      if (refs.has(observationRef)) return { status: 'INVALID', reason: 'RECONCILED_FILL_OBSERVATION_REFERENCE_DUPLICATED' }
+      refs.add(observationRef)
+      channels.add(readOwn(entry, 'sourceChannel'))
+      sources.add(readOwn(entry, 'sourceReference'))
+      normalizedEvidence.push({
+        observationRef,
+        sourceReference: readOwn(entry, 'sourceReference'),
+        streamReference: readOwn(entry, 'streamReference'),
+        sourceEventReference,
+        sourceOperationReference: readOwn(entry, 'sourceOperationReference'),
+        sourceChannel: readOwn(entry, 'sourceChannel'),
+        rawDigestRef: readOwn(entry, 'rawDigestRef'),
+      })
+    }
+    if (channels.size < 2 || sources.size < 2) {
+      return { status: 'INVALID', reason: 'RECONCILED_FILL_REQUIRES_DISTINCT_SOURCE_CHANNELS' }
+    }
+
+    normalizedEvidence.sort((left, right) =>
+      left.observationRef < right.observationRef ? -1 : left.observationRef > right.observationRef ? 1 : 0)
+    const normalizedBinding = {
+      recordType: 'ReconciledTradeEvidenceBinding',
+      bindingVersion: '0.1',
+      reconciliationStatus: 'MATCHED',
+      reconciliationKey: readOwn(binding, 'reconciliationKey'),
+      profileRef: readOwn(binding, 'profileRef'),
+      profileVersion: readOwn(binding, 'profileVersion'),
+      accountScopeRef: readOwn(binding, 'accountScopeRef'),
+      symbol: readOwn(binding, 'symbol'),
+      tradeId: readOwn(binding, 'tradeId'),
+      orderId: readOwn(binding, 'orderId'),
+      quantity: readOwn(binding, 'quantity'),
+      sourceOperationMappingStatus: 'CALLER_SUPPLIED_NOT_VERIFIED',
+      sourceEvidenceBindings: normalizedEvidence,
+    }
+    return {
+      status: 'VALID',
+      mode: 'RECONCILED_OBSERVATION_SET',
+      fingerprint: JSON.stringify(normalizedBinding),
+      binding: Object.freeze(normalizedBinding),
+      rawDigestRef: null,
+    }
+  }
+
+  const rawDigestRef = readOwn(event, 'rawDigestRef')
+  if (typeof rawDigestRef !== 'string' || rawDigestRef.length === 0) {
+    return { status: 'MISSING', reason: 'FILL_ID_QUANTITY_OR_RAW_DIGEST_MISSING' }
+  }
+  return {
+    status: 'VALID',
+    mode: 'RAW_DIGEST',
+    fingerprint: JSON.stringify({ mode: 'RAW_DIGEST', rawDigestRef }),
+    binding: null,
+    rawDigestRef,
+  }
+}
+
 export function projectOrderLifecycle(events) {
   if (!Array.isArray(events) || events.length === 0 || events.some((event) => !isRecord(event))) {
     return Object.freeze({ qualityStatus: 'INVALID', orderStatus: 'UNKNOWN', fillCount: 0, filledQuantity: '0' })
   }
   const first = events[0]
-  const orderId = first.orderId
+  const orderId = readOwn(first, 'orderId')
   if (typeof orderId !== 'string' || !orderId) {
     return Object.freeze({ qualityStatus: 'INVALID', orderStatus: 'UNKNOWN', fillCount: 0, filledQuantity: '0' })
   }
@@ -247,29 +344,47 @@ export function projectOrderLifecycle(events) {
   const anomalies = []
 
   for (const event of events) {
-    if (event.orderId !== orderId) {
+    if (readOwn(event, 'orderId') !== orderId) {
       anomalies.push('MIXED_ORDER_ID')
       continue
     }
-    if (event.eventType === 'ORDER_ACCEPTED') accepted = true
-    if (event.eventType === 'CANCEL_REQUEST_ACKNOWLEDGED') cancelRequested = true
-    if (event.eventType === 'CANCEL_CONFIRMED') cancelConfirmed = true
-    if (event.eventType === 'FILL') {
-      if (typeof event.fillId !== 'string' || !event.fillId ||
-          typeof event.quantity !== 'string' ||
-          typeof event.rawDigestRef !== 'string' || !event.rawDigestRef) {
+    if (readOwn(event, 'eventType') === 'ORDER_ACCEPTED') accepted = true
+    if (readOwn(event, 'eventType') === 'CANCEL_REQUEST_ACKNOWLEDGED') cancelRequested = true
+    if (readOwn(event, 'eventType') === 'CANCEL_CONFIRMED') cancelConfirmed = true
+    if (readOwn(event, 'eventType') === 'FILL') {
+      const fillId = readOwn(event, 'fillId')
+      const quantity = readOwn(event, 'quantity')
+      if (typeof fillId !== 'string' || !fillId || typeof quantity !== 'string') {
         anomalies.push('FILL_ID_QUANTITY_OR_RAW_DIGEST_MISSING')
         continue
       }
-      const existing = fills.get(event.fillId)
+      const evidence = inspectFillEvidence(event)
+      if (evidence.status === 'MISSING') {
+        anomalies.push('FILL_ID_QUANTITY_OR_RAW_DIGEST_MISSING')
+        continue
+      }
+      if (evidence.status !== 'VALID') {
+        anomalies.push('FILL_RECONCILIATION_BINDING_INVALID')
+        continue
+      }
+
+      const existing = fills.get(fillId)
       if (existing) {
-        if (existing.quantity === event.quantity && existing.rawDigestRef === event.rawDigestRef) {
+        if (existing.quantity === quantity &&
+            existing.evidenceMode === evidence.mode &&
+            existing.evidenceFingerprint === evidence.fingerprint) {
           continue
         }
         anomalies.push('FILL_ID_PAYLOAD_CONFLICT')
         continue
       }
-      fills.set(event.fillId, { quantity: event.quantity, rawDigestRef: event.rawDigestRef })
+      fills.set(fillId, {
+        quantity,
+        evidenceMode: evidence.mode,
+        evidenceFingerprint: evidence.fingerprint,
+        rawDigestRef: evidence.rawDigestRef,
+        evidenceBinding: evidence.binding,
+      })
       if (cancelConfirmed) anomalies.push('FILL_OBSERVED_AFTER_CANCEL_CONFIRMATION_REQUIRES_RECONCILIATION')
     }
   }
@@ -298,6 +413,13 @@ export function projectOrderLifecycle(events) {
     orderStatus,
     fillCount: fills.size,
     filledQuantity,
+    fillEvidence: [...fills.entries()].map(([fillId, fill]) => Object.freeze({
+      fillId,
+      quantity: fill.quantity,
+      evidenceMode: fill.evidenceMode,
+      rawDigestRef: fill.rawDigestRef,
+      evidenceBinding: fill.evidenceBinding,
+    })),
     cancelRequestObserved: cancelRequested,
     cancelConfirmationObserved: cancelConfirmed,
     reservationReleased: false,

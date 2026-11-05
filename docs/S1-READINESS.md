@@ -109,3 +109,8 @@ The current Arb project must not implement a parallel universal EvidenceQualific
 ## 11. Synthetic trade-observation reconciliation
 
 The provider-neutral comparison core in `src/trade-observation-reconciler.js` implements the synthetic MATCHED/INCOMPLETE/CONFLICTED/UNMAPPED/NOT_A_TRADE outcomes for normalized trade candidates. It preserves raw observation refs/digests and exact source value strings, compares decimal amounts without binary floats, rejects unresolved correction lineage and does not emit a trade projection from a single source. This is not a provider parser or ProviderProfile conformance check. Source-operation mapping, raw-digest integrity, verifier trust and the downstream `projectOrderLifecycle` evidence binding remain OPEN. The reconciliation contract records the unresolved digest-interface issue explicitly.
+
+
+## 12. Reconciled trade lifecycle binding
+
+The synthetic trade adapter now converts only a MATCHED REST/STREAM trade reconciliation into one `FILL` lifecycle event. It does not select or fabricate a single raw digest: the event binds the scoped trade key and all original ObservationRecord references, source IDs, stream IDs, source-operation refs and per-observation raw digests. `projectOrderLifecycle` retains the legacy single-`rawDigestRef` mode unchanged and accepts the explicit `ReconciledTradeEvidenceBinding` mode as a separate form. Replay is a no-op only when the complete binding set and quantity match; changed evidence is CONFLICTED. This is structural binding only; provider mapping, raw digest integrity, verifier trust and IMMORTAL EXP-06 qualification remain external and OPEN.
