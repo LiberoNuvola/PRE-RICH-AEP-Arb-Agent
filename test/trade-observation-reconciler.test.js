@@ -259,6 +259,10 @@ test('balance, collateral-lock and tariff observations are not inferred to be tr
     ['UNIVERSAL_TRANSFER', 'fixture:binance:asset.transfer.history'],
     ['DEPOSIT_HISTORY', 'fixture:binance:capital.deposit.hisrec'],
     ['WITHDRAWAL_HISTORY', 'fixture:binance:capital.withdraw.history'],
+    ['OBLIGATION_PAYMENT', 'fixture:profile:obligation-payment'],
+    ['OBLIGATION_SETTLEMENT', 'fixture:profile:obligation-settlement'],
+    ['OBLIGATION_NOVATION', 'fixture:profile:obligation-novation'],
+    ['LIABILITY_REASSIGNMENT', 'fixture:profile:liability-reassignment'],
     ['FEE_SCHEDULE', 'fixture:binance:account.commission'],
     ['COMMISSION_RATE_SNAPSHOT', 'fixture:binance:account.commission'],
     ['TEST_ORDER_COMMISSION_RATES', 'fixture:binance:order.test.computeCommissionRates'],
@@ -346,6 +350,47 @@ test('a wallet transfer matching trade amount and asset is not folded into the t
     orderId: null,
   })
   const result = reconcileTradeObservationCandidates([trade, transfer])
+  assert.equal(result.groups.length, 1)
+  assert.equal(result.groups[0].status, 'INCOMPLETE')
+  assert.equal(result.groups[0].projection, null)
+  assert.equal(result.unclassified.length, 1)
+  assert.equal(result.unclassified[0].status, 'UNMAPPED')
+})
+
+test('obligation payment, settlement, novation and reassignment are not trade executions', () => {
+  const obligationCases = [
+    ['OBLIGATION_PAYMENT', 'fixture:profile:obligation-payment'],
+    ['OBLIGATION_SETTLEMENT', 'fixture:profile:obligation-settlement'],
+    ['OBLIGATION_NOVATION', 'fixture:profile:obligation-novation'],
+    ['LIABILITY_REASSIGNMENT', 'fixture:profile:liability-reassignment'],
+  ]
+  for (const [sourceFactType, sourceOperationRef] of obligationCases) {
+    const result = reconcileTradeObservationCandidates([
+      candidate('REST', 'fixture:obs:obligation:' + sourceFactType, {
+        sourceFactType,
+        sourceOperationRef,
+        tradeId: null,
+        orderId: null,
+      }),
+    ])
+    assert.equal(result.reconciliationStatus, 'UNMAPPED', sourceFactType)
+    assert.equal(result.groups.length, 0, sourceFactType)
+    assert.equal(result.unclassified[0].status, 'UNMAPPED', sourceFactType)
+  }
+})
+
+test('a payment matching an obligation amount and asset is not a trade or proof of discharge', () => {
+  const trade = candidate('REST', 'fixture:obs:trade:obligation-payment:1')
+  const payment = candidate('REST', 'fixture:obs:payment:obligation:1', {
+    sourceFactType: 'OBLIGATION_PAYMENT',
+    sourceOperationRef: 'fixture:profile:obligation-payment',
+    sourceEventId: null,
+    quantity: trade.quantity,
+    commissionAsset: trade.commissionAsset,
+    tradeId: null,
+    orderId: null,
+  })
+  const result = reconcileTradeObservationCandidates([trade, payment])
   assert.equal(result.groups.length, 1)
   assert.equal(result.groups[0].status, 'INCOMPLETE')
   assert.equal(result.groups[0].projection, null)

@@ -107,6 +107,10 @@ A relation status never upgrades ObservationRecord quality, verifies raw bytes, 
 | Internal Wallet transfer | Source/destination product-wallet balances | Wallet history `tranId` plus direction-coded `type` records one cross-wallet operation; the record does not carry the balance-stream's event ID | Keep the `tranId` record and each balance observation separate; no amount/asset/time-only pairing; a product transfer is not a trade, borrow, repayment, settlement or novation |
 | Wallet deposit/withdrawal | External chain movement | Binance history row `id` identifies its internal record; `txId` identifies the chain transaction; network, asset, addresses/tags and status provide context | `txId` alone may not identify a unique output/token event; require chain-specific asset and sub-event evidence for cross-platform joins; do not confuse `withdrawOrderId` or internal row `id` with `txId` |
 | Deposit/withdrawal or internal transfer | Spot balance event/snapshot | The history operation may explain a later account balance delta or snapshot | Spot `balanceUpdate`/`outboundAccountPosition` expose no `tranId`, Wallet row `id` or `withdrawOrderId`; retain separate evidence and do not assert a one-to-one event pairing |
+| Transfer/payment | Established obligation/right | A transfer can be a candidate payment effect only when a profile-bound payment instruction identifies the canonical obligation, beneficiary, asset, amount semantics and applicable finality evidence | Do not infer `DISCHARGES` from asset/amount/time/txId/status alone; only the existing R7 settlement transition may consume L1/L2 → L4, exactly once |
+| Obligation transfer / proposed novation | Original and destination obligation records | EXP-09 profile policy may authorize a responsibility change with source/destination identity, consent, authority, terms and preserved obligation lineage | A wallet move, changed account/address or operational reassignment is not novation; no universal legal novation rule is selected |
+| Opposite transfers / separate obligations | Gross obligation set | A declared profile may define a permitted netting relation | EXP-08: retain gross identities and amounts; no offset by opposite signs, common asset, amount or timestamp |
+| Coupled cross-system transfer / obligation | Joint composed state | X4 requires atomic commit or exposure unresolved in both systems; X2 requires one canonical partition or non-overlapping resource shares | Do not locally discharge/reassign one side while the other is absent; do not double-count the shared resource |
 | Collateral | Liability/financing | A collateral relation may secure a separate liability | Require explicit collateral-agreement/loan relation and profile semantics; an encumbrance is not the liability itself |
 | Current fee schedule | Actual fee | `account.commission` is a current per-symbol tariff snapshot; `computeCommissionRates` is a hypothetical test-order rate response | Neither carries a historical effective-from/version binding to a past trade; preserve request/receipt time separately and never calculate/substitute the actual charge |
 
@@ -173,6 +177,7 @@ Implemented in Arb:
 
 Not implemented:
 - cross-family join/relation resolver;
+- transfer-to-obligation discharge and EXP-09 novation qualification resolver (design only; no runtime implementation);
 - SOR allocation parser/reconciler for the documented `allocId` ↔ `allocationId` relation;
 - complete Spot asset-movement and balance reconciliation; the current Binance contract exposes no adequate account cursor/atomic boundary;
 - typed ProviderProfile mappings for balance, collateral, direct trades, SOR allocations, liability, transfer and settlement fields;

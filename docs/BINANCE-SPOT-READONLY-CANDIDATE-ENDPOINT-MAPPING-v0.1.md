@@ -161,6 +161,51 @@ Deposit status codes include pending, success, rejected, credited-but-not-withdr
 
 A transfer record proves only the movement stated within its documented product/account scope. It does not by itself prove beneficial ownership of an external address, the counterparty's identity, novation of a liability, discharge of a commitment, or finality of a related obligation. In particular, a transfer to Margin is not a borrowing record, and a transfer from Margin is not a repayment record; require the separate Margin borrow/repay history and obligation identity before classifying either.
 
+### 3.9 Transfer, payment, discharge and novation are separate facts
+
+The same asset movement can be relevant to several workflows, but it does not collapse them into one semantic event:
+
+| Observed operation | What the source can establish | What it cannot establish by itself |
+|---|---|---|
+| Internal Binance wallet transfer (`tranId`, `type`, `asset`, `amount`, `status`) | A direction-coded movement between Binance product-wallet scopes, subject to the returned status | A loan, repayment, payment to an external creditor, discharge of an obligation, or novation |
+| External deposit (`id`, `txId`, network, asset/address and status) | A Binance deposit history record and its reported chain reference/status | Beneficial ownership of the source address, the economic purpose, or discharge of an obligation |
+| External withdrawal (`id`, `txId`, `withdrawOrderId`, address, amount, fee and status) | A Binance withdrawal history record and its reported destination/chain metadata | Beneficial ownership/control of the destination, creditor receipt, legal satisfaction of a debt, or novation |
+| Authorized payment against an established obligation | A candidate `DISCHARGES` relation, but only after matching the existing obligation and the profile's payment/finality requirements | The creation of a new obligation or the transfer of debtor identity |
+| Authorized transfer/novation of an obligation | A profile-governed change of responsible party while preserving canonical obligation lineage | Settlement or extinction merely because an asset was moved |
+
+#### 3.9.1 Payment is not discharge by amount matching
+
+To assert `DISCHARGES`, the profile must already identify the obligation/right being consumed. The evidence package must establish, at minimum:
+
+1. canonical obligation/right identity and current lifecycle state;
+2. authorized payment instruction or settlement reference bound to that obligation;
+3. intended beneficiary/payee and a qualified binding between that beneficiary and the actual destination/account/address at the relevant time;
+4. exact asset/network/unit, amount semantics (gross/net/fee), and the profile's explicit rule for full or partial payment;
+5. source transfer/withdrawal record and the relevant destination receipt/finality evidence required by the profile;
+6. idempotent consumption evidence so the same obligation cannot be settled twice.
+
+A matching amount, asset, sign, timestamp, transaction hash or `withdrawOrderId` by itself is not this evidence. `withdrawOrderId` is a client-side identifier supplied when the withdrawal is created; it may correlate with a separately preserved payment intent only if that intent-to-ID binding is itself authenticated and retained. It is not a provider proof of the underlying obligation or authorization.
+
+Until the evidence is sufficient, the transfer/payment and the obligation remain separate facts. The relation is INCOMPLETE or UNLINKED (or CONFLICTED where a declared identity resolves incompatibly); the existing obligation is not moved to R7 L4. R7's existing `settle: L1 | L2 → L4` transition remains exactly-once and requires the canonical right/settlement evidence; this document does not add a new R7 transition or define legal discharge.
+
+#### 3.9.2 Internal wallet movement is not borrow or repayment
+
+A `tranId` and direction `type` such as Spot → Margin prove only the Wallet operation represented by that history row. They do not prove that a margin loan was created, collateralized, repaid or extinguished. A Margin borrow/repay record and its own obligation identity/lifecycle must be collected and reconciled in the Margin product profile. The same rule applies to Futures funding transfers: a wallet movement to/from Futures is not itself a position close, realized PnL settlement or funding-fee payment.
+
+The Wallet history record is one transfer fact, not a separate debit event plus credit event to be summed as two independent gross transfers. Its source/destination effects may be reflected in distinct product balance observations; those are state/effect observations and must not duplicate the `tranId` transfer as a second economic operation.
+
+#### 3.9.3 Novation is not an asset transfer or operational reassignment
+
+EXP-09 remains profile/research-owned for transferability and legal novation semantics. A true obligation transfer requires an explicit governing profile rule and evidence for the original canonical obligation, source and destination responsible parties, beneficiary/creditor, unchanged or explicitly amended terms and remaining amount, effective time, required consent, authorization and destination acceptance. The old and new references must retain lineage to one economic obligation unless the profile explicitly defines a lawful split/merge.
+
+A Wallet transfer, a change of Binance sub-account/product wallet, a new address, an operator/worker reassignment or a changed local owner field does not establish novation. Without the profile rule and required attestations, preserve the original obligation and mark the proposed transfer relation INCOMPLETE/UNLINKED; do not erase the source responsibility, mint a second independent claim, or infer the destination's acceptance.
+
+#### 3.9.4 No implicit netting; composed systems remain coupled
+
+EXP-08 requires gross obligations to remain separately identifiable. Opposite balance movements, transfers in both directions, matching asset amounts, or a debit in one scope and credit in another do not create a netted obligation. Netting is possible only under an explicit profile policy with its own eligibility, consent, scope, timing and evidence; preserve the original gross records and the authorized net result separately.
+
+Where a transfer/novation/payment couples two economic systems, apply C-COMP rather than reconciling each side independently: X2 requires one canonical exhaustive resource partition or non-overlapping exclusive shares; X4 requires an atomic cross-system commit or the same unresolved exposure represented in both systems until settlement; X5/X5b require the joint certificate and joint gate. References to the same cross-system obligation must not cause the same resource or commitment to be counted twice.
+
 ## 4. Timestamp and units contract
 
 - Binance JSON time fields are milliseconds by default. The general REST documentation also supports requesting microseconds using X-MBX-TIME-UNIT. The candidate profile must pin one unit and reject mixed-unit ambiguity.
@@ -279,6 +324,13 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 39. A withdrawal includes `transactionFee` and `withdrawOrderId` — preserve network fee and caller-supplied lookup ID separately from trade commission, internal row `id` and chain `txId`.
 40. Deposit status is pending/restricted/rejected or waiting confirmation — preserve raw status; do not classify as a completed usable balance transfer.
 41. Universal-transfer history is queried beyond the six-month retention window or pages are not exhausted — classify coverage PARTIAL/UNKNOWN; absence of rows is not proof of zero transfers.
+42. A Spot → Margin `tranId` matches a borrow/repay asset and amount — do not classify as borrowing, collateralization or repayment without the separate Margin obligation record.
+43. A withdrawal row matches an existing obligation by asset and amount but lacks its canonical obligation/payment reference and qualified beneficiary binding — no `DISCHARGES` relation and no R7 L1/L2 → L4 transition.
+44. A withdrawal status or chain `txId` exists without destination receipt/finality or profile settlement evidence — preserve the withdrawal observation; do not infer legal/economic discharge.
+45. A Wallet transfer or local owner reassignment changes the operational account/scope but lacks EXP-09 profile rule, source/destination party identity, consent and authorization — no novation and no erasure of the original obligation.
+46. Opposite-signed transfers or payments concern separate obligations — retain gross facts; no implicit EXP-08 netting from sign, amount or asset.
+47. A coupled cross-system obligation is observed on one side only — retain unresolved exposure on both sides under C-COMP X4 and avoid double-counting the shared resource under X2.
+48. A `withdrawOrderId` resembles a local obligation ID but the signed/authenticated intent-to-ID binding is absent — treat as unqualified correlation metadata, not obligation identity.
 
 ## 9. Official sources reviewed
 
