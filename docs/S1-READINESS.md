@@ -114,3 +114,8 @@ The provider-neutral comparison core in `src/trade-observation-reconciler.js` im
 ## 12. Reconciled trade lifecycle binding
 
 The synthetic trade adapter now converts only a MATCHED REST/STREAM trade reconciliation into one `FILL` lifecycle event. It does not select or fabricate a single raw digest: the event binds the scoped trade key and all original ObservationRecord references, source IDs, stream IDs, source-operation refs and per-observation raw digests. `projectOrderLifecycle` retains the legacy single-`rawDigestRef` mode unchanged and accepts the explicit `ReconciledTradeEvidenceBinding` mode as a separate form. Replay is a no-op only when the complete binding set and quantity match; changed evidence is CONFLICTED. This is structural binding only; provider mapping, raw digest integrity, verifier trust and IMMORTAL EXP-06 qualification remain external and OPEN.
+
+
+## 13. Cross-family reconciliation boundary
+
+The read-only account/trading candidate now has a separate design contract for relations across balances, fills, fees, collateral locks, positions, liabilities, transfers and settlement. It reuses IMMORTAL's two-sided asset/commitment partition and C-COMP X1–X7; it does not add a universal ledger or an automatic netting engine. No relation is inferred from matching amounts, assets or timestamps. The current implementation remains trade-only: cross-family linking, provider-specific mapping, population completeness, valuation, obligation classification, finality and IMMORTAL admission remain OPEN. The Binance Spot externalLockUpdate is explicitly partial collateral/encumbrance evidence only.

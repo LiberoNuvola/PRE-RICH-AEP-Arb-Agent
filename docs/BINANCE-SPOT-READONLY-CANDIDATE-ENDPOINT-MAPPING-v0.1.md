@@ -1,7 +1,7 @@
 # Binance Spot Read-Only Candidate — Endpoint and Field Mapping v0.1
 
 **Status:** documentation-only mapping; candidate profile, not selected or conformant  
-**Date:** 2026-11-04  
+**Date:** 2026-11-05  
 **Branch:** Immortal-Protocol  
 **Provider product perimeter:** Binance Spot account/trading observations only
 
@@ -25,8 +25,9 @@ The initial candidate uses the current Spot WebSocket API at wss://ws-api.binanc
 | Arb family | Official operation/event | Documented fields to preserve | Identity / ordering | Coverage status |
 |---|---|---|---|---|
 | Account snapshot / balances | account.status (USER_DATA) | accountType, updateTime, balances[].asset, free, locked; permission flags as metadata only | Response ID is request correlation, not account event identity; preserve receipt time and updateTime | Snapshot is not atomic with other families |
-| Balance change | outboundAccountPosition | e, E, u, B[].a, B[].f, B[].l | Event type + event time + account update time + exact asset; no invented sequence | Push event; stream gaps require REST reconciliation |
-| Balance delta | balanceUpdate | e, E, a, d, T | Preserve delta, asset, event time and transaction/clear time; payload has no transaction ID | Does not identify transfer counterparty |
+| Balance change | outboundAccountPosition | e, E, u, B[].a, B[].f, B[].l | Event type + event time + account update time + exact asset; u is an update time, not a cross-family transaction key | Push event; stream gaps require REST reconciliation |
+| Balance delta | balanceUpdate | e, E, a, d, T | Preserve delta, asset, event time and transaction/clear time; payload has no transfer/transaction ID | Does not identify transfer counterparty or settlement |
+| External lock change | externalLockUpdate | e, E, a, d, T | Preserve event kind, asset, reported delta and transaction time; payload has no external-system, loan, collateral-agreement or obligation ID | Partial collateral/encumbrance observation only; do not infer debt, ownership, valuation or a new asset/liability |
 | Order lifecycle | allOrders / order.status (USER_DATA) | symbol, orderId, orderListId, clientOrderId, price, origQty, executedQty, cummulativeQuoteQty, status, timeInForce, type, side, time, updateTime | Product scope + symbol + orderId; clientOrderId is separate | Per-symbol history; documented query limits apply |
 | Order update / execution report | executionReport | s, c, S, o, f, q, p, x, X, i, l, z, L, n, N, T, t, I, Z, Y, C, r, v and conditional fields | i = order ID; I = execution ID; t = trade ID when present; c = client order ID | Event evidence, not guaranteed complete replay |
 | Fills / trades | myTrades (USER_DATA) | symbol, id (trade ID), orderId, orderListId, price, qty, quoteQty, commission, commissionAsset, time, isBuyer, isMaker, isBestMatch where returned | Product scope + symbol + trade ID; link to order ID | Per-symbol; max 1000; time interval max 24 hours; fromId cannot combine with time filters |
@@ -74,6 +75,14 @@ The reviewed Spot documentation exposes order execution type/status, cancel/repl
 
 A prevented match / STP event is not an executed fill. Preserve its distinct identifiers and quantities without adding it to trade quantity or gross executed exposure.
 
+### 3.5 External lock/unlock observations
+
+The Spot User Data Stream also documents externalLockUpdate: it reports when part of a Spot wallet balance is locked or unlocked by an external system (the documentation gives use as margin collateral as an example). The published event schema exposes only e, E, a, d and T; it does not expose an external-system identifier, loan/credit identifier, collateral-agreement identifier, counterparty, or obligation ID.
+
+Therefore this event is evidence of a reported encumbrance/availability change, not proof of the underlying debt, contractual collateral relationship, asset valuation, collateral eligibility, or settlement. It must not be counted as an additional asset or as a liability merely because a quantity changed. Retain the exact event and its original source evidence. Relating it to a balance snapshot, loan, position or settlement requires a separate explicit provider identity/mapping; asset + amount + nearby timestamp is insufficient.
+
+An external lock can change the distinction between total, free and locked amounts. Do not count the same units once as freely executable balance and again as a separately created collateral asset. Whether and how the underlying value enters the IMMORTAL asset-side partition is a profile qualification question, not an adapter inference.
+
 ## 4. Timestamp and units contract
 
 - Binance JSON time fields are milliseconds by default. The general REST documentation also supports requesting microseconds using X-MBX-TIME-UNIT. The candidate profile must pin one unit and reject mixed-unit ambiguity.
@@ -101,7 +110,7 @@ No key is needed for the current synthetic-only work.
 
 ## 6. Snapshot and stream reconciliation — no atomicity claim
 
-The official documentation describes separate account, order, trade and commission queries, plus asynchronous user-data events. This review found no documented atomic snapshot token spanning all these families.
+The official documentation describes separate account, order, trade and commission queries, plus asynchronous user-data events. This review found no documented atomic snapshot token spanning all these families. The stream also has separate balance-delta and external-lock events, but the published payloads do not supply a common transaction/obligation identifier that links them to a trade, loan, or order.
 
 1. Record each query's request parameters, response, source time fields, receipt time, profile version and evidence digest.
 2. Persist raw stream events before deriving projections.
@@ -120,7 +129,7 @@ The User Data Stream documentation states outboundAccountPosition is sent when b
 | Provider / product | binance / spot only |
 | Protocol / version | Spot WebSocket API v3 and User Data Stream; pin documentation revision and retrieval date |
 | Source operation | Exact method/event name, e.g. account.status, myTrades, executionReport |
-| Data family | account_balance, order, fill, fee_schedule, order_list, prevented_match |
+| Data family | account_balance, collateral_lock_change (partial), order, fill, fee_schedule, order_list, prevented_match |
 | Source identity | Scoped provider identifiers above; never ticker alone |
 | Snapshot identity | Local collection-run identity; no provider-wide atomic snapshot assumed |
 | Event identity | Local eventId distinct from provider sourceEventId; use documented provider execution/trade/order identity where appropriate |
@@ -129,7 +138,7 @@ The User Data Stream documentation states outboundAccountPosition is sent when b
 | Coverage rule | Per-family/per-query; zero omission disabled for account balances; query bounds and terminal pagination evidence required |
 | Evidence | Retain raw response/event bytes, exact digest, evidence version and source documentation reference; no verification promotion without separate verifier |
 
-The candidate must not place every provider payload into OpenExposure. OpenExposure remains a gross projection only when a source fact is correctly typed and mapped. Balances, account permissions, commission schedules and order-list parent records remain source-family observations.
+The candidate must not place every provider payload into OpenExposure. OpenExposure remains a gross projection only when a source fact is correctly typed and mapped. Balances, external lock changes, account permissions, commission schedules and order-list parent records remain source-family observations. A fee rate schedule is not an actual fee charge; a reported lock change is not itself a liability or proof of collateral ownership.
 
 ## 8. Required synthetic conformance vectors
 
@@ -149,12 +158,17 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 14. Commission asset different from quote/base asset — preserve exact fee asset.
 15. Missing or mixed timestamp units — reject or mark UNKNOWN.
 16. Balance delta without unique transaction reference — do not invent transfer identity.
+17. externalLockUpdate lock/unlock change — preserve as a separate encumbrance observation; do not manufacture a debt, collateral agreement or settlement reference.
+18. externalLockUpdate and a fill with the same asset/amount/time but no shared provider identity — do not join them.
+19. account.commission schedule and a trade's actual commission — preserve schedule and charged amount as distinct fact types.
+20. balanceUpdate and outboundAccountPosition reflecting a similar asset movement without a shared event/transaction ID — preserve both observations and do not claim independent corroboration or a single merged event.
 
 ## 9. Official sources reviewed
 
 - Binance Spot REST API — security, timestamp and error semantics: https://developers.binance.com/en/docs/products/spot/rest-api
 - Binance Spot WebSocket API — Account: https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-api/account
-- Binance Spot User Data Stream events: https://github.com/binance/binance-spot-api-docs/blob/master/user-data-stream.md
+- Binance Spot User Data Stream events: https://developers.binance.com/en/docs/products/spot/user-data-stream
+- Binance Spot WebSocket stream event schemas (including externalLockUpdate): https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-streams/~schemas
 - Binance Margin REST API — Borrow and Repay: https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/borrow-repay
 
 Margin is cited only to establish separate borrow/repay and interest-history operations. Margin is out of scope for this Spot candidate.
@@ -195,7 +209,7 @@ The generic reducer's `projectOrderLifecycle` deduplicates a repeated `fillId` o
 
 Therefore, these two records must **not** be fed as duplicate FILL events to `projectOrderLifecycle`. First preserve both ObservationRecords and reconcile them at the provider-observation identity layer using the documented scoped trade identity; only the single reconciled trade projection may be supplied to the generic lifecycle reducer. If the two observations disagree on quantity, order identity, commission or commission asset, preserve both and classify the reconciliation as CONFLICTED. This is a mapping requirement, not permission to weaken the reducer's exact-digest duplicate rule.
 
-The current S1 reducer does not implement this Binance-specific reconciliation. The conformance vectors must make this gap visible; they must not hide it in test-only code or claim that a provider adapter exists.
+The S1 branch now contains a synthetic comparison core (reconcileTradeObservationCandidates) and a narrow adapter (toOrderLifecycleFillEvent) that bind a MATCHED REST/STREAM trade to one lifecycle FILL without collapsing its original raw digests. The lifecycle reducer accepts this explicit evidence-binding mode while preserving the legacy single-digest rule. This is not a Binance payload parser, a verified ProviderProfile mapping, a live provider adapter, or a provider-conformance result; the candidates are already normalized and the source-operation mapping is caller-supplied.
 
 ### 11.2 What the vectors do not prove
 
@@ -205,3 +219,8 @@ The current S1 reducer does not implement this Binance-specific reconciliation. 
 - They do not authorize any TRADE, Margin, transfer, withdrawal, credential-management or actuator capability.
 
 **Current gate:** documentation and synthetic test design only. S1 remains read-only. Provider selection/conformance, D0/D1 and independent review remain OPEN; S2/S3 remain unauthorized.
+
+
+## 12. Cross-family reconciliation boundary
+
+The family-to-family rules are recorded separately in [CROSS-FAMILY-RECONCILIATION-CONTRACT-v0.1.md](CROSS-FAMILY-RECONCILIATION-CONTRACT-v0.1.md). Matching amount/asset/time is not a join key; a fill is not a balance delta or a settlement; an external lock is not an independently created asset or liability; and a commission schedule is not the commission actually charged. Where the provider supplies no shared identity, Arb preserves the observations without asserting a relation. No cross-family accounting projection or aggregation is implemented.

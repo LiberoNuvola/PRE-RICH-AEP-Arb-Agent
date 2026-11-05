@@ -143,3 +143,8 @@ Raw digest inequality across the two channels is allowed. Within one channel, an
 2. `ReconciledTradeEvidenceBinding`, where replay equality covers the full normalized set of observation references, source identities, operation references and per-observation raw digests.
 
 The modes cannot be mixed on one event. Incomplete, repeated or ambiguous source bindings fail closed. The adapter and reducer still do not verify raw bytes, digest integrity, provider mapping, verifier trust, settlement, ownership, position state, netting, authority or economic admission.
+
+
+## 12. Cross-family scope exclusion
+
+This trade-level contract resolves only observations that describe the same provider trade fact. It does not join trade facts to balance snapshots/deltas, external lock changes, positions, liabilities, transfer lifecycle, or settlement. Those are distinct source families and require explicit typed relation evidence. A shared asset, amount, timestamp, order ID, or account scope by itself is not enough to merge them. See [CROSS-FAMILY-RECONCILIATION-CONTRACT-v0.1.md](CROSS-FAMILY-RECONCILIATION-CONTRACT-v0.1.md).

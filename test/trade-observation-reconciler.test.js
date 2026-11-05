@@ -204,3 +204,42 @@ test('empty and malformed candidate collections fail closed without implying zer
   assert.equal(malformed.reconciliationStatus, 'INVALID')
   assert.equal(malformed.aggregateTradeCount, null)
 })
+
+
+test('balance, collateral-lock and fee-schedule observations are not inferred to be trades', () => {
+  const nonTradeCases = [
+    ['BALANCE_CHANGE', 'fixture:binance:balanceUpdate'],
+    ['COLLATERAL_LOCK_CHANGE', 'fixture:binance:externalLockUpdate'],
+    ['FEE_SCHEDULE', 'fixture:binance:account.commission'],
+    ['SETTLEMENT', 'fixture:binance:unmapped-settlement'],
+  ]
+
+  for (const [sourceFactType, sourceOperationRef] of nonTradeCases) {
+    const result = reconcileTradeObservationCandidates([
+      candidate('STREAM', 'fixture:obs:non-trade:' + sourceFactType, {
+        sourceFactType,
+        sourceOperationRef,
+      }),
+    ])
+    assert.equal(result.reconciliationStatus, 'UNMAPPED', sourceFactType)
+    assert.equal(result.groups.length, 0, sourceFactType)
+    assert.equal(result.unclassified[0].status, 'UNMAPPED', sourceFactType)
+  }
+})
+
+test('matching amount and asset do not join a trade to an external lock event', () => {
+  const trade = candidate('REST', 'fixture:obs:trade:9001')
+  const lock = candidate('STREAM', 'fixture:obs:external-lock:9001', {
+    sourceFactType: 'COLLATERAL_LOCK_CHANGE',
+    sourceOperationRef: 'fixture:binance:externalLockUpdate',
+    sourceEventId: null,
+    quantity: trade.quantity,
+    commissionAsset: trade.commissionAsset,
+  })
+  const result = reconcileTradeObservationCandidates([trade, lock])
+  assert.equal(result.reconciliationStatus, 'UNMAPPED')
+  assert.equal(result.groups.length, 1)
+  assert.equal(result.groups[0].status, 'INCOMPLETE')
+  assert.equal(result.groups[0].projection, null)
+  assert.equal(result.unclassified[0].status, 'UNMAPPED')
+})
