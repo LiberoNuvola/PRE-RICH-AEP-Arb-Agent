@@ -137,6 +137,14 @@ function keyFor(candidate) {
   ])
 }
 
+function sameObservationIdentity(left, right) {
+  return left.sourceChannel === right.sourceChannel &&
+    left.sourceId === right.sourceId &&
+    left.streamId === right.streamId &&
+    left.sourceEventId === right.sourceEventId &&
+    left.sourceOperationRef === right.sourceOperationRef
+}
+
 function sameComparedValues(left, right) {
   return left.orderId === right.orderId &&
     left.canonicalValues.quantity === right.canonicalValues.quantity &&
@@ -184,7 +192,7 @@ function reconcileGroup(candidates, key) {
   for (const candidate of candidates) {
     const previousRef = byObservationRef.get(candidate.observationRef)
     if (previousRef) {
-      if (previousRef.rawDigestRef === candidate.rawDigestRef && sameComparedValues(previousRef, candidate)) {
+      if (sameObservationIdentity(previousRef, candidate) && previousRef.rawDigestRef === candidate.rawDigestRef && sameComparedValues(previousRef, candidate)) {
         duplicateObservationRefs.push(candidate.observationRef)
         continue
       }
@@ -272,7 +280,7 @@ function reconcileGroup(candidates, key) {
     sourceValues[field] = [rest, stream]
       .filter((entry) => entry[field] !== null)
       .map((entry) => ({ observationRef: entry.observationRef, value: entry[field] }))
-      .sort((a, b) => a.observationRef.localeCompare(b.observationRef))
+      .sort((a, b) => a.observationRef < b.observationRef ? -1 : a.observationRef > b.observationRef ? 1 : 0)
   }
 
   const projection = Object.freeze({
@@ -376,7 +384,7 @@ export function reconcileTradeObservationCandidates(candidates) {
   }
 
   const groups = [...grouped.entries()]
-    .sort(([left], [right]) => left.localeCompare(right))
+    .sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0)
     .map(([key, values]) => reconcileGroup(values, key))
 
   const groupStatuses = groups.map((group) => group.status)
