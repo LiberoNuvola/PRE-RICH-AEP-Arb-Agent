@@ -25,9 +25,9 @@ The initial candidate uses the current Spot WebSocket API at wss://ws-api.binanc
 | Arb family | Official operation/event | Documented fields to preserve | Identity / ordering | Coverage status |
 |---|---|---|---|---|
 | Account snapshot / balances | account.status (USER_DATA) | accountType, updateTime, balances[].asset, free, locked; permission flags as metadata only | Response ID is request correlation, not account event identity; preserve receipt time and updateTime | Snapshot is not atomic with other families |
-| Balance change | outboundAccountPosition | e, E, u, B[].a, B[].f, B[].l | Event type + event time + account update time + exact asset; u is an update time, not a cross-family transaction key | Push event; stream gaps require REST reconciliation |
-| Balance delta | balanceUpdate | e, E, a, d, T | Preserve delta, asset, event time and transaction/clear time; payload has no transfer/transaction ID | Does not identify transfer counterparty or settlement |
-| External lock change | externalLockUpdate | e, E, a, d, T | Preserve event kind, asset, reported delta and transaction time; payload has no external-system, loan, collateral-agreement or obligation ID | Partial collateral/encumbrance observation only; do not infer debt, ownership, valuation or a new asset/liability |
+| Balance change | outboundAccountPosition | e, E, u, B[].a, B[].f, B[].l; SBE also exposes optional subscriptionId | Event type + event time + account update time + exact asset; u is an update time, and subscriptionId is subscription context, not a transaction key | Push event; stream gaps require REST reconciliation |
+| Balance delta | balanceUpdate | JSON: e, E, a, d, T; SBE: freeQtyDelta maps to d, clearTime maps to T, optional subscriptionId | Preserve exact event type, raw delta, asset and times; no transfer/transaction ID; subscriptionId is subscription context, not transaction identity | Deposit/withdrawal/transfer delta; not a lock event or settlement proof |
+| External lock change | externalLockUpdate | JSON: e, E, a, d, T; SBE: lockedQtyDelta maps to d, clearTime maps to T, optional subscriptionId | Preserve exact event type, raw locked-quantity delta, asset and times; no external-system, loan, collateral-agreement or obligation ID; subscriptionId is not a lock/event identity | Partial collateral/encumbrance observation only; do not infer debt, ownership, valuation or a new asset/liability |
 | Order lifecycle | allOrders / order.status (USER_DATA) | symbol, orderId, orderListId, clientOrderId, price, origQty, executedQty, cummulativeQuoteQty, status, timeInForce, type, side, time, updateTime | Product scope + symbol + orderId; clientOrderId is separate | Per-symbol history; documented query limits apply |
 | Order update / execution report | executionReport | s, c, S, o, f, q, p, x, X, i, l, z, L, n, N, T, t, I, Z, Y, C, r, v and conditional fields | i = order ID; I = execution ID; t = trade ID when present; c = client order ID | Event evidence, not guaranteed complete replay |
 | Fills / trades | myTrades (USER_DATA) | symbol, id (trade ID), orderId, orderListId, price, qty, quoteQty, commission, commissionAsset, time, isBuyer, isMaker, isBestMatch where returned | Product scope + symbol + trade ID; link to order ID | Per-symbol; max 1000; time interval max 24 hours; fromId cannot combine with time filters |
@@ -77,9 +77,18 @@ A prevented match / STP event is not an executed fill. Preserve its distinct ide
 
 ### 3.5 External lock/unlock observations
 
-The Spot User Data Stream also documents externalLockUpdate: it reports when part of a Spot wallet balance is locked or unlocked by an external system (the documentation gives use as margin collateral as an example). The published event schema exposes only e, E, a, d and T; it does not expose an external-system identifier, loan/credit identifier, collateral-agreement identifier, counterparty, or obligation ID.
+The JSON User Data Stream variant exposes `e`, `E`, `a`, `d` and `T`. The official SBE schema makes the field semantics more precise:
+- `BalanceUpdateEvent`: `freeQtyDelta` maps to JSON `d`; `clearTime` maps to `T`.
+- `ExternalLockUpdateEvent`: `lockedQtyDelta` maps to JSON `d`; `clearTime` maps to `T`.
+- `OutboundAccountPositionEvent`: carries `updateTime` and per-asset `free` / `locked` quantities.
 
-Therefore this event is evidence of a reported encumbrance/availability change, not proof of the underlying debt, contractual collateral relationship, asset valuation, collateral eligibility, or settlement. It must not be counted as an additional asset or as a liability merely because a quantity changed. Retain the exact event and its original source evidence. Relating it to a balance snapshot, loan, position or settlement requires a separate explicit provider identity/mapping; asset + amount + nearby timestamp is insufficient.
+The optional SBE `subscriptionId` is also present on these event types. It identifies the stream subscription context; it is not a provider event ID, transaction ID, lock ID, loan ID, collateral-agreement ID or obligation reference. A common `subscriptionId` across these events therefore does not establish that they describe the same underlying operation.
+
+The event-type distinction matters: the same JSON key `d` is a free-balance delta in `balanceUpdate` but a locked-quantity delta in `externalLockUpdate`. Preserve the event type, raw lexical value, exact asset, representation (JSON/SBE) and both source times. The reviewed schema identifies the lock field as `lockedQtyDelta` but does not specify a positive/negative direction convention; do not independently infer LOCK versus UNLOCK from the sign until an approved provider profile pins that convention.
+
+The Spot User Data Stream describes `externalLockUpdate` as being sent when part of the Spot wallet balance is locked or unlocked by an external system (with margin collateral as an example). The payload does not expose the external system, loan/credit, collateral agreement, counterparty or obligation identity.
+
+Therefore this event is evidence of a reported encumbrance/availability change, not proof of the underlying debt, contractual collateral relationship, asset valuation, collateral eligibility or settlement. It must not be counted as an additional asset or as a liability merely because a quantity changed. Relating it to a balance snapshot, balance delta, loan, position or settlement requires a separate explicit provider identity/mapping; same asset, amount, timestamp or subscriptionId is insufficient.
 
 An external lock can change the distinction between total, free and locked amounts. Do not count the same units once as freely executable balance and again as a separately created collateral asset. Whether and how the underlying value enters the IMMORTAL asset-side partition is a profile qualification question, not an adapter inference.
 
@@ -162,6 +171,7 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 18. externalLockUpdate and a fill with the same asset/amount/time but no shared provider identity — do not join them.
 19. account.commission schedule and a trade's actual commission — preserve schedule and charged amount as distinct fact types.
 20. balanceUpdate and outboundAccountPosition reflecting a similar asset movement without a shared event/transaction ID — preserve both observations and do not claim independent corroboration or a single merged event.
+21. JSON/SBE balanceUpdate, externalLockUpdate and outboundAccountPosition share one stream subscription context; equal subscriptionId plus asset/time/amount does not create a cross-family event or transaction identity.
 
 ## 9. Official sources reviewed
 
@@ -169,6 +179,7 @@ The candidate must not place every provider payload into OpenExposure. OpenExpos
 - Binance Spot WebSocket API — Account: https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-api/account
 - Binance Spot User Data Stream events: https://developers.binance.com/en/docs/products/spot/user-data-stream
 - Binance Spot WebSocket stream event schemas (including externalLockUpdate): https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/ws-streams/~schemas
+- Binance Spot SBE schema (spot_3_1.xml): https://github.com/binance/binance-spot-api-docs/blob/master/sbe/schemas/spot_3_1.xml
 - Binance Margin REST API — Borrow and Repay: https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/borrow-repay
 
 Margin is cited only to establish separate borrow/repay and interest-history operations. Margin is out of scope for this Spot candidate.
