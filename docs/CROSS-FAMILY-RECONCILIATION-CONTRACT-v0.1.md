@@ -106,7 +106,7 @@ A relation status never upgrades ObservationRecord quality, verifies raw bytes, 
 | Margin borrow/repay | USER_LIABILITY_CHANGE stream event | The stream reports asset, update type, principal and interest quantities | No txId or originating obligation ID in the stream schema; do not deduplicate to REST by asset/amount/time alone |
 | Margin repay | Actual interest history | A repayment row contains principal and interest components; interestHistory independently records interest charges by txId and type | Preserve principal, repay-interest and interest-history facts distinctly; do not double-count or join to an originating borrow without an explicit shared ID |
 | Margin capital-flow | Borrow/repay and Margin transfer history | Capital-flow rows expose id, tranId, type, asset, symbol and amount | Keep ID namespaces separate; the published schemas do not establish tranId=borrow-repay txId or equality with Wallet transfer tranId |
-| Margin collateral/risk snapshot | Borrowed assets / Margin liabilities | Margin account exposes free/locked/borrowed/interest/netAsset and risk ratios | Metrics are profile-valued risk/snapshot observations, not extra assets, debts, or independent collateral agreement; do not sum with constituent rows |
+| Margin collateral/risk snapshot | Borrowed assets / Margin liabilities | Margin account exposes free/locked/borrowed/interest/netAsset and risk ratios | Keep constituent buckets and aggregate metrics distinct; collateral haircuts, risk ratios and totals are account-level calculations, not extra assets, debts or collateral-agreement evidence. Do not sum with constituent rows |
 | Margin force liquidation | Margin order / debt lifecycle | Force-liquidation record can link to Margin order by scoped orderId | Liquidation execution is not itself proof of debt repayment or full liability discharge; reconcile resulting trades and later liability state separately |
 | Small-liability exchange | Source/target asset liability | History records a source asset/amount and target asset/amount | Preserve as debt-denomination conversion; no original debt ID or settlement/discharge proof is exposed |
 | Balance | Borrow/liability | A loan disbursement could affect an asset balance while also establishing a liability | Require explicit loan/borrow identity and product-specific source semantics; never infer a loan from a balance increase. Spot remains outside Margin liability scope |
@@ -159,6 +159,16 @@ The Binance Margin documentation supplies more than one liability view:
 
 These sources support a Margin candidate profile, not a universal liability ledger. Cross Margin and Isolated Margin are different product scopes. The current Spot-only S1 allowlist does not call any Margin endpoint or subscribe to any Margin Risk Data Stream. In particular, the Margin change log removed the legacy listenKey documentation on 2025-11-10 and recommends migration to `POST /sapi/v1/userListenToken` plus `userDataStream.subscribe.listenToken`; payload schema references alone do not prove that an Arb Margin stream adapter, event ordering contract or complete account stream has been implemented.
 
+### 6.1.1 Collateral and risk values are not additional resources
+
+For Cross Margin Classic, Binance's published formula calculates Margin Level from collateral value divided by total liabilities plus outstanding interest. Collateral value applies the current haircut and Price Index to net-positive positions, recognizes the liability-equivalent portion of those positive positions at 100%, and recognizes the positive asset portion of net-negative positions at 100%. Borrow Margin Level and Transfer-Out Margin Level are separate views based on mark prices and collateral ratios; the published support material states that Borrow and Transfer-Out ratios may differ and that the collateral ratio applies only to net collateral. The documented calculation changed effective 2026-06-15, so a historical or cached ratio table cannot silently stand in for the current parameters.
+
+Cross Margin Pro was phased out on 2026-02-05. The API schema still labels `MARGIN_2` as Pro and still shows `collateralMarginLevel`; preserve such fields raw, but do not assign them current Cross Classic semantics. Cross account summary fields (including BTC totals, `TotalCollateralValueInUSDT` and `totalOpenOrderLossInUSDT`) remain aggregate views and must not be added to their constituent `userAssets[]` rows. The documented field schema does not define an algebraic calculation for `netAsset`; Arb must not derive it by subtracting borrowed/interest from free/locked.
+
+For Isolated Margin, only the assets in the exact isolated pair account can collateralize that account; Cross Margin and other Isolated account balances are not shared collateral. The provider publishes the pair's own margin-level/risk fields and a quote-currency formula. The Cross-only collateral-ratio schedule must not be applied to Isolated Margin.
+
+The supporting GET endpoints have distinct evidentiary classes: `crossMarginCollateralRatio` is a provider parameter schedule; `allAssets.isMortgageable` is asset capability metadata; `priceIndex` and `risk-based-liquidation-ratio` are valuation/risk inputs; `maxBorrowable` and `maxTransferable` are current capacity outputs; and `available-inventory` is provider-side lending supply. None is a borrow/repayment/transfer event, none by itself proves an asset was pledged, and none creates a separate collateral resource. These operations remain outside the Spot S1 collection allowlist.
+
 Official provider references:
 - [Spot User Data Stream](https://developers.binance.com/en/docs/products/spot/user-data-stream)
 - [Spot Smart Order Routing FAQ](https://developers.binance.com/en/docs/products/spot/faqs/sor_faq)
@@ -168,6 +178,9 @@ Official provider references:
 - [Binance Margin REST API — Account](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/account)
 - [Binance Margin REST API — Borrow and Repay](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/borrow-repay)
 - [Binance Margin REST API — Transfer](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/transfer)
+- [Binance Margin REST API — Market Data](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/market-data)
+- [Binance Margin Level and Risk Control](https://www.binance.com/en/support/faq/binance-margin-level-and-risk-control-360030493931)
+- [Binance Cross Margin Pro phase-out notice](https://www.binance.com/en/support/faq/detail/0b5441a1c1ff431bb2e135dfa8e6ffba)
 - [Binance Margin REST API — Trade / liquidation](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/rest-api/trade)
 - [Binance Margin WebSocket event schemas](https://developers.binance.com/en/docs/catalog/core-trading-margin-trading/api/ws-streams/~schemas)
 - [Binance Margin Trading change log](https://developers.binance.com/en/docs/products/margin-trading/change-log)

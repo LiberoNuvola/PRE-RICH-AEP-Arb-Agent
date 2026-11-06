@@ -274,6 +274,13 @@ test('balance, collateral-lock and tariff observations are not inferred to be tr
     ['MARGIN_LEVEL_STATUS_CHANGE', 'fixture:binance:margin.MARGIN_LEVEL_STATUS_CHANGE'],
     ['MARGIN_FORCE_LIQUIDATION', 'fixture:binance:margin.forceLiquidationRec'],
     ['MARGIN_SMALL_LIABILITY_EXCHANGE', 'fixture:binance:margin.exchange-small-liability-history'],
+    ['MARGIN_COLLATERAL_RATIO', 'fixture:binance:margin.crossMarginCollateralRatio'],
+    ['MARGIN_ASSET_CAPABILITY', 'fixture:binance:margin.allAssets'],
+    ['MARGIN_PRICE_INDEX', 'fixture:binance:margin.priceIndex'],
+    ['MARGIN_RISK_BASED_LIQUIDATION_RATIO', 'fixture:binance:margin.risk-based-liquidation-ratio'],
+    ['MARGIN_BORROW_CAPACITY', 'fixture:binance:margin.maxBorrowable'],
+    ['MARGIN_TRANSFER_CAPACITY', 'fixture:binance:margin.maxTransferable'],
+    ['MARGIN_PROVIDER_LENDING_INVENTORY', 'fixture:binance:margin.available-inventory'],
     ['FEE_SCHEDULE', 'fixture:binance:account.commission'],
     ['COMMISSION_RATE_SNAPSHOT', 'fixture:binance:account.commission'],
     ['TEST_ORDER_COMMISSION_RATES', 'fixture:binance:order.test.computeCommissionRates'],
@@ -422,6 +429,13 @@ test('Margin liability, interest, account, capital-flow and liquidation observat
     ['MARGIN_LEVEL_STATUS_CHANGE', 'fixture:binance:margin.MARGIN_LEVEL_STATUS_CHANGE'],
     ['MARGIN_FORCE_LIQUIDATION', 'fixture:binance:margin.forceLiquidationRec'],
     ['MARGIN_SMALL_LIABILITY_EXCHANGE', 'fixture:binance:margin.exchange-small-liability-history'],
+    ['MARGIN_COLLATERAL_RATIO', 'fixture:binance:margin.crossMarginCollateralRatio'],
+    ['MARGIN_ASSET_CAPABILITY', 'fixture:binance:margin.allAssets'],
+    ['MARGIN_PRICE_INDEX', 'fixture:binance:margin.priceIndex'],
+    ['MARGIN_RISK_BASED_LIQUIDATION_RATIO', 'fixture:binance:margin.risk-based-liquidation-ratio'],
+    ['MARGIN_BORROW_CAPACITY', 'fixture:binance:margin.maxBorrowable'],
+    ['MARGIN_TRANSFER_CAPACITY', 'fixture:binance:margin.maxTransferable'],
+    ['MARGIN_PROVIDER_LENDING_INVENTORY', 'fixture:binance:margin.available-inventory'],
   ]
   for (const [sourceFactType, sourceOperationRef] of marginCases) {
     const result = reconcileTradeObservationCandidates([
@@ -436,6 +450,25 @@ test('Margin liability, interest, account, capital-flow and liquidation observat
     assert.equal(result.groups.length, 0, sourceFactType)
     assert.equal(result.unclassified[0].status, 'UNMAPPED', sourceFactType)
   }
+})
+
+test('Margin capacity and collateral metadata matching a trade amount do not create a trade projection', () => {
+  const trade = candidate('REST', 'fixture:obs:trade:margin-capacity:1')
+  const capacity = candidate('REST', 'fixture:obs:margin:max-borrowable:1', {
+    sourceFactType: 'MARGIN_BORROW_CAPACITY',
+    sourceOperationRef: 'fixture:binance:margin.maxBorrowable',
+    sourceEventId: null,
+    quantity: trade.quantity,
+    commissionAsset: trade.commissionAsset,
+    tradeId: null,
+    orderId: null,
+  })
+  const result = reconcileTradeObservationCandidates([trade, capacity])
+  assert.equal(result.groups.length, 1)
+  assert.equal(result.groups[0].status, 'INCOMPLETE')
+  assert.equal(result.groups[0].projection, null)
+  assert.equal(result.unclassified.length, 1)
+  assert.equal(result.unclassified[0].status, 'UNMAPPED')
 })
 
 test('a Margin borrow matching a trade asset and amount is not folded into the trade', () => {
