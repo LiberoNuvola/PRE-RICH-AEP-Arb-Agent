@@ -458,6 +458,34 @@ test('Margin liability, interest, account, capital-flow and liquidation observat
   }
 })
 
+test('Margin capital-flow and transfer rows matching a reconciled trade do not add executions', () => {
+  const [restTrade, streamTrade] = pair()
+  const capitalFlow = candidate('REST', 'fixture:obs:margin:capital-flow:trade:1', {
+    sourceFactType: 'MARGIN_CAPITAL_FLOW',
+    sourceOperationRef: 'fixture:binance:margin.capital-flow',
+    sourceEventId: null,
+    quantity: restTrade.quantity,
+    commissionAsset: restTrade.commissionAsset,
+    tradeId: null,
+    orderId: null,
+  })
+  const transfer = candidate('REST', 'fixture:obs:margin:transfer:trade:1', {
+    sourceFactType: 'MARGIN_TRANSFER_HISTORY',
+    sourceOperationRef: 'fixture:binance:margin.transfer',
+    sourceEventId: null,
+    quantity: restTrade.quantity,
+    commissionAsset: restTrade.commissionAsset,
+    tradeId: null,
+    orderId: null,
+  })
+  const result = reconcileTradeObservationCandidates([restTrade, streamTrade, capitalFlow, transfer])
+  assert.equal(result.groups.length, 1)
+  assert.equal(result.groups[0].status, 'MATCHED')
+  assert.equal(result.groups[0].projection.observationRefs.length, 2)
+  assert.equal(result.unclassified.length, 2)
+  assert.deepEqual(result.unclassified.map(x => x.status), ['UNMAPPED', 'UNMAPPED'])
+})
+
 test('liquidation-deficit repayment evidence matching a trade amount is not a trade projection', () => {
   const trade = candidate('REST', 'fixture:obs:trade:liquidation-deficit:1')
   const evidence = candidate('REST', 'fixture:obs:margin:liquidation-deficit-repay:1', {
