@@ -281,6 +281,9 @@ test('balance, collateral-lock and tariff observations are not inferred to be tr
     ['MARGIN_BORROW_CAPACITY', 'fixture:binance:margin.maxBorrowable'],
     ['MARGIN_TRANSFER_CAPACITY', 'fixture:binance:margin.maxTransferable'],
     ['MARGIN_PROVIDER_LENDING_INVENTORY', 'fixture:binance:margin.available-inventory'],
+    ['MARGIN_LIQUIDATION_LOAN', 'fixture:binance:margin.liquidation-loan'],
+    ['MARGIN_LIQUIDATION_LOAN_REPAYMENT', 'fixture:binance:margin.liquidation-loan.repay-history'],
+    ['MARGIN_INSTITUTIONAL_LOAN_FLOW', 'fixture:binance:margin.capital-flow.note'],
     ['FEE_SCHEDULE', 'fixture:binance:account.commission'],
     ['COMMISSION_RATE_SNAPSHOT', 'fixture:binance:account.commission'],
     ['TEST_ORDER_COMMISSION_RATES', 'fixture:binance:order.test.computeCommissionRates'],
@@ -436,6 +439,9 @@ test('Margin liability, interest, account, capital-flow and liquidation observat
     ['MARGIN_BORROW_CAPACITY', 'fixture:binance:margin.maxBorrowable'],
     ['MARGIN_TRANSFER_CAPACITY', 'fixture:binance:margin.maxTransferable'],
     ['MARGIN_PROVIDER_LENDING_INVENTORY', 'fixture:binance:margin.available-inventory'],
+    ['MARGIN_LIQUIDATION_LOAN', 'fixture:binance:margin.liquidation-loan'],
+    ['MARGIN_LIQUIDATION_LOAN_REPAYMENT', 'fixture:binance:margin.liquidation-loan.repay-history'],
+    ['MARGIN_INSTITUTIONAL_LOAN_FLOW', 'fixture:binance:margin.capital-flow.note'],
   ]
   for (const [sourceFactType, sourceOperationRef] of marginCases) {
     const result = reconcileTradeObservationCandidates([
@@ -450,6 +456,25 @@ test('Margin liability, interest, account, capital-flow and liquidation observat
     assert.equal(result.groups.length, 0, sourceFactType)
     assert.equal(result.unclassified[0].status, 'UNMAPPED', sourceFactType)
   }
+})
+
+test('liquidation-deficit repayment evidence matching a trade amount is not a trade projection', () => {
+  const trade = candidate('REST', 'fixture:obs:trade:liquidation-deficit:1')
+  const evidence = candidate('REST', 'fixture:obs:margin:liquidation-deficit-repay:1', {
+    sourceFactType: 'MARGIN_LIQUIDATION_LOAN_REPAYMENT',
+    sourceOperationRef: 'fixture:binance:margin.liquidation-loan.repay-history',
+    sourceEventId: null,
+    quantity: trade.quantity,
+    commissionAsset: trade.commissionAsset,
+    tradeId: null,
+    orderId: null,
+  })
+  const result = reconcileTradeObservationCandidates([trade, evidence])
+  assert.equal(result.groups.length, 1)
+  assert.equal(result.groups[0].status, 'INCOMPLETE')
+  assert.equal(result.groups[0].projection, null)
+  assert.equal(result.unclassified.length, 1)
+  assert.equal(result.unclassified[0].status, 'UNMAPPED')
 })
 
 test('Margin capacity and collateral metadata matching a trade amount do not create a trade projection', () => {
