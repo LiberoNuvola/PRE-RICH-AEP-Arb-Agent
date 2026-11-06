@@ -29,5 +29,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const requestUrl = new URL(event.request.url)
   if (requestUrl.origin !== self.location.origin) return
-  event.respondWith(caches.match(event.request).then((cached) => cached || Response.error()))
+
+  // Tracking/query parameters must not make an otherwise cached static asset
+  // miss the app shell cache (for example, /app/?utm_source=...).
+  event.respondWith(
+    caches.match(event.request, { ignoreSearch: true })
+      .then((cached) => cached || Response.error()),
+  )
 })

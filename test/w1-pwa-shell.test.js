@@ -22,6 +22,7 @@ test('W1 PWA manifest and service-worker shell point to the existing read-only w
   assert.match(main, /new Date\(\)\.toISOString\(\)/)
   assert.match(worker, /cache\.addAll\(SHELL\)/)
   assert.match(worker, /requestUrl\.origin !== self\.location\.origin/)
+  assert.match(worker, /caches\.match\(event\.request,\s*\{\s*ignoreSearch:\s*true\s*\}\)/)
   assert.doesNotMatch(worker, /\bfetch\s*\(/)
 })
 
