@@ -51,11 +51,27 @@ function classifyNetworkId(networkId) {
 }
 
 export class WalletCompanionError extends Error {
-  constructor(code, message) {
+  constructor(code, message, details = {}) {
     super(message)
     this.name = 'WalletCompanionError'
     this.code = code
+    if (details.providerError) {
+      this.providerError = Object.freeze({ ...details.providerError })
+    }
   }
+}
+
+function describeProviderError(error) {
+  if (!isRecord(error)) return Object.freeze({ name: null, code: null, info: null })
+  const name = typeof error.name === 'string' ? error.name.slice(0, 80) : null
+  const code = typeof error.code === 'number' || typeof error.code === 'string'
+    ? String(error.code).slice(0, 32)
+    : null
+  const rawInfo = typeof error.info === 'string'
+    ? error.info
+    : typeof error.message === 'string' ? error.message : null
+  const info = rawInfo === null ? null : rawInfo.slice(0, 240)
+  return Object.freeze({ name, code, info })
 }
 
 export function discoverCip30Wallets(injectedNamespace) {
@@ -92,8 +108,15 @@ export async function connectReadOnlyWallet({ walletName, injectedWallets } = {}
   let api
   try {
     api = await provider.enable.call(provider)
-  } catch {
-    throw new WalletCompanionError('WALLET_ACCESS_NOT_GRANTED', 'The wallet did not grant read access')
+  } catch (error) {
+    // Preserve only the standard error metadata needed to distinguish a
+    // user refusal (-3) from an internal connector failure (-2). Never expose
+    // the provider object, stack, or any wallet API methods to the caller.
+    throw new WalletCompanionError(
+      'WALLET_ACCESS_NOT_GRANTED',
+      'The wallet did not grant read access',
+      { providerError: describeProviderError(error) },
+    )
   }
 
   if (!isRecord(api)) {
