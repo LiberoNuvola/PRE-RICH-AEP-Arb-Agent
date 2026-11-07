@@ -70,6 +70,53 @@ test('discovery lists only injected providers that expose enable', () => {
   }])
 })
 
+test('connection refusal preserves the CIP-30 provider error code and info', async () => {
+  const providerError = Object.assign(new Error('wallet not authorized.'), {
+    name: 'ApiError',
+    code: -3,
+    info: 'User declined authorization',
+  })
+  const injectedWallets = {
+    lace: {
+      name: 'Lace',
+      apiVersion: '0.1.0',
+      async enable() {
+        throw providerError
+      },
+    },
+  }
+
+  await assert.rejects(
+    connectReadOnlyWallet({ walletName: 'lace', injectedWallets }),
+    (error) => error instanceof WalletCompanionError &&
+      error.code === 'WALLET_ACCESS_NOT_GRANTED' &&
+      error.providerError.name === 'ApiError' &&
+      error.providerError.code === '-3' &&
+      error.providerError.info === 'User declined authorization',
+  )
+})
+
+test('connection failure preserves a bounded internal connector diagnostic', async () => {
+  const injectedWallets = {
+    lace: {
+      name: 'Lace',
+      async enable() {
+        throw Object.assign(new Error('connector unavailable'), {
+          name: 'APIError',
+          code: -2,
+        })
+      },
+    },
+  }
+
+  await assert.rejects(
+    connectReadOnlyWallet({ walletName: 'lace', injectedWallets }),
+    (error) => error.code === 'WALLET_ACCESS_NOT_GRANTED' &&
+      error.providerError.code === '-2' &&
+      error.providerError.info === 'connector unavailable',
+  )
+})
+
 test('connection is explicit and the session exposes only read operations', async () => {
   const { api, calls } = makeApi()
   let enables = 0
