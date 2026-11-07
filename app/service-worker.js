@@ -6,6 +6,11 @@ const SHELL = [
   './main.js',
   './manifest.webmanifest',
   './icon.svg',
+  // main.js imports these modules from the repository-root wallet companion.
+  // They must be cached because this worker intercepts same-origin requests
+  // from the controlled app, including requests outside its /app/ scope.
+  '../wallet-companion/cip30-read-only.js',
+  '../wallet-companion/minswap-v2-position-link.js',
 ]
 
 self.addEventListener('install', (event) => {
