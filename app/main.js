@@ -117,7 +117,15 @@ connectButton.addEventListener('click', async () => {
     await readSnapshot()
   } catch (error) {
     session = null
-    setStatus('Connessione non riuscita: ' + (error?.message ?? 'errore wallet'), 'error')
+    const providerError = error?.providerError
+    const providerDetail = providerError
+      ? ' [Lace ' +
+        (providerError.name ?? 'APIError') +
+        (providerError.code !== null ? ' ' + providerError.code : '') +
+        (providerError.info ? ': ' + providerError.info : '') +
+        ']'
+      : ''
+    setStatus('Connessione non riuscita: ' + (error?.message ?? 'errore wallet') + providerDetail, 'error')
   } finally {
     connectButton.disabled = false
   }
