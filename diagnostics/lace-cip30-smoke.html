@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b25">
+  <title>Arb Agent — Lace CIP-30 diagnostic</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #102b25; color: #f2f4ed; }
+    body { max-width: 680px; margin: 0 auto; padding: 2rem 1.25rem; }
+    main { background: #173b33; border: 1px solid #396358; border-radius: 16px; padding: 1.5rem; }
+    h1 { margin-top: 0; font-size: 1.5rem; }
+    p { line-height: 1.55; }
+    code { overflow-wrap: anywhere; color: #d3e5dc; }
+    button { margin-top: 1rem; padding: .8rem 1rem; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; color: #102b25; background: #b7ddbd; }
+    button:disabled { opacity: .5; cursor: wait; }
+    #status { white-space: pre-wrap; overflow-wrap: anywhere; background: #0c211c; border-radius: 8px; padding: 1rem; min-height: 3rem; }
+    .warning { color: #f4d79c; }
+  </style>
+  <script type="module" src="./lace-cip30-smoke.js"></script>
+</head>
+<body>
+  <main>
+    <p>ARB AGENT / DIAGNOSTICA W1</p>
+    <h1>Test isolato di connessione Lace</h1>
+    <p>Questa pagina verifica esclusivamente la risposta di <code>window.cardano.lace.enable()</code>.</p>
+    <p>Non è controllata dal Service Worker di <code>/app/</code> e non applica la Content Security Policy dell'app: serve a separare un problema del contesto Arb Agent da un problema del canale Lace/Brave.</p>
+    <p><strong>Non vengono richiesti indirizzi, saldo o UTxO.</strong> Non vengono chiamate funzioni di lettura e non viene richiesta alcuna firma o transazione.</p>
+    <p>Origine: <code id="origin"></code></p>
+    <p>Provider Lace: <code id="provider-state">controllo…</code></p>
+    <button id="connect" type="button" disabled>Verifica connessione Lace</button>
+    <h2>Risultato</h2>
+    <p id="status" role="status" aria-live="polite">Premi il pulsante per avviare un solo tentativo esplicito.</p>
+  </main>
+</body>
+</html>
